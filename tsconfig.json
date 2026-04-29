@@ -63,14 +63,6 @@
         "noUncheckedSideEffectImports": true,
         "noUnusedLocals": true,
         "noUnusedParameters": true,
-        "paths": {
-            "@assets/*": [
-                "./assets/*"
-            ],
-            "@plugin/*": [
-                "./src/*"
-            ]
-        },
         "preserveConstEnums": true,
         "preserveSymlinks": false,
         "preserveWatchOutput": false,
@@ -91,7 +83,7 @@
         "stripInternal": false,
         "target": "ES2024",
         "traceResolution": false,
-        "tsBuildInfoFile": "./.cache/tsbuildinfo/tsconfig.app.tsbuildinfo",
+        "tsBuildInfoFile": "./.cache/tsbuildinfo/tsconfig.tsbuildinfo",
         "types": [
             "vite/client",
             "vitest/globals"
@@ -111,8 +103,7 @@
         "test/fixtures/**"
     ],
     "include": [
-        "src/**/*.d.ts",
-        "src/**/*.ts",
+        "index.d.ts",
         "test/**/*.d.ts",
         "test/**/*.ts",
         "vite.config.ts"

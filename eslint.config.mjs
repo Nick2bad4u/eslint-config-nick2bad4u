@@ -3418,9 +3418,19 @@ export const configs = Object.freeze({
         },
     }),
     recommended: allConfig,
+    withoutChunkyLint: createConfig({
+        plugins: {
+            chunkylint: false,
+        },
+    }),
     withoutCopilot: createConfig({
         plugins: {
             copilot: false,
+        },
+    }),
+    withoutDocusaurus2: createConfig({
+        plugins: {
+            "docusaurus-2": false,
         },
     }),
     withoutEtcMisc: createConfig({
@@ -3428,14 +3438,69 @@ export const configs = Object.freeze({
             "etc-misc": false,
         },
     }),
+    withoutFileProgress2: createConfig({
+        plugins: {
+            "file-progress-2": false,
+        },
+    }),
+    withoutGithubActions2: createConfig({
+        plugins: {
+            "github-actions-2": false,
+        },
+    }),
+    withoutImmutable2: createConfig({
+        plugins: {
+            "immutable-2": false,
+        },
+    }),
+    withoutRepo: createConfig({
+        plugins: {
+            repo: false,
+        },
+    }),
+    withoutSdl2: createConfig({
+        plugins: {
+            "sdl-2": false,
+        },
+    }),
+    withoutStylelint2: createConfig({
+        plugins: {
+            "stylelint-2": false,
+        },
+    }),
     withoutTsconfig: createConfig({
         plugins: {
             tsconfig: false,
         },
     }),
+    withoutTsdocRequire2: createConfig({
+        plugins: {
+            "tsdoc-require-2": false,
+        },
+    }),
+    withoutTypedoc: createConfig({
+        plugins: {
+            typedoc: false,
+        },
+    }),
     withoutTypefest: createConfig({
         plugins: {
             typefest: false,
+        },
+    }),
+    withoutUptimeWatcher: createConfig({
+        plugins: {
+            "uptime-watcher": false,
+        },
+    }),
+    withoutVite: createConfig({
+        plugins: {
+            vite: false,
+        },
+    }),
+    withoutWriteGoodComments2: createConfig({
+        plugins: {
+            "write-good-comments-2": false,
         },
     }),
 });

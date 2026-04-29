@@ -1,17 +1,18 @@
 {
     "$schema": "https://www.schemastore.org/tsconfig.json",
     "compilerOptions": {
+        "allowJs": true,
+        "checkJs": true,
         "composite": true,
         "declaration": true,
         "declarationMap": true,
         "emitDeclarationOnly": false,
-        "isolatedDeclarations": true,
+        "isolatedDeclarations": false,
         "isolatedModules": true,
         "module": "NodeNext",
         "moduleResolution": "NodeNext",
         "noEmit": false,
         "outDir": "./dist",
-        "rootDir": "./src",
         "sourceMap": true,
         "tsBuildInfoFile": "./.cache/tsbuildinfo/tsconfig.build.tsbuildinfo",
         "types": [
@@ -25,11 +26,12 @@
         "docs/docusaurus/build/**",
         "eslint.config.bundled_*.mjs",
         "node_modules/**",
-        "test/**"
+        "test/fixtures/**"
     ],
     "extends": "./tsconfig.json",
     "include": [
-        "src/**/*.d.ts",
-        "src/**/*.ts"
+        "index.d.ts",
+        "eslint.config.mjs",
+        "preset.mjs"
     ]
 }

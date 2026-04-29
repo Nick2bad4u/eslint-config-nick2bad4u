@@ -46,10 +46,23 @@ describe("eslint-config-nick2bad4u presets", () => {
     });
 
     it.each([
+        ["withoutChunkyLint", "chunkylint"],
         ["withoutCopilot", "copilot"],
+        ["withoutDocusaurus2", "docusaurus-2"],
         ["withoutEtcMisc", "etc-misc"],
+        ["withoutFileProgress2", "file-progress-2"],
+        ["withoutGithubActions2", "github-actions-2"],
+        ["withoutImmutable2", "immutable-2"],
+        ["withoutRepo", "repo"],
+        ["withoutSdl2", "sdl-2"],
+        ["withoutStylelint2", "stylelint-2"],
         ["withoutTsconfig", "tsconfig"],
+        ["withoutTsdocRequire2", "tsdoc-require-2"],
         ["withoutTypefest", "typefest"],
+        ["withoutTypedoc", "typedoc"],
+        ["withoutUptimeWatcher", "uptime-watcher"],
+        ["withoutVite", "vite"],
+        ["withoutWriteGoodComments2", "write-good-comments-2"],
     ] as const)(
         "removes %s plugin rules from the preset",
         (presetName, pluginName) => {
