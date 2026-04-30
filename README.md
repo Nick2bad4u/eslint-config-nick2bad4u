@@ -61,12 +61,9 @@ Available presets:
 
 ## Configure project roots / TypeScript projects
 
-By default, TypeScript-aware rules resolve projects from `process.cwd()` and try these files:
+By default, TypeScript-aware rules resolve projects from `process.cwd()` and use:
 
 - `./tsconfig.eslint.json`
-- `./tsconfig.json`
-- `./tsconfig.build.json`
-- `./tsconfig.js.json`
 
 Override that when a repo has different config names:
 

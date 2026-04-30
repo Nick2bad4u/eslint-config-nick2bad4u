@@ -11,7 +11,7 @@
 import pluginDocusaurus from "@docusaurus/eslint-plugin";
 import comments from "@eslint-community/eslint-plugin-eslint-comments/configs";
 import eslintReactPlugin from "@eslint-react/eslint-plugin";
-import { defineConfig, globalIgnores } from "@eslint/config-helpers";
+import { globalIgnores } from "@eslint/config-helpers";
 import css from "@eslint/css";
 import js from "@eslint/js";
 import json from "@eslint/json";
@@ -124,12 +124,7 @@ const jsonSchemaValidatorRules =
 
 const processEnvironment = globalThis.process.env;
 
-const DEFAULT_TSCONFIG_PATHS = Object.freeze([
-    "./tsconfig.eslint.json",
-    "./tsconfig.json",
-    "./tsconfig.build.json",
-    "./tsconfig.js.json",
-]);
+const DEFAULT_TSCONFIG_PATHS = Object.freeze(["./tsconfig.eslint.json"]);
 
 /**
  * @typedef {import("eslint").Linter.Config} EslintConfig
@@ -222,6 +217,16 @@ const removeDisabledPluginRules = (configs, disabledPluginNames) => {
         return nextConfig;
     });
 };
+
+/**
+ * @param {readonly (EslintConfig | readonly EslintConfig[])[]} configs
+ *
+ * @returns {EslintConfig[]}
+ */
+const flattenConfigs = (configs) =>
+    configs.flatMap((config) =>
+        Array.isArray(config) ? flattenConfigs(config) : [config]
+    );
 
 /**
  * Controls eslint-plugin-file-progress behavior.
@@ -3401,8 +3406,9 @@ export const createConfig = (options = {}) => {
         // #endregion
     ];
 
-    return defineConfig(
-        removeDisabledPluginRules(configs, disabledPluginNames)
+    return removeDisabledPluginRules(
+        flattenConfigs(configs),
+        disabledPluginNames
     );
 };
 

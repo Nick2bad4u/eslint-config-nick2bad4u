@@ -6,9 +6,8 @@ export interface Nick2Bad4UEslintConfigOptions {
      * Replace or disable plugins by ESLint namespace.
      *
      * Pass a plugin object to dogfood an explicitly configurable source-rule
-     * plugin section, such as `typefest` or `etc-misc`. Pass `false` or `null`
-     * to remove that plugin's registered rules from the shared config by
-     * namespace.
+     * Defaults to `["./tsconfig.eslint.json"]`. to remove that plugin's
+     * registered rules from the shared config by namespace.
      */
     readonly plugins?: Readonly<Record<string, unknown>>;
 
