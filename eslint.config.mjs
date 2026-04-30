@@ -3446,26 +3446,31 @@ export const configs = Object.freeze({
     }),
     withoutFileProgress2: createConfig({
         plugins: {
+            "file-progress": false,
             "file-progress-2": false,
         },
     }),
     withoutGithubActions2: createConfig({
         plugins: {
+            "github-actions": false,
             "github-actions-2": false,
         },
     }),
     withoutImmutable2: createConfig({
         plugins: {
+            immutable: false,
             "immutable-2": false,
         },
     }),
     withoutRepo: createConfig({
         plugins: {
             repo: false,
+            "repo-compliance": false,
         },
     }),
     withoutSdl2: createConfig({
         plugins: {
+            sdl: false,
             "sdl-2": false,
         },
     }),
@@ -3506,6 +3511,7 @@ export const configs = Object.freeze({
     }),
     withoutWriteGoodComments2: createConfig({
         plugins: {
+            "write-good-comments": false,
             "write-good-comments-2": false,
         },
     }),
