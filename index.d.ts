@@ -96,7 +96,7 @@ export declare const createConfig: (
 ) => Linter.Config[];
 
 /** Shared flat config presets. */
-export declare const configs: Nick2Bad4UEslintConfigPresets;
+export declare const presets: Nick2Bad4UEslintConfigPresets;
 
 declare const nickTwoBadFourU: {
     readonly configs: Nick2Bad4UEslintConfigPresets;

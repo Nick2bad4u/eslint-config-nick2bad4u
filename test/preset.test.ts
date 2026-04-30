@@ -1,8 +1,8 @@
 import type { Linter } from "eslint";
 
 import nickTwoBadFourU, {
-    configs,
     createConfig,
+    presets,
 } from "eslint-config-nick2bad4u";
 import { describe, expect, it } from "vitest";
 
@@ -39,10 +39,10 @@ describe("eslint-config-nick2bad4u presets", () => {
     it("exposes plugin-style flat config presets", () => {
         expect.assertions(4);
 
-        expect(nickTwoBadFourU.configs).toBe(configs);
-        expect(configs.all.length).toBeGreaterThan(0);
-        expect(configs.recommended).toBe(configs.all);
-        expect(Array.isArray(configs.all)).toBeTruthy();
+        expect(nickTwoBadFourU.configs).toBe(presets);
+        expect(presets.all.length).toBeGreaterThan(0);
+        expect(presets.recommended).toBe(presets.all);
+        expect(Array.isArray(presets.all)).toBeTruthy();
     });
 
     it.each([
@@ -68,7 +68,7 @@ describe("eslint-config-nick2bad4u presets", () => {
         (presetName, pluginName) => {
             expect.assertions(2);
 
-            const preset = configs[presetName];
+            const preset = presets[presetName];
             const registeredPluginNames = getRegisteredPluginNames(preset);
 
             expect(hasRuleFromPlugin(preset, pluginName)).toBeFalsy();
@@ -79,8 +79,8 @@ describe("eslint-config-nick2bad4u presets", () => {
     it("keeps full preset rules in the all preset", () => {
         expect.assertions(2);
 
-        expect(hasRuleFromPlugin(configs.all, "copilot")).toBeTruthy();
-        expect(hasRuleFromPlugin(configs.all, "typefest")).toBeTruthy();
+        expect(hasRuleFromPlugin(presets.all, "copilot")).toBeTruthy();
+        expect(hasRuleFromPlugin(presets.all, "typefest")).toBeTruthy();
     });
 
     it("supports local source-rule plugin replacement via createConfig", () => {

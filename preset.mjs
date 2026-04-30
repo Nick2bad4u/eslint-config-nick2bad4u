@@ -3,7 +3,7 @@ import {
     configs as sharedConfigs,
 } from "./eslint.config.mjs";
 
-export const configs = Object.freeze({
+export const presets = Object.freeze({
     all: sharedConfigs.all,
     base: sharedConfigs.base,
     recommended: sharedConfigs.recommended,
@@ -35,7 +35,7 @@ export const configs = Object.freeze({
 export const createConfig = (options) => createSharedConfig(options);
 
 const nickTwoBadFourU = Object.freeze({
-    configs,
+    configs: presets,
     createConfig,
 });
 

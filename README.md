@@ -36,6 +36,14 @@ export default [
 ];
 ```
 
+If you prefer named imports, use `presets` (not `configs`):
+
+```js
+import { presets } from "eslint-config-nick2bad4u";
+
+export default [...presets.all];
+```
+
 Available presets:
 
 - `nick2bad4u.configs.all` - full shared config, including packaged Typefest and Etc-Misc source rules.
