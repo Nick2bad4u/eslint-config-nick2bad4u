@@ -2571,7 +2571,7 @@ export const createConfig = (options = {}) => {
                 "html/no-aria-hidden-on-focusable": "warn",
                 "html/no-duplicate-class": "warn",
                 "html/no-empty-headings": "warn",
-                "html/no-extra-spacing-attrs": [
+                "html/no-extra-spacing-tags": [
                     "error",
                     { enforceBeforeSelfClose: true },
                 ],
