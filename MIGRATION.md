@@ -86,7 +86,11 @@ Remove the old file and create a minimal one that delegates to the shared config
 Remove-Item "eslint.config.mjs","eslint.config.js","eslint.config.cjs" -ErrorAction SilentlyContinue
 ```
 
-**`eslint.config.mjs`** (recommended default — uses `all` preset):
+There are two styles — pick the one that fits your repo.
+
+---
+
+### Style A — Spread (simple, good for repos with no extra overrides)
 
 ```js
 import nick2bad4u from "eslint-config-nick2bad4u";
@@ -94,28 +98,120 @@ import nick2bad4u from "eslint-config-nick2bad4u";
 export default nick2bad4u.configs.all;
 ```
 
-**Or, use `createConfig` for fine-grained control:**
-
-```js
-import { createConfig } from "eslint-config-nick2bad4u";
-import { fileURLToPath } from "node:url";
-
-export default createConfig({
-    rootDirectory: fileURLToPath(new URL(".", import.meta.url)),
-    tsconfigPaths: ["./tsconfig.eslint.json"],
-});
-```
-
-**Or, use a named preset that omits plugins irrelevant to your project:**
+Drop specific plugin groups when they are irrelevant to your repo:
 
 ```js
 import { presets } from "eslint-config-nick2bad4u";
 
-// e.g. a project that has no Docusaurus or Vite:
-export default [
+/** @type {import("eslint").Linter.Config[]} */
+const config = [
     ...presets.withoutDocusaurus2,
     ...presets.withoutVite,
+    // Add repository-specific config entries below as needed.
 ];
+
+export default config;
+```
+
+To dogfood a local plugin (e.g. `eslint-plugin-typefest`), append your section
+after spreading a `withoutX` preset:
+
+```js
+import nick2bad4u from "eslint-config-nick2bad4u";
+import typefest from "./plugin.mjs";
+
+/** @type {import("eslint").Linter.Config[]} */
+const config = [
+    ...nick2bad4u.configs.withoutTypefest,
+
+    // Local plugin config — lets you use the plugin's rules in this repo
+    // without needing to publish it first.
+    {
+        files: ["src/**/*.{ts,tsx,mts,cts}"],
+        name: "Local Typefest",
+        plugins: {
+            typefest,
+        },
+        rules: {
+            // @ts-expect-error -- plugin.mjs is typed as generic ESLint.Plugin.
+            ...typefest.configs.experimental.rules,
+        },
+    },
+    // Add repository-specific config entries below as needed.
+];
+
+export default config;
+```
+
+---
+
+### Style B — `createConfig` (preferred when you need option overrides)
+
+Use this style when you need to customise:
+
+- `rootDirectory` — project root for the TypeScript parser
+- `tsconfigPaths` — which tsconfig files to use (e.g. add `tsconfig.docusaurus.json` for docs builds)
+- `plugins` — swap out or disable specific plugin namespaces
+
+```js
+import { createConfig } from "eslint-config-nick2bad4u";
+
+export default createConfig({
+    rootDirectory: import.meta.dirname,
+    tsconfigPaths: ["./tsconfig.eslint.json"],
+});
+```
+
+To dogfood a local plugin via `createConfig`, pass it through the `plugins` option
+and then append your section to the returned array:
+
+```js
+import { createConfig } from "eslint-config-nick2bad4u";
+import typefest from "./plugin.mjs";
+
+/** @type {import("eslint").Linter.Config[]} */
+const config = [
+    // Disable the packaged typefest namespace; we'll supply it ourselves below.
+    ...createConfig({
+        rootDirectory: import.meta.dirname,
+        plugins: { typefest: false },
+    }),
+
+    // Local plugin config — lets you use the plugin's rules in this repo
+    // without needing to publish it first.
+    {
+        files: ["src/**/*.{ts,tsx,mts,cts}"],
+        name: "Local Typefest",
+        plugins: {
+            typefest,
+        },
+        rules: {
+            // @ts-expect-error -- plugin.mjs is typed as generic ESLint.Plugin.
+            ...typefest.configs.experimental.rules,
+        },
+    },
+    // Add repository-specific config entries below as needed.
+];
+
+export default config;
+```
+
+To cover benchmark or docs script files that the default tsconfigs don't include,
+add a tsconfig that includes them and pass it via `tsconfigPaths`:
+
+```js
+import { createConfig } from "eslint-config-nick2bad4u";
+
+export default createConfig({
+    rootDirectory: import.meta.dirname,
+    tsconfigPaths: [
+        "./tsconfig.eslint.json",
+        "./tsconfig.json",
+        "./tsconfig.build.json",
+        "./tsconfig.js.json",
+        "./tsconfig.benchmarks.json",
+    ],
+});
 ```
 
 Available `createConfig` options:
@@ -123,8 +219,8 @@ Available `createConfig` options:
 | Option | Type | Default | Purpose |
 |---|---|---|---|
 | `rootDirectory` | `string` | `process.cwd()` | Repo root for `tsconfigRootDir` |
-| `tsconfigPaths` | `string[]` | `["./tsconfig.eslint.json"]` | TS project files used by type-aware rules |
-| `disabledPluginNames` | `string[]` | `[]` | Plugin names to strip entirely |
+| `tsconfigPaths` | `string[]` | `["tsconfig.eslint.json", "tsconfig.json", "tsconfig.build.json", "tsconfig.js.json"]` | TS project files for type-aware rules |
+| `plugins` | `Record<string, Plugin \| false \| null>` | `{}` | Swap out or disable plugins by namespace |
 
 ---
 

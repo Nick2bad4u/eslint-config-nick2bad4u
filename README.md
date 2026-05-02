@@ -69,34 +69,31 @@ Available presets:
 
 ## Configure project roots / TypeScript projects
 
-By default, TypeScript-aware rules resolve projects from `process.cwd()` and use:
+By default, TypeScript-aware rules resolve projects from `process.cwd()` and look for:
 
 - `./tsconfig.eslint.json`
+- `./tsconfig.json`
+- `./tsconfig.build.json`
+- `./tsconfig.js.json`
 
-Override that when a repo has different config names:
+Override `tsconfigPaths` when your repo uses different names or needs extra files
+(e.g. `tsconfig.vitest.json`, `tsconfig.docusaurus.json`):
 
 ```js
 import { createConfig } from "eslint-config-nick2bad4u";
 
 export default createConfig({
     rootDirectory: import.meta.dirname,
-    tsconfigPaths: ["./tsconfig.eslint.json", "./tsconfig.json"],
-    allowDefaultProjectGlobs: [
-        "benchmarks/*.mjs",
-        "docs/docusaurus/typedoc-plugins/*.mjs",
-        "docs/docusaurus/typedoc-plugins/*.mts",
-        "docs/docusaurus/typedoc-plugins/*.d.mts",
+    tsconfigPaths: [
+        "./tsconfig.eslint.json",
+        "./tsconfig.json",
+        "./tsconfig.build.json",
+        "./tsconfig.docusaurus.json",
     ],
 });
 ```
 
 You can also set `ESLINT_CONFIG_ROOT` if you need to drive the root from the environment.
-
-`allowDefaultProjectGlobs` is for JS/MJS/CJS/MTS files intentionally outside
-your tsconfig include lists (benchmark scripts, docs tooling, root config files).
-`projectService.allowDefaultProject` does not allow `**` globs; use explicit
-directory segments like `benchmarks/*.mjs`.
-For `.ts` source/fixture files, prefer adding them to `tsconfig.eslint.json`.
 
 ## Dogfood a local ESLint plugin
 
