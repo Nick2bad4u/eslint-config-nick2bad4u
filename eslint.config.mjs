@@ -1085,7 +1085,18 @@ export const createConfig = (options = {}) => {
                     },
                     ecmaVersion: "latest",
                     jsDocParsingMode: "all",
-                    project: [...tsconfigPaths],
+                    // ProjectService auto-discovers the consumer's tsconfig via the TS
+                    // Language Service.  allowDefaultProject covers root-level config files
+                    // (e.g. stylelint.config.mjs, prettier.config.mjs) that won't be listed
+                    // in any tsconfig but are matched by the *.{mjs,cjs,js} files glob.
+                    projectService: {
+                        allowDefaultProject: [
+                            "*.mjs",
+                            "*.cjs",
+                            "*.js",
+                        ],
+                        defaultProject: tsconfigPaths[0],
+                    },
                     sourceType: "module",
                     tsconfigRootDir: rootDirectory,
                     warnOnUnsupportedTypeScriptVersion: true,
@@ -1921,7 +1932,14 @@ export const createConfig = (options = {}) => {
                     },
                     ecmaVersion: "latest",
                     jsDocParsingMode: "all",
-                    project: [...tsconfigPaths],
+                    projectService: {
+                        allowDefaultProject: [
+                            "*.mjs",
+                            "*.cjs",
+                            "*.js",
+                        ],
+                        defaultProject: tsconfigPaths[0],
+                    },
                     sourceType: "module",
                     tsconfigRootDir: rootDirectory,
                     warnOnUnsupportedTypeScriptVersion: true,
