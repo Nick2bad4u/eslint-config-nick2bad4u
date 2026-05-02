@@ -366,15 +366,25 @@ $plugins = @(
 npm uninstall @($plugins)
 
 # 2 — Install shared config
-npm install --save-dev eslint-config-nick2bad4u
+npm install --save-dev eslint-config-nick2bad4u --force
 
 # 3 — Write minimal config
 @'
 import nick2bad4u from "eslint-config-nick2bad4u";
 
-export default nick2bad4u.configs.all;
+/** @type {import("eslint").Linter.Config[]} */
+const config = [
+    ...nick2bad4u.configs.all,
+
+    // Add repository-specific config entries below as needed.
+];
+
+export default config;
+
 '@ | Set-Content -Path "eslint.config.mjs" -Encoding utf8
 
 # 4 — Verify
 npm run lint
+
+Write-Host "Migration complete! Review the new eslint.config.mjs and adjust presets or add overrides as needed. Make sure to add "**/*", "**/.*" to your tsconfig.eslint.json include if you haven't already." -ForegroundColor Green
 ```
