@@ -28,19 +28,6 @@ const packageJsonPath = fileURLToPath(
     new URL("../package.json", import.meta.url)
 );
 /**
- * The minimum supported range for eslint in peer dependencies. This is used as
- * a fallback when the existing peer range is not a valid string or cannot be
- * parsed to determine a floor candidate. This ensures that the peer dependency
- * range does not fall below a certain baseline, which is important for
- * maintaining compatibility with supported versions of eslint.
- *
- * @type {string}
- *
- * @see resolvePeerFloorRange
- */
-const minimumSupportedEslintRange = "^10.0.0";
-
-/**
  * Read and parse package.json.
  *
  * @type {() => Promise<Record<string, unknown>>}
@@ -67,34 +54,6 @@ const readPackageJson = async () => {
             { cause: error }
         );
     }
-};
-
-/**
- * Resolve a floor range from an existing peer range when possible. Falls back
- * to repository baseline.
- *
- * @type {(existingPeerRange: unknown) => string}
- *
- * @param {unknown} existingPeerRange
- *
- * @returns {string}
- */
-const resolvePeerFloorRange = (existingPeerRange) => {
-    if (typeof existingPeerRange !== "string") {
-        return minimumSupportedEslintRange;
-    }
-
-    /** @type {string[]} */
-    const [floorCandidate] = existingPeerRange
-        .split("||")
-        .map((part) => part.trim());
-
-    if (!floorCandidate) {
-        return minimumSupportedEslintRange;
-    }
-
-    /** @type {string} */
-    return floorCandidate;
 };
 
 /**
@@ -191,7 +150,6 @@ const main = async () => {
  * @see writeFile
  * @see readPackageJson
  * @see isRecord
- * @see resolvePeerFloorRange
  * @see main
  */
 try {
