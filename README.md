@@ -69,15 +69,26 @@ Available presets:
 
 ## Configure project roots / TypeScript projects
 
-By default, TypeScript-aware rules resolve projects from `process.cwd()` and look for:
+By default, TypeScript-aware rules resolve from `process.cwd()` using a single
+`./tsconfig.eslint.json`. That file should use a catch-all `include` to cover
+every file ESLint touches — source, tests, scripts, dotfiles, and docs tooling:
 
-- `./tsconfig.eslint.json`
-- `./tsconfig.json`
-- `./tsconfig.build.json`
-- `./tsconfig.js.json`
+```json
+{
+    "$schema": "https://www.schemastore.org/tsconfig.json",
+    "extends": "./tsconfig.json",
+    "compilerOptions": { "allowJs": true, "checkJs": true, "noEmit": true },
+    "exclude": ["node_modules/**", "dist/**", "coverage/**", ".cache/**"],
+    "include": ["**/*", "**/.*"]
+}
+```
 
-Override `tsconfigPaths` when your repo uses different names or needs extra files
-(e.g. `tsconfig.vitest.json`, `tsconfig.docusaurus.json`):
+> One tsconfig avoids multi-project warnings and is simpler to maintain.
+> Dotfiles like `.secretlintrc.cjs` require `"**/.*"` — they are **not** matched
+> by extension globs such as `**/*.cjs`.
+
+Override `tsconfigPaths` only when a separate project with different compiler
+settings is genuinely needed (e.g. a Docusaurus build or benchmark suite):
 
 ```js
 import { createConfig } from "eslint-config-nick2bad4u";
@@ -86,9 +97,7 @@ export default createConfig({
     rootDirectory: import.meta.dirname,
     tsconfigPaths: [
         "./tsconfig.eslint.json",
-        "./tsconfig.json",
-        "./tsconfig.build.json",
-        "./tsconfig.docusaurus.json",
+        "./tsconfig.benchmarks.json",
     ],
 });
 ```

@@ -196,8 +196,10 @@ const config = [
 export default config;
 ```
 
-To cover benchmark or docs script files that the default tsconfigs don't include,
-add a tsconfig that includes them and pass it via `tsconfigPaths`:
+To cover benchmark or docs script files, simply ensure your `tsconfig.eslint.json`
+`include` uses `"**/*"` and `"**/.*"` (the recommended default already does this).
+If you have files in a separate project that needs different compiler settings,
+add that tsconfig to `tsconfigPaths`:
 
 ```js
 import { createConfig } from "eslint-config-nick2bad4u";
@@ -206,9 +208,6 @@ export default createConfig({
     rootDirectory: import.meta.dirname,
     tsconfigPaths: [
         "./tsconfig.eslint.json",
-        "./tsconfig.json",
-        "./tsconfig.build.json",
-        "./tsconfig.js.json",
         "./tsconfig.benchmarks.json",
     ],
 });
@@ -219,7 +218,7 @@ Available `createConfig` options:
 | Option | Type | Default | Purpose |
 |---|---|---|---|
 | `rootDirectory` | `string` | `process.cwd()` | Repo root for `tsconfigRootDir` |
-| `tsconfigPaths` | `string[]` | `["tsconfig.eslint.json", "tsconfig.json", "tsconfig.build.json", "tsconfig.js.json"]` | TS project files for type-aware rules |
+| `tsconfigPaths` | `string[]` | `["./tsconfig.eslint.json"]` | TS project files for type-aware rules — single catch-all tsconfig is recommended |
 | `plugins` | `Record<string, Plugin \| false \| null>` | `{}` | Swap out or disable plugins by namespace |
 
 ---
@@ -254,6 +253,10 @@ Create it if missing — it should include every file ESLint will touch:
 > **Note:** Dotfiles are **not** matched by normal extension globs (`**/*.cjs`,
 > `**/*.mjs`, etc.). Keeping `"**/.*"` in include prevents misses like
 > `.secretlintrc.cjs`.
+>
+> A single `tsconfig.eslint.json` with catch-all includes is the recommended
+> setup — it avoids multi-project warnings and covers every file ESLint touches
+> (source, tests, scripts, dotfiles, docs tooling) through one project file.
 
 ---
 
@@ -311,8 +314,10 @@ not being excluded by `exclude` or by a parent tsconfig.
 
 ### `Multiple projects found, consider using a single tsconfig`
 
-You are passing more than one path to `tsconfigPaths`. Reduce to a single
-`tsconfig.eslint.json` that covers all linted files.
+This warning no longer fires by default — the shared config uses a single
+`tsconfig.eslint.json`. If you see it, you are passing multiple paths to
+`tsconfigPaths`. Consider merging them into one catch-all `tsconfig.eslint.json`
+instead.
 
 ### `TS2883: The inferred type of 'default' cannot be named …`
 

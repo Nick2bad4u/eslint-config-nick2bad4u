@@ -18,11 +18,11 @@ export interface Nick2Bad4UEslintConfigOptions {
     readonly rootDirectory?: string;
 
     /**
-     * TypeScript project files, relative to `rootDirectory`. Defaults to the
-     * four standard tsconfig files used across Nick2bad4u repos:
-     * `tsconfig.eslint.json`, `tsconfig.json`, `tsconfig.build.json`,
-     * `tsconfig.js.json`. Override to match your repo's tsconfig filenames or
-     * to include additional project files (e.g. for benchmarks or docs).
+     * TypeScript project files, relative to `rootDirectory`. Defaults to
+     * `["./tsconfig.eslint.json"]` — a single catch-all tsconfig that should
+     * use `"include": ["**\/*", "**\/.*"]` to cover all linted files including
+     * dotfiles. Override when your repo uses a different filename or needs
+     * additional projects (e.g. a separate `tsconfig.benchmarks.json`).
      */
     readonly tsconfigPaths?: readonly string[];
 }

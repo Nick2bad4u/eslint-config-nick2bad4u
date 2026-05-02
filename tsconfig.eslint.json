@@ -19,6 +19,7 @@
         "coverage/**",
         "dist/**",
         "docs/docusaurus/.docusaurus/**",
+        "docs/docusaurus/typedoc-plugins/*.d.mts",
         "docs/docusaurus/build/**",
         "eslint.config.bundled_*.mjs",
         "node_modules/**",

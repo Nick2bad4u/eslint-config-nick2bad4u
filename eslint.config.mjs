@@ -124,12 +124,10 @@ const jsonSchemaValidatorRules =
 
 const processEnvironment = globalThis.process.env;
 
-const DEFAULT_TSCONFIG_PATHS = Object.freeze([
-    "./tsconfig.eslint.json",
-    "./tsconfig.json",
-    "./tsconfig.build.json",
-    "./tsconfig.js.json",
-]);
+// A single catch-all tsconfig.eslint.json (includes **/* and **/.* for dotfiles,
+// extends tsconfig.json, allowJs:true) is the only project ESLint needs.
+// Consumer repos can override via createConfig({ tsconfigPaths: [...] }).
+const DEFAULT_TSCONFIG_PATHS = Object.freeze(["./tsconfig.eslint.json"]);
 
 /**
  * @typedef {import("eslint").Linter.Config} EslintConfig
@@ -757,7 +755,6 @@ export const createConfig = (options = {}) => {
                     },
                     ecmaVersion: "latest",
                     jsDocParsingMode: "all",
-                    noWarnOnMultipleProjects: true,
                     project: [...tsconfigPaths],
                     sourceType: "module",
                     tsconfigRootDir: rootDirectory,
@@ -1045,14 +1042,12 @@ export const createConfig = (options = {}) => {
             name: "Global Settings Options **/**",
             settings: {
                 "import-x/resolver": {
-                    node: true,
-                    noWarnOnMultipleProjects: true, // Don't warn about multiple projects
+                    node: true, // Don't warn about multiple projects
                 },
                 "import-x/resolver-next": [
                     createTypeScriptImportResolver({
                         alwaysTryTypes: true, // Always try to resolve types under `<root>@types` directory even if it doesn't contain any source code, like `@types/unist`
-                        bun: true, // Resolve Bun modules (https://github.com/import-js/eslint-import-resolver-typescript#bun)
-                        noWarnOnMultipleProjects: true, // Don't warn about multiple projects
+                        bun: true, // Resolve Bun modules (https://github.com/import-js/eslint-import-resolver-typescript#bun) // Don't warn about multiple projects
                         // Use an array.
                         project: [...tsconfigPaths],
                     }),
@@ -1087,7 +1082,6 @@ export const createConfig = (options = {}) => {
                     },
                     ecmaVersion: "latest",
                     jsDocParsingMode: "all",
-                    noWarnOnMultipleProjects: true,
                     project: [...tsconfigPaths],
                     sourceType: "module",
                     tsconfigRootDir: rootDirectory,
@@ -1924,7 +1918,6 @@ export const createConfig = (options = {}) => {
                     },
                     ecmaVersion: "latest",
                     jsDocParsingMode: "all",
-                    noWarnOnMultipleProjects: true,
                     project: [...tsconfigPaths],
                     sourceType: "module",
                     tsconfigRootDir: rootDirectory,
@@ -3402,6 +3395,22 @@ export const createConfig = (options = {}) => {
             rules: {
                 "max-lines-per-function": "off",
                 "n/no-top-level-await": "off",
+            },
+        },
+        {
+            files: [
+                "**/*.secretlintrc.cjs",
+                "**/*.secretlintrc.mjs",
+                "**/*.secretlintrc.js",
+                "**/secretlint.config.{js,cjs,mjs}",
+                "**/secretlint.{js,cjs,mjs}",
+            ],
+            name: "Secretlint Configs: relax strict void rules",
+            // Secretlint configs often use CommonJS, and the import-x rule is too noisy to justify forcing all
+            // configs to ESM.
+            rules: {
+                "@typescript-eslint/no-require-imports": "off",
+                "import-x/no-commonjs": "off",
             },
         },
         // #endregion
