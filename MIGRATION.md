@@ -234,21 +234,26 @@ Create it if missing — it should include every file ESLint will touch:
     "$schema": "https://www.schemastore.org/tsconfig.json",
     "extends": "./tsconfig.json",
     "compilerOptions": {
+        "allowJs": true,
+        "checkJs": true,
         "noEmit": true
     },
+    "exclude": [
+        "node_modules/**",
+        "dist/**",
+        "coverage/**",
+        ".cache/**"
+    ],
     "include": [
-        "*.mjs",
-        "*.ts",
-        "*.d.ts",
-        "test/**/*.ts",
-        "src/**/*.ts"
+        "**/*",
+        "**/.*"
     ]
 }
 ```
 
-> **Note:** Root-level `.mjs`/`.cjs`/`.js` config files (e.g. `stylelint.config.mjs`,
-> `prettier.config.mjs`) are handled automatically via `projectService.allowDefaultProject`
-> in the shared config — you do **not** need to add them to every tsconfig.
+> **Note:** Dotfiles are **not** matched by normal extension globs (`**/*.cjs`,
+> `**/*.mjs`, etc.). Keeping `"**/.*"` in include prevents misses like
+> `.secretlintrc.cjs`.
 
 ---
 
@@ -300,9 +305,9 @@ All presets are exposed on the default export (`.configs`) and as the `presets` 
 ### `Parsing error: "parserOptions.project" has been provided … file not found`
 
 Your `tsconfig.eslint.json` doesn't include the file being linted.
-The shared config uses `projectService.allowDefaultProject` to handle root-level
-`.mjs`/`.cjs`/`.js` files automatically, but if you see this on a `.ts` file,
-add it to your `tsconfig.eslint.json` `include` array.
+Use a catch-all include (`"**/*"` + `"**/.*"`) and keep your `exclude` list
+focused on generated/build folders. If you still see this, verify the file is
+not being excluded by `exclude` or by a parent tsconfig.
 
 ### `Multiple projects found, consider using a single tsconfig`
 
