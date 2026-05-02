@@ -388,3 +388,16 @@ npm run lint
 
 Write-Host "Migration complete! Review the new eslint.config.mjs and adjust presets or add overrides as needed. Make sure to add "**/*", "**/.*" to your tsconfig.eslint.json include if you haven't already." -ForegroundColor Green
 ```
+
+
+## If you have issues with files not being picked up due to accompanying d.mts files, ensure your `tsconfig.eslint.json` includes the following in the `files` and `include` lists:
+
+```json
+    "files": [
+        "stylelint.config.mjs"
+    ],
+    "include": [
+        "**/*",
+        "**/.*"
+    ]
+```
