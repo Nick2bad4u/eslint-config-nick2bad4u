@@ -1,7 +1,7 @@
 {
     "$schema": "https://www.schemastore.org/package.json",
     "name": "eslint-config-nick2bad4u",
-    "version": "1.0.4",
+    "version": "1.0.5",
     "private": false,
     "description": "Shared flat ESLint config for Nick2bad4u ESLint plugin projects.",
     "keywords": [
