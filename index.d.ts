@@ -3,11 +3,18 @@ import type { Linter } from "eslint";
 /** Options for creating the shared Nick2bad4u ESLint flat config. */
 export interface Nick2Bad4UEslintConfigOptions {
     /**
+     * Extra `projectService.allowDefaultProject` entries merged with the shared
+     * defaults for root config files and common plugin-repo script/config
+     * paths.
+     */
+    readonly allowDefaultProjectGlobs?: readonly string[];
+
+    /**
      * Replace or disable plugins by ESLint namespace.
      *
      * Pass a plugin object to dogfood an explicitly configurable source-rule
-     * Defaults to `["./tsconfig.eslint.json"]`. to remove that plugin's
-     * registered rules from the shared config by namespace.
+     * plugin section. Pass `false` or `null` to remove that plugin's registered
+     * rules from the shared config by namespace.
      */
     readonly plugins?: Readonly<Record<string, unknown>>;
 
@@ -18,8 +25,8 @@ export interface Nick2Bad4UEslintConfigOptions {
     readonly rootDirectory?: string;
 
     /**
-     * TypeScript project files, relative to `rootDirectory`. Defaults to this
-     * repo's common ESLint-plugin tsconfig file names.
+     * TypeScript project files, relative to `rootDirectory`. Defaults to
+     * `["./tsconfig.eslint.json"]`.
      */
     readonly tsconfigPaths?: readonly string[];
 }

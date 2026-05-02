@@ -81,10 +81,22 @@ import { createConfig } from "eslint-config-nick2bad4u";
 export default createConfig({
     rootDirectory: import.meta.dirname,
     tsconfigPaths: ["./tsconfig.eslint.json", "./tsconfig.json"],
+    allowDefaultProjectGlobs: [
+        "benchmarks/*.mjs",
+        "docs/docusaurus/typedoc-plugins/*.mjs",
+        "docs/docusaurus/typedoc-plugins/*.mts",
+        "docs/docusaurus/typedoc-plugins/*.d.mts",
+    ],
 });
 ```
 
 You can also set `ESLINT_CONFIG_ROOT` if you need to drive the root from the environment.
+
+`allowDefaultProjectGlobs` is for JS/MJS/CJS/MTS files intentionally outside
+your tsconfig include lists (benchmark scripts, docs tooling, root config files).
+`projectService.allowDefaultProject` does not allow `**` globs; use explicit
+directory segments like `benchmarks/*.mjs`.
+For `.ts` source/fixture files, prefer adding them to `tsconfig.eslint.json`.
 
 ## Dogfood a local ESLint plugin
 

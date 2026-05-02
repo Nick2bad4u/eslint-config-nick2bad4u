@@ -125,6 +125,11 @@ const jsonSchemaValidatorRules =
 const processEnvironment = globalThis.process.env;
 
 const DEFAULT_TSCONFIG_PATHS = Object.freeze(["./tsconfig.eslint.json"]);
+const DEFAULT_ALLOW_DEFAULT_PROJECT_GLOBS = Object.freeze([
+    "*.mjs",
+    "*.cjs",
+    "*.js",
+]);
 
 /**
  * @typedef {import("eslint").Linter.Config} EslintConfig
@@ -147,6 +152,9 @@ const DEFAULT_TSCONFIG_PATHS = Object.freeze(["./tsconfig.eslint.json"]);
  *   the config works from `node_modules`.
  * @property {readonly string[]} [tsconfigPaths] TypeScript project files,
  *   relative to `rootDirectory`.
+ * @property {readonly string[]} [allowDefaultProjectGlobs] Extra
+ *   `projectService.allowDefaultProject` entries. Merged with defaults for root
+ *   config files and known plugin-repo script/config locations.
  * @property {PluginOverrides} [plugins] Plugin overrides keyed by ESLint plugin
  *   namespace. Explicit source-rule plugin sections can be replaced with a
  *   plugin object (currently `typefest` and `etc-misc`). Pass `false`/`null` to
@@ -217,6 +225,18 @@ const removeDisabledPluginRules = (configs, disabledPluginNames) => {
         return nextConfig;
     });
 };
+
+/**
+ * @param {readonly string[] | undefined} additionalGlobs
+ *
+ * @returns {string[]}
+ */
+const mergeAllowDefaultProjectGlobs = (additionalGlobs) => [
+    ...new Set([
+        ...DEFAULT_ALLOW_DEFAULT_PROJECT_GLOBS,
+        ...(additionalGlobs ?? []),
+    ]),
+];
 
 /**
  * @param {readonly (EslintConfig | readonly EslintConfig[])[]} configs
@@ -315,6 +335,9 @@ export const createConfig = (options = {}) => {
         options.rootDirectory ?? processEnvironment["ESLINT_CONFIG_ROOT"] ?? "."
     );
     const tsconfigPaths = options.tsconfigPaths ?? DEFAULT_TSCONFIG_PATHS;
+    const allowDefaultProjectGlobs = mergeAllowDefaultProjectGlobs(
+        options.allowDefaultProjectGlobs
+    );
     const pluginOverrides = options.plugins ?? {};
     const pluginOverrideEntries = new Map(Object.entries(pluginOverrides));
     const disabledPluginNames = new Set(
@@ -752,10 +775,8 @@ export const createConfig = (options = {}) => {
                     ecmaVersion: "latest",
                     jsDocParsingMode: "all",
                     projectService: {
-                        allowDefaultProject: [
-                            "docs/docusaurus/typedoc-plugins/*.mjs",
-                            "docs/docusaurus/typedoc-plugins/*.mts",
-                        ],
+                        allowDefaultProject: allowDefaultProjectGlobs,
+                        defaultProject: tsconfigPaths[0],
                     },
                     sourceType: "module",
                     tsconfigRootDir: rootDirectory,
@@ -1086,15 +1107,10 @@ export const createConfig = (options = {}) => {
                     ecmaVersion: "latest",
                     jsDocParsingMode: "all",
                     // ProjectService auto-discovers the consumer's tsconfig via the TS
-                    // Language Service.  allowDefaultProject covers root-level config files
-                    // (e.g. stylelint.config.mjs, prettier.config.mjs) that won't be listed
-                    // in any tsconfig but are matched by the *.{mjs,cjs,js} files glob.
+                    // Language Service. allowDefaultProject covers JS/MJS/CJS config files
+                    // that are often intentionally outside tsconfig include lists.
                     projectService: {
-                        allowDefaultProject: [
-                            "*.mjs",
-                            "*.cjs",
-                            "*.js",
-                        ],
+                        allowDefaultProject: allowDefaultProjectGlobs,
                         defaultProject: tsconfigPaths[0],
                     },
                     sourceType: "module",
@@ -1933,11 +1949,7 @@ export const createConfig = (options = {}) => {
                     ecmaVersion: "latest",
                     jsDocParsingMode: "all",
                     projectService: {
-                        allowDefaultProject: [
-                            "*.mjs",
-                            "*.cjs",
-                            "*.js",
-                        ],
+                        allowDefaultProject: allowDefaultProjectGlobs,
                         defaultProject: tsconfigPaths[0],
                     },
                     sourceType: "module",
