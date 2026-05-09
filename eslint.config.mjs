@@ -18,6 +18,7 @@ import json from "@eslint/json";
 import markdown from "@eslint/markdown";
 import html from "@html-eslint/eslint-plugin";
 import * as htmlParser from "@html-eslint/parser";
+import nextPlugin from "@next/eslint-plugin-next";
 import stylistic from "@stylistic/eslint-plugin";
 import tseslint from "@typescript-eslint/eslint-plugin";
 import tseslintParser from "@typescript-eslint/parser";
@@ -27,6 +28,7 @@ import gitignore from "eslint-config-flat-gitignore";
 import eslintConfigPrettier from "eslint-config-prettier";
 import { createTypeScriptImportResolver } from "eslint-import-resolver-typescript";
 import arrayFunc from "eslint-plugin-array-func";
+import astroPlugin from "eslint-plugin-astro";
 import pluginCanonical from "eslint-plugin-canonical";
 import pluginCasePolice from "eslint-plugin-case-police";
 import eslintPluginCommentLength from "eslint-plugin-comment-length";
@@ -57,6 +59,7 @@ import eslintPluginNoUseExtendNative from "eslint-plugin-no-use-extend-native";
 import nodeDependencies from "eslint-plugin-node-dependencies";
 import packageJson from "eslint-plugin-package-json";
 import perfectionist from "eslint-plugin-perfectionist";
+import playwrightPlugin from "eslint-plugin-playwright";
 import pluginPrettier from "eslint-plugin-prettier";
 import pluginPromise from "eslint-plugin-promise";
 import pluginRedos from "eslint-plugin-redos";
@@ -66,9 +69,11 @@ import * as pluginJSDoc from "eslint-plugin-require-jsdoc";
 import sdl from "eslint-plugin-sdl-2";
 import pluginSecurity from "eslint-plugin-security";
 import sonarjs, { configs as sonarjsConfigs } from "eslint-plugin-sonarjs";
+import storybook from "eslint-plugin-storybook";
 import stylelint2 from "eslint-plugin-stylelint-2";
 import pluginTestingLibrary from "eslint-plugin-testing-library";
 import eslintPluginToml from "eslint-plugin-toml";
+import tsconfigPlugin from "eslint-plugin-tsconfig";
 import pluginTsdoc from "eslint-plugin-tsdoc";
 import tsdocRequire from "eslint-plugin-tsdoc-require-2";
 import typedocPlugin from "eslint-plugin-typedoc";
@@ -76,6 +81,7 @@ import typefestPlugin from "eslint-plugin-typefest";
 import pluginUndefinedCss from "eslint-plugin-undefined-css-classes";
 import eslintPluginUnicorn from "eslint-plugin-unicorn";
 import pluginUnusedImports from "eslint-plugin-unused-imports";
+import vuePlugin from "eslint-plugin-vue";
 import writeGoodComments from "eslint-plugin-write-good-comments-2";
 import eslintPluginYml from "eslint-plugin-yml";
 import globals from "globals";
@@ -83,6 +89,7 @@ import * as jsoncEslintParser from "jsonc-eslint-parser";
 import { createRequire } from "node:module";
 import * as path from "node:path";
 import * as tomlEslintParser from "toml-eslint-parser";
+import * as vueParser from "vue-eslint-parser";
 import * as yamlEslintParser from "yaml-eslint-parser";
 
 const require = createRequire(import.meta.url);
@@ -231,6 +238,39 @@ const flattenConfigs = (configs) =>
     configs.flatMap((config) =>
         Array.isArray(config) ? flattenConfigs(config) : [config]
     );
+
+/**
+ * @param {{ configs?: Record<string, unknown> } | undefined | null} plugin
+ * @param {readonly string[]} presetKeys
+ *
+ * @returns {Record<string, unknown>}
+ */
+const collectPresetRules = (plugin, presetKeys) => {
+    const pluginConfigs = plugin?.configs;
+
+    if (typeof pluginConfigs !== "object" || pluginConfigs === null) {
+        return {};
+    }
+
+    const presetKeySet = new Set(presetKeys);
+    const matchingConfigs = Object.entries(pluginConfigs)
+        .filter(([presetName]) => presetKeySet.has(presetName))
+        .map(([, presetConfig]) => presetConfig);
+
+    const mergedRules = {};
+
+    for (const presetConfig of matchingConfigs) {
+        if (Array.isArray(presetConfig)) {
+            for (const nestedConfig of presetConfig) {
+                Object.assign(mergedRules, nestedConfig?.rules ?? {});
+            }
+        } else {
+            Object.assign(mergedRules, presetConfig?.rules ?? {});
+        }
+    }
+
+    return mergedRules;
+};
 
 /**
  * Controls eslint-plugin-file-progress behavior.
@@ -442,6 +482,18 @@ export const createConfig = (options = {}) => {
                 ...docusaurus2.configs["strict-mdx-upgrade"].rules,
                 ...docusaurus2.configs.content.rules,
                 "docusaurus-2/local-search-will-not-work-in-dev": "off",
+            },
+        },
+        {
+            files: [
+                "tsconfig*.json",
+                "**/tsconfig*.json",
+                "**/.*tsconfig.*.json",
+                "**/tsconfig*.*.json",
+            ],
+            ...tsconfigPlugin.configs.strictest,
+            rules: {
+                ...tsconfigPlugin.configs.all.rules,
             },
         },
         progress.configs["recommended-ci"],
@@ -832,6 +884,7 @@ export const createConfig = (options = {}) => {
                 "@eslint-react/x-no-unstable-default-props": "warn",
                 "@eslint-react/x-no-unused-class-component-members": "warn",
                 "@eslint-react/x-no-unused-props": "warn",
+                "@eslint-react/x-no-unused-state": "warn",
                 "@eslint-react/x-no-use-context": "warn",
                 "@eslint-react/x-purity": "warn",
                 "@eslint-react/x-refs": "warn",
@@ -1101,7 +1154,6 @@ export const createConfig = (options = {}) => {
                 listeners,
                 math: eslintPluginMath,
                 "module-interop": moduleInterop,
-                n: nodePlugin,
                 "no-function-declare-after-return": pluginNFDAR,
                 "no-use-extend-native": eslintPluginNoUseExtendNative,
                 perfectionist: perfectionist,
@@ -1928,7 +1980,6 @@ export const createConfig = (options = {}) => {
             plugins: {
                 "@typescript-eslint": tseslint,
                 "import-x": importX,
-                n: nodePlugin,
                 "no-only-tests": pluginNoOnly,
                 "testing-library": pluginTestingLibrary,
                 unicorn: eslintPluginUnicorn,
@@ -2973,7 +3024,6 @@ export const createConfig = (options = {}) => {
                 "import-x": importX,
                 js: js,
                 math: eslintPluginMath,
-                n: nodePlugin,
                 "no-unsanitized": nounsanitized,
                 perfectionist: perfectionist,
                 prettier: pluginPrettier,
@@ -3413,6 +3463,184 @@ export const createConfig = (options = {}) => {
                 "import-x/no-commonjs": "off",
             },
         },
+        // #endregion
+        // #region 🎭 Framework-Specific Configurations
+        // ═══════════════════════════════════════════════════════════════════════════════
+        // SECTION: Framework-Specific Configurations (Optional)
+        // These configurations are scoped to specific frameworks and file types.
+        // Projects that don't use these frameworks won't be affected.
+        // ═══════════════════════════════════════════════════════════════════════════════
+        // #region 🎭 Playwright
+        // ═══════════════════════════════════════════════════════════════════════════════
+        // SECTION: Playwright E2E Testing
+        // ═══════════════════════════════════════════════════════════════════════════════
+        {
+            files: [
+                "playwright/**/*.{ts,tsx,js,jsx,mts,mjs}",
+                "test/e2e/**/*.{ts,tsx,js,jsx,mts,mjs}",
+                "e2e/**/*.{ts,tsx,js,jsx,mts,mjs}",
+                "**/*.e2e.{ts,tsx,js,jsx,mts,mjs}",
+                "**/*.pw.{ts,tsx,js,jsx,mts,mjs}",
+            ],
+            languageOptions: {
+                globals: {
+                    ...globals.node,
+                    browser: "readonly",
+                    context: "readonly",
+                    expect: "readonly",
+                    page: "readonly",
+                },
+                parser: tseslintParser,
+                parserOptions: {
+                    ecmaFeatures: {
+                        impliedStrict: true,
+                    },
+                    ecmaVersion: "latest",
+                    jsDocParsingMode: "all",
+                    sourceType: "module",
+                    tsconfigRootDir: rootDirectory,
+                    warnOnUnsupportedTypeScriptVersion: true,
+                },
+            },
+            name: "Playwright E2E Tests - playwright/**, test/e2e/**, **/*.e2e.*",
+            plugins: {
+                playwright: playwrightPlugin,
+            },
+            rules: collectPresetRules(playwrightPlugin, ["flat/recommended"]),
+        },
+        // #endregion
+        // #region 📖 Storybook
+        // ═══════════════════════════════════════════════════════════════════════════════
+        // SECTION: Storybook Component Stories
+        // ═══════════════════════════════════════════════════════════════════════════════
+        {
+            files: [
+                "**/*.stories.{ts,tsx,js,jsx}",
+                ".storybook/**/*.{ts,tsx,js,jsx,mts,mjs}",
+            ],
+            languageOptions: {
+                parser: tseslintParser,
+                parserOptions: {
+                    ecmaFeatures: {
+                        impliedStrict: true,
+                        jsx: true,
+                    },
+                    ecmaVersion: "latest",
+                    jsDocParsingMode: "all",
+                    project: [...tsconfigPaths],
+                    sourceType: "module",
+                    tsconfigRootDir: rootDirectory,
+                    warnOnUnsupportedTypeScriptVersion: true,
+                },
+            },
+            name: "Storybook Stories - **/*.stories.*, .storybook/**",
+            plugins: {
+                storybook: storybook,
+            },
+            rules: collectPresetRules(storybook, ["flat/recommended"]),
+        },
+        // #endregion
+        // #region 🖖 Vue
+        // ═══════════════════════════════════════════════════════════════════════════════
+        // SECTION: Vue Single File Components
+        // ═══════════════════════════════════════════════════════════════════════════════
+        {
+            files: ["**/*.vue"],
+            languageOptions: {
+                ecmaVersion: "latest",
+                globals: {
+                    ...globals.browser,
+                },
+                parser: vueParser,
+                parserOptions: {
+                    ecmaFeatures: {
+                        impliedStrict: true,
+                        jsx: true,
+                    },
+                    ecmaVersion: "latest",
+                    jsDocParsingMode: "all",
+                    parser: tseslintParser,
+                    project: [...tsconfigPaths],
+                    sourceType: "module",
+                    tsconfigRootDir: rootDirectory,
+                    warnOnUnsupportedTypeScriptVersion: true,
+                },
+                sourceType: "module",
+            },
+            name: "Vue Single File Components - **/*.vue",
+            plugins: {
+                vue: vuePlugin,
+            },
+            rules: collectPresetRules(vuePlugin, ["flat/strongly-recommended"]),
+        },
+        // #endregion
+        // #region 🚀 Astro
+        // ═══════════════════════════════════════════════════════════════════════════════
+        // SECTION: Astro Components
+        // ═══════════════════════════════════════════════════════════════════════════════
+        {
+            files: ["**/*.astro"],
+            languageOptions: {
+                ecmaVersion: "latest",
+                globals: {
+                    ...globals.browser,
+                },
+                parserOptions: {
+                    ecmaFeatures: {
+                        impliedStrict: true,
+                        jsx: true,
+                    },
+                    ecmaVersion: "latest",
+                    jsDocParsingMode: "all",
+                    sourceType: "module",
+                    tsconfigRootDir: rootDirectory,
+                    warnOnUnsupportedTypeScriptVersion: true,
+                },
+                sourceType: "module",
+            },
+            name: "Astro Components - **/*.astro",
+            plugins: {
+                astro: astroPlugin,
+            },
+            rules: collectPresetRules(astroPlugin, ["flat/all"]),
+        },
+        // #endregion
+        // #region ⚛️ Next.js
+        // ═══════════════════════════════════════════════════════════════════════════════
+        // SECTION: Next.js App Router and Pages
+        // ═══════════════════════════════════════════════════════════════════════════════
+        {
+            files: [
+                "app/**/*.{ts,tsx,js,jsx}",
+                "pages/**/*.{ts,tsx,js,jsx}",
+                "src/app/**/*.{ts,tsx,js,jsx}",
+                "src/pages/**/*.{ts,tsx,js,jsx}",
+            ],
+            languageOptions: {
+                parser: tseslintParser,
+                parserOptions: {
+                    ecmaFeatures: {
+                        impliedStrict: true,
+                        jsx: true,
+                    },
+                    ecmaVersion: "latest",
+                    jsDocParsingMode: "all",
+                    project: [...tsconfigPaths],
+                    sourceType: "module",
+                    tsconfigRootDir: rootDirectory,
+                    warnOnUnsupportedTypeScriptVersion: true,
+                },
+            },
+            name: "Next.js Pages and App Router - app/**, pages/**, src/app/**, src/pages/**",
+            plugins: {
+                "@next/next": nextPlugin,
+            },
+            rules: collectPresetRules(nextPlugin, [
+                "recommended",
+                "core-web-vitals",
+            ]),
+        },
+        // #endregion
         // #endregion
         // #region 🧹 Prettier Disable Config
         eslintConfigPrettier,
