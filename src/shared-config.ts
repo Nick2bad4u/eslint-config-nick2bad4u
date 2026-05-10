@@ -92,6 +92,7 @@ import * as yamlEslintParser from "yaml-eslint-parser";
 import {
     arrayFirst,
     arrayJoin,
+    keyIn,
     objectEntries,
     objectFromEntries,
     setHas,
@@ -4140,6 +4141,17 @@ export const createConfig = (
 
 const allConfig: EslintConfig[] = createConfig();
 
+const withoutSdl2BaseConfig: EslintConfig[] = createConfig({
+    plugins: {
+        sdl: false,
+        "sdl-2": false,
+    },
+});
+
+const withoutSdl2HasNodePlugin = withoutSdl2BaseConfig.some(
+    (config) => config.plugins !== undefined && keyIn(config.plugins, "n")
+);
+
 /** Shared preset arrays for plugin-style flat config consumption. */
 const sharedConfigs: Nick2Bad4UEslintConfigPresets = {
     all: allConfig,
@@ -4194,12 +4206,17 @@ const sharedConfigs: Nick2Bad4UEslintConfigPresets = {
             "repo-compliance": false,
         },
     }),
-    withoutSdl2: createConfig({
-        plugins: {
-            sdl: false,
-            "sdl-2": false,
-        },
-    }),
+    withoutSdl2: withoutSdl2HasNodePlugin
+        ? withoutSdl2BaseConfig
+        : [
+              {
+                  name: "Node plugin registration (withoutSdl2 only)",
+                  plugins: {
+                      n: nodePlugin,
+                  },
+              },
+              ...withoutSdl2BaseConfig,
+          ],
     withoutStylelint2: createConfig({
         plugins: {
             "stylelint-2": false,

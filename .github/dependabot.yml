@@ -41,6 +41,11 @@ updates:
           default-days: 3
           include: ["*"]
       directory: /
+      groups:
+          npm-all:
+              applies-to: version-updates
+              patterns:
+                  - "*"
       rebase-strategy: auto
       versioning-strategy: increase
       allow:

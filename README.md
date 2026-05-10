@@ -1,5 +1,7 @@
 # eslint-config-nick2bad4u
 
+[![npm version](https://img.shields.io/npm/v/eslint-config-nick2bad4u?logo=npm&label=npm)](https://www.npmjs.com/package/eslint-config-nick2bad4u)
+
 Shared flat ESLint config for Nick2bad4u ESLint plugin projects.
 
 ## Install
