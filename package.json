@@ -175,6 +175,7 @@
     },
     "devDependencies": {
         "@arethetypeswrong/cli": "^0.18.2",
+        "@codecov/bundle-analyzer": "^2.0.1",
         "@types/eslint-plugin-security": "^3.0.1",
         "@types/node": "^25.6.2",
         "@vitest/coverage-v8": "^4.1.5",
