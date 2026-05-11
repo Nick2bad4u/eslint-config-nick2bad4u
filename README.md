@@ -1,6 +1,6 @@
 # eslint-config-nick2bad4u
 
-[![npm version](https://img.shields.io/npm/v/eslint-config-nick2bad4u?logo=npm&label=npm)](https://www.npmjs.com/package/eslint-config-nick2bad4u)
+[![npm license.](https://flat.badgen.net/npm/license/eslint-config-nick2bad4u?color=purple)](https://github.com/Nick2bad4u/eslint-config-nick2bad4u/blob/main/LICENSE) [![npm total downloads.](https://flat.badgen.net/npm/dt/eslint-config-nick2bad4u?color=pink)](https://www.npmjs.com/package/eslint-config-nick2bad4u) [![latest GitHub release.](https://flat.badgen.net/github/release/Nick2bad4u/eslint-config-nick2bad4u?color=cyan)](https://github.com/Nick2bad4u/eslint-config-nick2bad4u/releases) [![GitHub stars.](https://flat.badgen.net/github/stars/Nick2bad4u/eslint-config-nick2bad4u?color=yellow)](https://github.com/Nick2bad4u/eslint-config-nick2bad4u/stargazers) [![GitHub forks.](https://flat.badgen.net/github/forks/Nick2bad4u/eslint-config-nick2bad4u?color=green)](https://github.com/Nick2bad4u/eslint-config-nick2bad4u/forks) [![GitHub open issues.](https://flat.badgen.net/github/open-issues/Nick2bad4u/eslint-config-nick2bad4u?color=red)](https://github.com/Nick2bad4u/eslint-config-nick2bad4u/issues) [![codecov.](https://codecov.io/gh/Nick2bad4u/eslint-config-nick2bad4u/branch/main/graph/badge.svg)](https://codecov.io/gh/Nick2bad4u/eslint-config-nick2bad4u)
 
 Shared flat ESLint config for Nick2bad4u ESLint plugin projects.
 
@@ -45,6 +45,23 @@ import { presets } from "eslint-config-nick2bad4u";
 
 export default [...presets.all];
 ```
+
+### Alternative: `createConfig()`
+
+If you want to keep the shared config but customize root resolution,
+`tsconfigPaths`, or plugin replacements, use `createConfig()` instead:
+
+```js
+import { createConfig } from "eslint-config-nick2bad4u";
+
+export default createConfig({
+    rootDirectory: import.meta.dirname,
+    tsconfigPaths: ["./tsconfig.eslint.json"],
+});
+```
+
+An example copy-paste file is available at
+[`examples/eslint.config.create.mjs`](./examples/eslint.config.create.mjs).
 
 Available presets:
 

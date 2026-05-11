@@ -23,10 +23,7 @@
         },
         {
             "avatar_url": "https://avatars.githubusercontent.com/in/29110?v=4",
-            "contributions": [
-                "infra",
-                "security"
-            ],
+            "contributions": ["infra", "security"],
             "login": "dependabot[bot]",
             "name": "dependabot[bot]",
             "profile": "https://github.com/apps/dependabot"
@@ -59,18 +56,12 @@
             "name": "github-actions[bot]",
             "avatar_url": "https://avatars.githubusercontent.com/in/15368?v=4",
             "profile": "https://github.com/apps/github-actions",
-            "contributions": [
-                "code",
-                "infra"
-            ]
+            "contributions": ["code", "infra"]
         }
     ],
     "contributorsPerLine": 4,
     "contributorsSortAlphabetically": true,
-    "files": [
-        "README.md",
-        "CONTRIBUTORS.md"
-    ],
+    "files": ["README.md", "CONTRIBUTORS.md"],
     "imageSize": 80,
     "linkToUsage": false,
     "projectName": "eslint-config-nick2bad4u",

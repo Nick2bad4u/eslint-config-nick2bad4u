@@ -1,5 +1,5 @@
 // eslint-disable-next-line @eslint-community/eslint-comments/disable-enable-pair -- project-wide disable pattern for build configs
-/* eslint-disable n/no-process-env, comment-length/limit-single-line-comments   -- Disable specific rules for build configs */
+/* eslint-disable n/no-process-env, comment-length/limit-single-line-comments, module-interop/no-import-cjs -- Disable specific rules for build configs */
 
 import pc from "picocolors";
 import {
@@ -153,7 +153,6 @@ const vitestConfig: ReturnType<typeof defineConfig> = defineConfig({
                 "lcov",
                 "html",
             ],
-
             reportOnFailure: true,
             reportsDirectory: "./coverage",
             skipFull: true, // Don't skip full coverage collection

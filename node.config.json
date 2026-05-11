@@ -28,10 +28,7 @@
             "./temp",
             "./.cache"
         ],
-        "conditions": [
-            "development",
-            "node"
-        ],
+        "conditions": ["development", "node"],
         "diagnostic-dir": "./temp",
         "enable-source-maps": true,
         "extra-info-on-fatal-exception": true,
@@ -61,14 +58,8 @@
         "test-coverage-lines": 80,
         "test-force-exit": false,
         "test-isolation": "process",
-        "test-reporter": [
-            "spec",
-            "json"
-        ],
-        "test-reporter-destination": [
-            "stdout",
-            "./coverage/test-results.json"
-        ],
+        "test-reporter": ["spec", "json"],
+        "test-reporter-destination": ["stdout", "./coverage/test-results.json"],
         "test-timeout": 30000,
         "test-update-snapshots": true
     }

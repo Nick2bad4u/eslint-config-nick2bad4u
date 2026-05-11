@@ -54,14 +54,12 @@ import noBarrelFiles from "eslint-plugin-no-barrel-files";
 import pluginNoOnly from "eslint-plugin-no-only-tests";
 import noSecrets from "eslint-plugin-no-secrets";
 import nounsanitized from "eslint-plugin-no-unsanitized";
-import eslintPluginNoUseExtendNative from "eslint-plugin-no-use-extend-native";
 import nodeDependencies from "eslint-plugin-node-dependencies";
 import packageJson from "eslint-plugin-package-json";
 import perfectionist from "eslint-plugin-perfectionist";
 import playwrightPlugin from "eslint-plugin-playwright";
 import pluginPrettier from "eslint-plugin-prettier";
 import pluginPromise from "eslint-plugin-promise";
-import pluginRedos from "eslint-plugin-redos";
 import pluginRegexp from "eslint-plugin-regexp";
 import repoPlugin from "eslint-plugin-repo";
 import sdl from "eslint-plugin-sdl-2";
@@ -327,7 +325,7 @@ const HIDE_PROGRESS_FILENAMES = ESLINT_PROGRESS_MODE === "nofile";
 
 /** @type {import("eslint").Linter.Config} */
 const fileProgressOverridesConfig = {
-    name: "CLI: file progress overrides",
+    name: "⏱️ CLI: File Progress Overrides",
     rules: {
         // The preset already auto-hides on CI, but we also support explicit
         // local toggles.
@@ -349,32 +347,6 @@ const fileProgressOverridesConfig = {
         },
     },
 };
-
-const configuredRecheckJar = processEnvironment["RECHECK_JAR"];
-
-if (
-    typeof configuredRecheckJar !== "string" ||
-    configuredRecheckJar.length === 0
-) {
-    const resolvedRecheckJarPath = (() => {
-        try {
-            return require.resolve("recheck-jar/recheck.jar");
-        } catch {
-            console.warn(
-                '[eslint.config] Unable to resolve "recheck-jar/recheck.jar". eslint-plugin-redos will rely on its internal resolution logic.'
-            );
-            return undefined;
-        }
-    })();
-    if (
-        typeof resolvedRecheckJarPath === "string" &&
-        resolvedRecheckJarPath.length > 0
-    ) {
-        processEnvironment["RECHECK_JAR"] = path.normalize(
-            resolvedRecheckJarPath
-        );
-    }
-}
 
 /**
  * Create the shared Nick2bad4u ESLint flat config.
@@ -408,45 +380,24 @@ export const createConfig = (
         etcMiscPlugin
     );
 
+    // NOTE: In ESLint flat config, ignore-only entries are safest when
+    // placed near the start of the config array.
     // ═══════════════════════════════════════════════════════════════════════════════
     // #region 🌍 Global Configs and Rules
     // SECTION: Global Configs and Rules
     // ═══════════════════════════════════════════════════════════════════════════════
+    // #endregion
+    // ═══════════════════════════════════════════════════════════════════════════════
+    // #region 🧹 Global Ignore Patterns
+    // SECTION: 🧹 Global Ignore Patterns
+    // ═══════════════════════════════════════════════════════════════════════════════
+    // Add patterns here to ignore files and directories globally
     const configs = [
-        globalIgnores([
-            "**/CHANGELOG.md",
-            ".remarkrc.mjs",
-            "test/fixtures/**",
-        ]),
-        gitignore({
-            name: "Global - .gitignore Rules",
-            root: true,
-            strict: false,
-        }),
-        // Stylistic.configs.customize({
-        //     arrowParens: true,
-        //     blockSpacing: true,
-        //     braceStyle: "stroustrup",
-        //     commaDangle: "always-multiline",
-        //     experimental: true,
-        //     // The following options are the default values
-        //     indent: 4,
-        //     jsx: true,
-        //     pluginName: "@stylistic",
-        //     quoteProps: "as-needed",
-        //     quotes: 'double',
-        //     semi: true,
-        //     severity: "warn",
-        //     // ...
-        //   }),
-        {
-            // NOTE: In ESLint flat config, ignore-only entries are safest when
-            // placed near the start of the config array.
-            // ═══════════════════════════════════════════════════════════════════════════════
-            // SECTION: Global Ignore Patterns
-            // Add patterns here to ignore files and directories globally
-            // ═══════════════════════════════════════════════════════════════════════════════
-            ignores: [
+        globalIgnores(
+            [
+                "**/CHANGELOG.md",
+                ".remarkrc.mjs",
+                "test/fixtures/**",
                 "**/**-instructions.md",
                 "**/**.instructions.md",
                 "**/**dist**/**",
@@ -462,6 +413,7 @@ export const createConfig = (
                 "**/*.css.d.ts",
                 "**/*.module.css.d.ts",
                 "**/html/**",
+                "examples/**",
                 "**/node_modules/**",
                 "**/package-lock.json",
                 "**/release/**",
@@ -494,7 +446,82 @@ export const createConfig = (
                 "temp/**",
                 ".temp/**",
             ],
-            name: "Global: Ignore Patterns **/**",
+            "🌍 Global: Ignore Patterns"
+        ),
+        gitignore({
+            cwd: rootDirectory,
+            files: [".gitignore", ".eslintignore"],
+            filesGitModules: [".gitmodules"],
+            name: "🌍 Global: .gitignore Rules",
+            recursive: false,
+            root: true,
+            strict: false,
+        }),
+        // Stylistic.configs.customize({
+        //     arrowParens: true,
+        //     blockSpacing: true,
+        //     braceStyle: "stroustrup",
+        //     commaDangle: "always-multiline",
+        //     experimental: true,
+        //     // The following options are the default values
+        //     indent: 4,
+        //     jsx: true,
+        //     pluginName: "@stylistic",
+        //     quoteProps: "as-needed",
+        //     quotes: 'double',
+        //     semi: true,
+        //     severity: "warn",
+        //     // ...
+        //   }),
+
+        // #endregion
+        // #region 🧭 Custom Global Rules
+        // ═══════════════════════════════════════════════════════════════════════════════
+        // SECTION: Custom Global Rules
+        // ═══════════════════════════════════════════════════════════════════════════════
+        // Add any global rules here that don't fit within specific plugin configs or that require custom options
+        // #endregion
+        // #region 🗣️ Global Language Options
+        // ═══════════════════════════════════════════════════════════════════════════════
+        // SECTION:  Global Language Options
+        // ═══════════════════════════════════════════════════════════════════════════════
+        // Intentionally left empty.
+        // #region ⚙️ Global Settings
+        // ═══════════════════════════════════════════════════════════════════════════════
+        // SECTION:  Global Settings
+        // ═══════════════════════════════════════════════════════════════════════════════
+        {
+            name: "🌍 Global: Settings",
+            settings: {
+                "import-x/resolver": {
+                    node: true, // Don't warn about multiple projects
+                },
+                "import-x/resolver-next": [
+                    createTypeScriptImportResolver({
+                        alwaysTryTypes: true, // Always try to resolve types under `<root>@types` directory even if it doesn't contain any source code, like `@types/unist`
+                        bun: true, // Resolve Bun modules (https://github.com/import-js/eslint-import-resolver-typescript#bun) // Don't warn about multiple projects
+                        // Use an array.
+                        project: [...tsconfigPaths],
+                    }),
+                ],
+            },
+        },
+        // #endregion
+        {
+            files: ["**/*.d.{ts,mts,cts}"],
+            languageOptions: {
+                parser: tseslintParser,
+                parserOptions: {
+                    ecmaVersion: "latest",
+                    jsDocParsingMode: "all",
+                    sourceType: "module",
+                    warnOnUnsupportedTypeScriptVersion: true,
+                },
+            },
+            name: "🗄️ Type Declarations: TypeScript Parser",
+            rules: {
+                "import-x/unambiguous": "off",
+            },
         },
         // #endregion
         // #region 🧱 Base Flat Configs
@@ -504,7 +531,14 @@ export const createConfig = (
         {
             ...importX.flatConfigs.typescript,
             files: ["**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}"],
-            name: "Import-X TypeScript (code files only)",
+            name: "📦 Import-X: TypeScript (code files only)",
+        },
+        {
+            files: ["**/*.d.ts"],
+            name: "📦 Import-X: TypeScript declarations (no unambiguous)",
+            rules: {
+                "import-x/unambiguous": "off",
+            },
         },
         {
             ...docusaurus2.configs.all,
@@ -535,14 +569,15 @@ export const createConfig = (
         stylelint2.configs.all,
         {
             ...repoPlugin.configs.recommended,
-            // prettier-ignore
-            // Tries to put "off" on second line, but that reduces readability for this long list of rules.
             rules: {
                 ...repoPlugin.configs.recommended.rules,
-                "repo-compliance/require-aws-amplify-artifacts-base-directory":"off",
-                "repo-compliance/require-aws-amplify-artifacts-base-directory-relative-path":"off",
+                "repo-compliance/require-aws-amplify-artifacts-base-directory":
+                    "off",
+                "repo-compliance/require-aws-amplify-artifacts-base-directory-relative-path":
+                    "off",
                 "repo-compliance/require-aws-amplify-artifacts-files": "off",
-                "repo-compliance/require-aws-amplify-artifacts-files-non-empty":"off",
+                "repo-compliance/require-aws-amplify-artifacts-files-non-empty":
+                    "off",
                 "repo-compliance/require-aws-amplify-build-commands": "off",
                 "repo-compliance/require-aws-amplify-config-file": "off",
                 "repo-compliance/require-aws-amplify-version": "off",
@@ -553,68 +588,96 @@ export const createConfig = (
                 "repo-compliance/require-azure-pipelines-pr-branches": "off",
                 "repo-compliance/require-azure-pipelines-pr-trigger": "off",
                 "repo-compliance/require-azure-pipelines-trigger": "off",
-                "repo-compliance/require-azure-pipelines-trigger-branches":"off",
-                "repo-compliance/require-azure-pipelines-trigger-include-branches":"off",
-                "repo-compliance/require-bitbucket-pipelines-clone-depth":"off",
-                "repo-compliance/require-bitbucket-pipelines-config-file":"off",
-                "repo-compliance/require-bitbucket-pipelines-default-pipeline":"off",
-                "repo-compliance/require-bitbucket-pipelines-image-pinned-tag":"off",
+                "repo-compliance/require-azure-pipelines-trigger-branches":
+                    "off",
+                "repo-compliance/require-azure-pipelines-trigger-include-branches":
+                    "off",
+                "repo-compliance/require-bitbucket-pipelines-clone-depth":
+                    "off",
+                "repo-compliance/require-bitbucket-pipelines-config-file":
+                    "off",
+                "repo-compliance/require-bitbucket-pipelines-default-pipeline":
+                    "off",
+                "repo-compliance/require-bitbucket-pipelines-image-pinned-tag":
+                    "off",
                 "repo-compliance/require-bitbucket-pipelines-max-time": "off",
-                "repo-compliance/require-bitbucket-pipelines-pull-requests":"off",
-                "repo-compliance/require-bitbucket-pipelines-pull-requests-target-branches":"off",
+                "repo-compliance/require-bitbucket-pipelines-pull-requests":
+                    "off",
+                "repo-compliance/require-bitbucket-pipelines-pull-requests-target-branches":
+                    "off",
                 "repo-compliance/require-bitbucket-pipelines-step-name": "off",
                 "repo-compliance/require-copilot-instructions-file": "off",
-                "repo-compliance/require-digitalocean-app-spec-component":"off",
+                "repo-compliance/require-digitalocean-app-spec-component":
+                    "off",
                 "repo-compliance/require-digitalocean-app-spec-file": "off",
                 "repo-compliance/require-digitalocean-app-spec-name": "off",
-                "repo-compliance/require-digitalocean-app-spec-name-value":"off",
+                "repo-compliance/require-digitalocean-app-spec-name-value":
+                    "off",
                 "repo-compliance/require-digitalocean-app-spec-region": "off",
-                "repo-compliance/require-digitalocean-app-spec-region-lowercase":"off",
-                "repo-compliance/require-digitalocean-app-spec-region-value":"off",
+                "repo-compliance/require-digitalocean-app-spec-region-lowercase":
+                    "off",
+                "repo-compliance/require-digitalocean-app-spec-region-value":
+                    "off",
                 "repo-compliance/require-dockerfile": "off",
                 "repo-compliance/require-dockerfile-base-image-tag": "off",
                 "repo-compliance/require-dockerfile-cmd-or-entrypoint": "off",
-                "repo-compliance/require-dockerfile-first-instruction-from":"off",
+                "repo-compliance/require-dockerfile-first-instruction-from":
+                    "off",
                 "repo-compliance/require-dockerfile-from-instruction": "off",
                 "repo-compliance/require-dockerfile-user": "off",
                 "repo-compliance/require-dockerfile-workdir": "off",
                 "repo-compliance/require-dockerignore-file": "off",
                 "repo-compliance/require-forgejo-actions-concurrency": "off",
-                "repo-compliance/require-forgejo-actions-job-timeout-minutes":"off",
-                "repo-compliance/require-forgejo-actions-no-write-all-permissions":"off",
+                "repo-compliance/require-forgejo-actions-job-timeout-minutes":
+                    "off",
+                "repo-compliance/require-forgejo-actions-no-write-all-permissions":
+                    "off",
                 "repo-compliance/require-forgejo-actions-pinned-sha": "off",
-                "repo-compliance/require-forgejo-actions-workflow-dispatch":"off",
+                "repo-compliance/require-forgejo-actions-workflow-dispatch":
+                    "off",
                 "repo-compliance/require-forgejo-actions-workflow-file": "off",
                 "repo-compliance/require-forgejo-actions-workflow-name": "off",
-                "repo-compliance/require-forgejo-actions-workflow-permissions":"off",
-                "repo-compliance/require-forgejo-actions-workflow-trigger-coverage":"off",
+                "repo-compliance/require-forgejo-actions-workflow-permissions":
+                    "off",
+                "repo-compliance/require-forgejo-actions-workflow-trigger-coverage":
+                    "off",
                 "repo-compliance/require-gitlab-ci-cache-policy": "off",
                 "repo-compliance/require-gitlab-ci-config-file": "off",
                 "repo-compliance/require-gitlab-ci-default-timeout": "off",
                 "repo-compliance/require-gitlab-ci-interruptible": "off",
-                "repo-compliance/require-gitlab-ci-merge-request-pipelines":"off",
+                "repo-compliance/require-gitlab-ci-merge-request-pipelines":
+                    "off",
                 "repo-compliance/require-gitlab-ci-needs-dag": "off",
-                "repo-compliance/require-gitlab-ci-rules-over-only-except":"off",
+                "repo-compliance/require-gitlab-ci-rules-over-only-except":
+                    "off",
                 "repo-compliance/require-gitlab-ci-security-scanning": "off",
                 "repo-compliance/require-gitlab-ci-stages": "off",
                 "repo-compliance/require-gitlab-ci-workflow-rules": "off",
                 "repo-compliance/require-gitlab-issue-template-file": "off",
-                "repo-compliance/require-gitlab-merge-request-template-file":"off",
+                "repo-compliance/require-gitlab-merge-request-template-file":
+                    "off",
                 "repo-compliance/require-google-cloud-build-config-file": "off",
                 "repo-compliance/require-google-cloud-build-step-name": "off",
                 "repo-compliance/require-google-cloud-build-steps": "off",
-                "repo-compliance/require-google-cloud-build-steps-non-empty":"off",
+                "repo-compliance/require-google-cloud-build-steps-non-empty":
+                    "off",
                 "repo-compliance/require-google-cloud-build-timeout": "off",
-                "repo-compliance/require-google-cloud-build-timeout-format":"off",
+                "repo-compliance/require-google-cloud-build-timeout-format":
+                    "off",
                 "repo-compliance/require-google-cloud-build-timeout-max": "off",
-                "repo-compliance/require-google-cloud-build-timeout-positive":"off",
+                "repo-compliance/require-google-cloud-build-timeout-positive":
+                    "off",
                 "repo-compliance/require-netlify-build-command": "off",
-                "repo-compliance/require-netlify-build-command-non-empty":"off",
-                "repo-compliance/require-netlify-build-publish-directory":"off",
+                "repo-compliance/require-netlify-build-command-non-empty":
+                    "off",
+                "repo-compliance/require-netlify-build-publish-directory":
+                    "off",
                 "repo-compliance/require-netlify-build-section": "off",
                 "repo-compliance/require-netlify-config-file": "off",
-                "repo-compliance/require-netlify-publish-directory-no-trailing-slash":"off",
-                "repo-compliance/require-netlify-publish-directory-non-empty":"off",
+                "repo-compliance/require-netlify-publish-directory-no-trailing-slash":
+                    "off",
+                "repo-compliance/require-netlify-publish-directory-non-empty":
+                    "off",
                 "repo-compliance/require-netlify-publish-relative-path": "off",
                 "repo-compliance/require-pr-template-checklist-items": "warn",
                 "repo-compliance/require-readme-badges": "warn",
@@ -633,7 +696,7 @@ export const createConfig = (
         repoPlugin.configs.node,
         {
             ...typedocPlugin.configs.recommended,
-            name: "TypeDoc recommended (repo tuned)",
+            name: "⌨️ TypeDoc: recommended (repo tuned)",
             rules: {
                 ...typedocPlugin.configs.recommended.rules,
                 "typedoc/no-empty-private-remarks-tag": "off",
@@ -659,12 +722,12 @@ export const createConfig = (
         {
             ...immutable.configs.all,
             files: ["functional/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}"],
-            name: "Immutable: functional (not used in this repo)",
+            name: "🧩 Immutable: functional (not used in this repo)",
         },
         {
             ...writeGoodComments.configs.all,
             files: ["src/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}"],
-            name: "Write Good Comments: (not used in this repo)",
+            name: "📝 Write Good Comments: (not used in this repo)",
             rules: {
                 "write-good-comments/inclusive-language-comments": "off",
                 "write-good-comments/no-profane-comments": "off",
@@ -678,24 +741,26 @@ export const createConfig = (
         {
             ...noBarrelFiles.flat,
             files: ["**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}"],
-            name: "No barrel files (code files only)",
+            name: "🛑 No Barrel Files (code files only)",
         },
         {
-            ...((nitpick.configs?.["recommended"] as
-                | readonly EslintConfig[]
-                | undefined) ?? []),
+            ...nitpick.configs.recommended,
             files: ["**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}"],
-            name: "Nitpick recommended (code files only)",
+            name: "📝 Nitpick: recommended (code files only)",
         },
         {
             ...comments.recommended,
             files: ["**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}"],
-            name: "ESLint comments recommended (code files only)",
+            name: "💬 ESLint comments: recommended (code files only)",
         },
         {
             ...arrayFunc.configs.all,
             files: ["**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}"],
-            name: "Array func all (code files only)",
+            name: "🧩 Array func: all (code files only)",
+            rules: {
+                ...arrayFunc.configs.all.rules,
+                "array-func/prefer-array-from": "off",
+            },
         },
         deMorgan.configs.recommended,
         ...pluginCasePolice.configs.recommended,
@@ -737,74 +802,13 @@ export const createConfig = (
         //     })
         // ),
         // #endregion
-        // #region 🧭 Custom Global Rules
-        // ═══════════════════════════════════════════════════════════════════════════════
-        // SECTION: Custom Global Rules
-        // ═══════════════════════════════════════════════════════════════════════════════
-        {
-            name: "Array conversion: prefer spread",
-            rules: {
-                // Conflicts with `unicorn/prefer-spread` and can cause circular
-                // autofix loops. We prefer spread (`[...iterable]`) for iterables
-                // and only reach for Array.from when we specifically need its
-                // mapping function or array-like support.
-                "array-func/prefer-array-from": "off",
-            },
-        },
-        // #endregion
-        // #region 🗣️ Global Language Options
-        // ═══════════════════════════════════════════════════════════════════════════════
-        // SECTION:  Global Language Options
-        // ═══════════════════════════════════════════════════════════════════════════════
-        {
-            languageOptions: {
-                globals: {
-                    ...globals.node,
-                    ...vitest.environments.env.globals,
-                    __dirname: "readonly",
-                    __filename: "readonly",
-                    afterAll: "readonly",
-                    afterEach: "readonly",
-                    beforeAll: "readonly",
-                    beforeEach: "readonly",
-                    Buffer: "readonly",
-                    describe: "readonly",
-                    document: "readonly",
-                    expect: "readonly",
-                    global: "readonly",
-                    globalThis: "readonly",
-                    it: "readonly",
-                    module: "readonly",
-                    process: "readonly",
-                    require: "readonly",
-                    test: "readonly",
-                    vi: "readonly",
-                    window: "readonly",
-                },
-            },
-            name: "Global Language Options **/**",
-        },
-        {
-            files: ["**/*.d.{ts,mts,cts}"],
-            languageOptions: {
-                parser: tseslintParser,
-                parserOptions: {
-                    ecmaVersion: "latest",
-                    jsDocParsingMode: "all",
-                    sourceType: "module",
-                    warnOnUnsupportedTypeScriptVersion: true,
-                },
-            },
-            name: "Type Declarations - TypeScript Parser",
-        },
-        // #endregion
         // #region 📃 TSDoc Setup
         // ═══════════════════════════════════════════════════════════════════════════════
         // SECTION: 📃 TSDoc (tsdoc/*)
         // ═══════════════════════════════════════════════════════════════════════════════
         {
             files: ["**/*.{ts,mts,cts,tsx}"],
-            name: "TSDoc rules (TypeScript files)",
+            name: "⌨️ TSDoc: rules (TypeScript files)",
             plugins: {
                 tsdoc: pluginTsdoc,
             },
@@ -814,7 +818,7 @@ export const createConfig = (
         },
         {
             files: ["src/**/*.{ts,mts,cts,tsx}"],
-            name: "TSDoc rules (TypeScript files)",
+            name: "⌨️ TSDoc: rules (TypeScript files)",
             plugins: {
                 "tsdoc-require-2": tsdocRequire,
             },
@@ -891,7 +895,7 @@ export const createConfig = (
             languageOptions: {
                 tolerant: true,
             },
-            name: "CSS - **/*.CSS",
+            name: "🎨 CSS: All Files",
             plugins: {
                 css: css,
                 "css-modules": pluginCssModules,
@@ -941,7 +945,7 @@ export const createConfig = (
                     warnOnUnsupportedTypeScriptVersion: true,
                 },
             },
-            name: "Docusaurus Workspace Files",
+            name: "🦖 Docusaurus: Workspace Files",
             plugins: {
                 "@docusaurus": pluginDocusaurus,
                 "@eslint-react": eslintReactPlugin,
@@ -1025,7 +1029,7 @@ export const createConfig = (
                 "@eslint-react/x-use-state": "warn",
             },
             settings: {
-                ...eslintReactPlugin.configs["strict-type-checked"]?.settings,
+                ...eslintReactPlugin.configs["strict-type-checked"].settings,
             },
         },
         // #endregion
@@ -1049,7 +1053,7 @@ export const createConfig = (
                           "src/**/*.{ts,tsx,mts,cts}",
                           //    "test/**/*.{ts,tsx,mts,cts}"
                       ],
-                      name: "Typefest Rules for Source",
+                      name: "⌨️ Typefest: Rules for Source",
                       plugins: {
                           typefest: typefest,
                       },
@@ -1071,7 +1075,7 @@ export const createConfig = (
                           "src/**/*.{ts,tsx,mts,cts}",
                           //    "test/**/*.{ts,tsx,mts,cts}"
                       ],
-                      name: "Etc-Misc Rules for Source",
+                      name: "⌨️ Etc-Misc: Rules for Source",
                       plugins: {
                           "etc-misc": etcMisc,
                       },
@@ -1098,6 +1102,7 @@ export const createConfig = (
                           "etc-misc/no-enum": "off",
                           "etc-misc/no-expression-empty-lines": "off",
                           "etc-misc/no-foreach": "off",
+                          "etc-misc/no-function-declare-after-return": "off",
                           "etc-misc/no-implicit-any-catch": "off",
                           "etc-misc/no-index-import": "off",
                           "etc-misc/no-internal": "off",
@@ -1115,6 +1120,8 @@ export const createConfig = (
                           "etc-misc/no-unnecessary-break": "off",
                           "etc-misc/no-unnecessary-initialization": "off",
                           "etc-misc/no-unnecessary-template-literal": "off",
+                          "etc-misc/no-use-extend-native": "off",
+                          "etc-misc/no-vulnerable": "off",
                           "etc-misc/no-writeonly": "off",
                           "etc-misc/object-format": "off",
                           "etc-misc/only-export-name": "off",
@@ -1215,27 +1222,6 @@ export const createConfig = (
                   },
               ]),
         // #endregion
-        // #region ⚙️ Global Settings
-        // ═══════════════════════════════════════════════════════════════════════════════
-        // SECTION:  Global Settings
-        // ═══════════════════════════════════════════════════════════════════════════════
-        {
-            name: "Global Settings Options **/**",
-            settings: {
-                "import-x/resolver": {
-                    node: true, // Don't warn about multiple projects
-                },
-                "import-x/resolver-next": [
-                    createTypeScriptImportResolver({
-                        alwaysTryTypes: true, // Always try to resolve types under `<root>@types` directory even if it doesn't contain any source code, like `@types/unist`
-                        bun: true, // Resolve Bun modules (https://github.com/import-js/eslint-import-resolver-typescript#bun) // Don't warn about multiple projects
-                        // Use an array.
-                        project: [...tsconfigPaths],
-                    }),
-                ],
-            },
-        },
-        // #endregion
         // #region 🔌 Source Files
         // ═══════════════════════════════════════════════════════════════════════════════
         // SECTION: Source Files
@@ -1250,11 +1236,9 @@ export const createConfig = (
             ignores: ["plugin.mjs"],
             languageOptions: {
                 globals: {
+                    ...globals.builtin,
                     ...globals.browser,
-                    ...globals.node,
-                    document: "readonly",
-                    globalThis: "readonly",
-                    window: "readonly",
+                    ...globals.nodeBuiltin,
                 },
                 parser: tseslintParser,
                 parserOptions: {
@@ -1269,23 +1253,22 @@ export const createConfig = (
                     warnOnUnsupportedTypeScriptVersion: true,
                 },
             },
-            name: "Source Files - project/**/*.*",
+            name: "📂 Source Files - Src, Test, Benchmarks, and Root JS/TS files",
             plugins: {
                 "@typescript-eslint": tseslint,
                 canonical: pluginCanonical,
                 "comment-length": eslintPluginCommentLength,
                 "eslint-comments": comments,
                 "eslint-plugin": eslintPluginEslintPlugin,
+                "etc-misc": etcMisc,
                 "import-x": importX,
                 js: js,
                 jsdoc: jsdocPlugin,
                 listeners,
                 math: eslintPluginMath,
                 "module-interop": moduleInterop,
-                "no-use-extend-native": eslintPluginNoUseExtendNative,
                 perfectionist: perfectionist,
                 promise: pluginPromise,
-                redos: pluginRedos,
                 regexp: pluginRegexp,
                 security: pluginSecurity,
                 sonarjs: sonarjs,
@@ -1315,14 +1298,11 @@ export const createConfig = (
                 ...eslintPluginMath.configs.recommended.rules,
                 ...comments.recommended.rules,
                 ...pluginCanonical.configs.recommended.rules,
-                ...eslintPluginNoUseExtendNative.configs.recommended.rules,
                 ...listeners.configs.strict?.rules,
                 ...moduleInterop.configs.recommended.rules,
 
                 "@eslint-community/eslint-comments/no-restricted-disable":
                     "warn",
-                // Deprecated rule - turned off
-                "@eslint-community/eslint-comments/no-unused-disable": "off",
                 "@eslint-community/eslint-comments/no-use": "off",
                 "@eslint-community/eslint-comments/require-description": "warn",
                 "@typescript-eslint/await-thenable": "error", // Prevent awaiting non-promises
@@ -1761,8 +1741,6 @@ export const createConfig = (
                         tabSize: 4,
                     },
                 ],
-                // Needs update for Eslint v10
-                // "deprecation/deprecation": "off",
                 "eslint-plugin/consistent-output": "error",
                 "eslint-plugin/fixer-return": "error",
                 "eslint-plugin/meta-property-ordering": [
@@ -1812,6 +1790,9 @@ export const createConfig = (
                 "eslint-plugin/test-case-property-ordering": "warn",
                 "eslint-plugin/test-case-shorthand-strings": "error",
                 "eslint-plugin/unique-test-case-names": "error",
+                "etc-misc/no-function-declare-after-return": "error",
+                "etc-misc/no-use-extend-native": "error",
+                "etc-misc/no-vulnerable": "error",
                 "import-x/consistent-type-specifier-style": "off",
                 "import-x/default": "warn",
                 "import-x/dynamic-import-chunkname": "off",
@@ -1855,7 +1836,7 @@ export const createConfig = (
                         allow: ["**/*.css", "**/*.scss"], // Allow CSS imports without assignment
                     },
                 ],
-                "import-x/no-unresolved": "off",
+                "import-x/no-unresolved": "warn",
                 "import-x/no-unused-modules": [
                     "warn",
                     {
@@ -1868,9 +1849,7 @@ export const createConfig = (
                 "import-x/order": "off",
                 "import-x/prefer-default-export": "off",
                 "import-x/prefer-namespace-import": "off",
-                // NOTE(ESLint10): Re-enable once import-x/unambiguous is
-                // compatible with ESLint 10 parser context assumptions.
-                "import-x/unambiguous": "off",
+                "import-x/unambiguous": "warn",
                 "jsdoc/require-description": "warn",
                 "jsdoc/require-param-description": "warn",
                 "jsdoc/require-returns-description": "warn",
@@ -1883,7 +1862,7 @@ export const createConfig = (
                 "n/no-missing-file-extension": "off",
                 "n/no-missing-import": "off",
                 "perfectionist/sort-arrays": [
-                    "off",
+                    "warn",
                     {
                         customGroups: [],
                         fallbackSort: { type: "unsorted" },
@@ -1909,116 +1888,29 @@ export const createConfig = (
                 "sdl/no-nonnull-assertion-on-security-input": "error",
                 "sdl/no-trusted-types-policy-pass-through": "error",
                 "sdl/no-unsafe-cast-to-trusted-types": "error",
-                "security/detect-non-literal-fs-filename": "off",
-                "security/detect-object-injection": "off",
+                "security/detect-non-literal-fs-filename": "warn",
+                "security/detect-object-injection": "warn",
+                "sort-imports": "off",
+                "sort-keys": "off",
                 "unused-imports/no-unused-imports": "error",
                 "unused-imports/no-unused-vars": "error",
             },
         },
         {
-            files: [
-                "commitlint.config.mjs",
-                "eslint.config.mjs",
-                "plugin.mjs",
-                "stylelint.config.mjs",
-                ".secretlintrc.cjs",
-                "src/**/*.{js,mjs,cjs,ts,mts,cts,tsx}",
-                "vite*.config.ts",
-            ],
-            name: "ESLint Plugin Source - internal rule authoring overrides",
+            files: ["src/shared-config.ts"],
+            name: "🧩 Repo Internal: shared-config.ts compatibility overrides",
             rules: {
-                "@typescript-eslint/ban-ts-comment": "off",
-                "@typescript-eslint/consistent-type-definitions": "off",
-                "@typescript-eslint/explicit-function-return-type": "off",
-                "@typescript-eslint/explicit-module-boundary-types": "off",
-                "@typescript-eslint/no-misused-spread": "off",
-                "@typescript-eslint/no-unnecessary-condition": "off",
-                "@typescript-eslint/no-unsafe-argument": "off",
                 "@typescript-eslint/no-unsafe-assignment": "off",
-                "@typescript-eslint/no-unsafe-call": "off",
-                "@typescript-eslint/no-unsafe-enum-comparison": "off",
                 "@typescript-eslint/no-unsafe-member-access": "off",
-                "@typescript-eslint/no-unsafe-return": "off",
                 "@typescript-eslint/no-unsafe-type-assertion": "off",
-                "@typescript-eslint/prefer-destructuring": "off",
-                "@typescript-eslint/prefer-nullish-coalescing": "off",
-                "@typescript-eslint/restrict-template-expressions": "off",
-                camelcase: "off",
-                canonical: "off",
-                "canonical/destructuring-property-newline": "off",
                 "canonical/id-match": "off",
-                "capitalized-comments": [
-                    "error",
-                    "always",
-                    {
-                        ignoreConsecutiveComments: true,
-                        ignoreInlineComments: true,
-                        ignorePattern:
-                            "pragma|ignored|import|prettier|eslint|tslint|copyright|license|eslint-disable|@ts-.*|jsx-a11y.*|@eslint.*|global|jsx|jsdoc|prettier|istanbul|jcoreio|metamask|microsoft|no-unsafe-optional-chaining|no-unnecessary-type-assertion|no-non-null-asserted-optional-chain|no-non-null-asserted-nullish-coalescing|@typescript-eslint.*|@docusaurus.*|@react.*|boundaries.*|depend.*|deprecation.*|etc.*|ex.*|functional.*|import-x.*|import-zod.*|jsx-a11y.*|loadable-imports.*|math.*|n.*|neverthrow.*|no-constructor-bind.*|no-explicit-type-exports.*|no-function-declare-after-return.*|no-lookahead-lookbehind-regexp.*|no-secrets.*|no-unary-plus.*|no-unawaited-dot-catch-throw.*|no-unsanitized.*|no-use-extend-native.*|observers.*|prefer-arrow.*|perfectionist.*|prettier.*|promise.*|react.*|react-hooks.*|react-hooks-addons.*|redos.*|regexp.*|require-jsdoc.*|safe-jsx.*|security.*|sonarjs.*|sort-class-members.*|sort-destructure-keys.*|sort-keys-fix.*|sql-template.*|ssr-friendly.*|styled-components-a11y.*|switch-case.*|total-functions.*|tsdoc.*|unicorn.*|unused-imports.*|usememo-recommendations.*|validate-jsx-nesting.*|write-good-comments.*|xss.*|v8.*|c8.*|istanbul.*|nyc.*|codecov.*|coveralls.*|c8-coverage.*|codecov-coverage.*",
-                    },
-                ],
-                "class-methods-use-this": "off",
-                complexity: "off",
-                "consistent-return": "off",
-                "dot-notation": "off",
-                "func-style": "off",
-                "id-length": "off",
-                "import-x/extensions": "off",
-                "import-x/no-commonjs": "off",
                 "import-x/no-rename-default": "off",
-                "init-declarations": "off",
                 "jsdoc/require-description": "off",
                 "jsdoc/require-param-description": "off",
                 "jsdoc/require-returns-description": "off",
-                "max-classes-per-file": "off",
-                "max-lines": "off",
-                "max-lines-per-function": "off",
-                "max-params": "off",
-                "max-statements": "off",
                 "module-interop/no-import-cjs": "off",
-                "n/no-extraneous-import": "off",
-                "n/no-mixed-requires": "off",
-                "n/no-sync": "off",
-                "n/no-unsupported-features/node-builtins": "off",
-                "new-cap": "off",
-                "no-console": "off",
-                "no-continue": "off",
-                "no-inline-comments": "off",
-                "no-magic-numbers": "off",
-                "no-plusplus": "off",
-                "no-ternary": "off",
-                "no-undef-init": "off",
-                "no-undefined": "off",
-                "no-underscore-dangle": "off",
-                "no-use-before-define": "off",
-                "no-void": "off",
-                "object-shorthand": "off",
-                "one-var": "off",
-                "prefer-arrow-callback": [
-                    "warn",
-                    { allowNamedFunctions: true, allowUnboundThis: true },
-                ],
-                "prefer-destructuring": "off",
-                "regexp/require-unicode-regexp": "off",
-                "regexp/require-unicode-sets-regexp": "off",
-                "require-await": "off",
-                "require-unicode-regexp": "off",
-                "security/detect-non-literal-fs-filename": "off",
-                "security/detect-object-injection": "off",
-                "sonarjs/cognitive-complexity": "off",
-                "sonarjs/different-types-comparison": "off",
-                "sonarjs/no-commented-code": "off",
-                "sonarjs/no-nested-conditional": "off",
-                "sort-imports": "off",
-                "sort-keys": "off",
-                "sort-vars": "off",
-                "unicorn/consistent-destructuring": "off",
-                "unicorn/consistent-function-scoping": "off",
                 "unicorn/import-style": "off",
-                "unicorn/no-nested-ternary": "off",
                 "unicorn/no-null": "off",
-                "unicorn/prefer-import-meta-properties": "off",
-                "unicorn/prevent-abbreviations": "off",
             },
         },
         // #endregion
@@ -2028,16 +1920,14 @@ export const createConfig = (
         // ═══════════════════════════════════════════════════════════════════════════════
         {
             files: ["test/**/*.{test,spec}.{ts,tsx}", "test/**/*.{ts,tsx}"],
-            name: "ESLint Plugin Tests - internal tooling",
+            name: "🧪 ESLint Plugin Tests: internal tooling",
             rules: {
                 "@typescript-eslint/array-type": "off",
                 "@typescript-eslint/no-floating-promises": "off",
-                "@typescript-eslint/no-unnecessary-condition": "off",
                 "@typescript-eslint/no-unsafe-assignment": "off",
                 canonical: "off",
                 "canonical/id-match": "off",
                 eqeqeq: "off",
-                "filenames/no-relative-paths": "off",
                 "func-style": "off",
                 "max-statements": "off",
                 "n/no-missing-import": "off",
@@ -2060,7 +1950,7 @@ export const createConfig = (
         },
         {
             files: ["test/_internal/ruleTester.ts"],
-            name: "ESLint Plugin Tests - internal helper filename",
+            name: "🧪 ESLint Plugin Tests: ruleTester.ts ⛔ Disables",
             rules: {
                 "unicorn/filename-case": "off",
             },
@@ -2073,23 +1963,18 @@ export const createConfig = (
         {
             files: [
                 "test/**/*.{ts,tsx,mts,cts,mjs,js,jsx,cjs}",
+                "tests/**/*.{ts,tsx,mts,cts,mjs,js,jsx,cjs}",
+                "src/test/**/*.{ts,tsx,mts,cts,mjs,js,jsx,cjs}",
                 "benchmarks/**/*.{ts,tsx,mts,cts,mjs,js,jsx,cjs}",
+                "benchmark/**/*.{ts,tsx,mts,cts,mjs,js,jsx,cjs}",
             ],
             languageOptions: {
                 globals: {
-                    ...globals.node,
+                    ...globals.builtin,
+                    ...globals.nodeBuiltin,
+                    ...globals.commonjs,
                     ...vitest.environments.env.globals,
-                    afterAll: "readonly",
-                    afterEach: "readonly",
-                    beforeAll: "readonly",
-                    beforeEach: "readonly",
                     createTypedRuleSelectorAwarePassThrough: "readonly",
-                    describe: "readonly",
-                    expect: "readonly",
-                    it: "readonly",
-                    NodeJS: "readonly",
-                    test: "readonly",
-                    vi: "readonly",
                 },
                 parser: tseslintParser,
                 parserOptions: {
@@ -2104,7 +1989,7 @@ export const createConfig = (
                     warnOnUnsupportedTypeScriptVersion: true,
                 },
             },
-            name: "Tests test/**/*.{spec,test}.*.{TS,TSX,MTS,CTS,MJS,JS,JSX,CJS}",
+            name: "🧪 Tests: Tests, Benchmarks",
             plugins: {
                 "@typescript-eslint": tseslint,
                 "import-x": importX,
@@ -2125,8 +2010,6 @@ export const createConfig = (
                 ...vitest.configs.all.rules,
                 ...eslintPluginUnicorn.configs.all.rules,
                 ...pluginTestingLibrary.configs["flat/react"].rules,
-                "@jcoreio/implicit-dependencies/no-implicit": "off",
-                "@typescript-eslint/explicit-function-return-type": "off",
                 "@typescript-eslint/no-empty-function": "off", // Empty mocks/stubs are common
                 "@typescript-eslint/no-explicit-any": "off",
                 "@typescript-eslint/no-inferrable-types": "warn", // Allow explicit types for React components
@@ -2134,11 +2017,9 @@ export const createConfig = (
                 "@typescript-eslint/no-restricted-types": "off", // Tests may need generic Function types
                 "@typescript-eslint/no-shadow": "off",
                 "@typescript-eslint/no-unsafe-function-type": "off", // Tests may use generic handlers
-                "@typescript-eslint/no-unsafe-type-assertion": "off",
                 "@typescript-eslint/no-unused-vars": "off",
                 "@typescript-eslint/no-use-before-define": "off", // Allow use before define in tests
                 "@typescript-eslint/no-useless-default-assignment": "warn",
-                "@typescript-eslint/prefer-destructuring": "off",
                 "@typescript-eslint/strict-void-return": "warn",
                 "@typescript-eslint/unbound-method": "off",
                 camelcase: "off",
@@ -2303,16 +2184,16 @@ export const createConfig = (
                         ],
                     },
                 ], // Allow "class" prefix for className and other legitimate uses
-                "unicorn/no-null": "off", // Null is common in test setups
-                "unicorn/no-unused-properties": "off", // Allow unused properties in test setups
-                "unicorn/no-useless-undefined": "off", // Allow undefined in test setups
-                "unicorn/prefer-global-this": "off", // Allow globalThis for test setups
-                "unicorn/prefer-optional-catch-binding": "off", // Allow optional catch binding for test flexibility
-                "unicorn/prevent-abbreviations": "off", // Too many false positives in tests
-                "vitest/max-expects": "off",
+                "unicorn/no-null": "warn", // Null is common in test setups
+                "unicorn/no-unused-properties": "warn", // Allow unused properties in test setups
+                "unicorn/no-useless-undefined": "warn", // Allow undefined in test setups
+                "unicorn/prefer-global-this": "warn", // Allow globalThis for test setups
+                "unicorn/prefer-optional-catch-binding": "warn", // Allow optional catch binding for test flexibility
+                "unicorn/prevent-abbreviations": "warn", // Too many false positives in tests
+                "vitest/max-expects": "warn",
                 // Needs update to not use deprecated alias methods like
                 // Replace toThrow() with its canonical name oThrowError()
-                "vitest/no-alias-methods": "off",
+                "vitest/no-alias-methods": "warn",
                 "vitest/no-commented-out-tests": "warn",
                 "vitest/no-conditional-expect": "warn",
                 "vitest/no-disabled-tests": "warn",
@@ -2326,7 +2207,7 @@ export const createConfig = (
                 "vitest/prefer-called-once": "warn",
                 // Conflicts with `prefer-called-once` for `.toHaveBeenCalledTimes(1)`.
                 // Keep the more specific once-only rule enabled.
-                "vitest/prefer-called-times": "off",
+                "vitest/prefer-called-times": "warn",
                 "vitest/prefer-called-with": "warn",
                 "vitest/prefer-comparison-matcher": "warn",
                 "vitest/prefer-describe-function-title": "warn",
@@ -2334,7 +2215,7 @@ export const createConfig = (
                 "vitest/prefer-expect-resolves": "warn",
                 // Vitest's autofix currently rewrites to `expectTypeOf(...).toBeFunction()`
                 // which does not typecheck with the current expect-type typings.
-                "vitest/prefer-expect-type-of": "off",
+                "vitest/prefer-expect-type-of": "warn",
                 "vitest/prefer-mock-return-shorthand": "warn",
                 "vitest/prefer-spy-on": "warn",
                 "vitest/prefer-strict-boolean-matchers": "off",
@@ -2347,7 +2228,7 @@ export const createConfig = (
                 "vitest/prefer-to-have-length": "warn",
                 "vitest/prefer-todo": "warn",
                 "vitest/prefer-vi-mocked": "warn",
-                "vitest/require-hook": "off",
+                "vitest/require-hook": "warn",
                 "vitest/require-mock-type-parameters": "warn",
                 "vitest/require-test-timeout": "off",
                 "vitest/valid-expect": "warn",
@@ -2393,7 +2274,7 @@ export const createConfig = (
                 parser: jsoncEslintParser,
                 parserOptions: { jsonSyntax: "JSON" },
             },
-            name: "Package - **/Package.json",
+            name: "📦 Package: **/Package.json",
             plugins: {
                 json: json,
                 "node-dependencies": nodeDependencies,
@@ -2616,7 +2497,7 @@ export const createConfig = (
         },
         {
             files: ["docs/docusaurus/package.json"],
-            name: "Package - docs docusaurus private override",
+            name: "📦 Package: Docusaurus Private Override",
             rules: {
                 "package-json/restrict-private-properties": "off",
             },
@@ -2634,7 +2515,7 @@ export const createConfig = (
                 "**/.github/agents/**",
             ],
             language: "markdown/gfm",
-            name: "MD - **/*.{MD,MARKUP,ATOM,RSS,MARKDOWN} (with Remark)",
+            name: "📝 Markdown: **/*.{MD,MARKUP,ATOM,RSS,MARKDOWN} (with Remark)",
             plugins: {
                 markdown: markdown,
             },
@@ -2678,7 +2559,7 @@ export const createConfig = (
                     defaultYAMLVersion: "1.2",
                 },
             },
-            name: "YAML/YML - **/*.{YAML,YML}",
+            name: "🧾 YAML/YML: **/*.{YAML,YML}",
             plugins: {
                 ...jsonSchemaValidatorPlugins,
                 yml: eslintPluginYml,
@@ -2728,7 +2609,7 @@ export const createConfig = (
             languageOptions: {
                 parser: htmlParser,
             },
-            name: "HTML - **/*.{HTML,HTM,XHTML}",
+            name: "🌐 HTML: **/*.{HTML,HTM,XHTML}",
             plugins: {
                 html: html,
             },
@@ -2798,7 +2679,7 @@ export const createConfig = (
         {
             files: ["**/*.jsonc", ".vscode/*.json"],
             ignores: [],
-            name: "JSONC - **/*.JSONC",
+            name: "🧾 JSONC: **/*.JSONC",
             // ═══════════════════════════════════════════════════════════════════════════════
             // Plugin Config for eslint-plugin-jsonc to enable Prettier formatting
             // ═══════════════════════════════════════════════════════════════════════════════
@@ -2917,7 +2798,7 @@ export const createConfig = (
             // (needed for some package.json-specific tooling rules).
             ignores: ["**/package.json"],
             language: "json/json",
-            name: "JSON - **/*.JSON",
+            name: "🧾 JSON: **/*.JSON",
             plugins: {
                 json: json,
                 ...jsonSchemaValidatorPlugins,
@@ -2945,7 +2826,7 @@ export const createConfig = (
         {
             files: ["**/*.json5"],
             language: "json/json5",
-            name: "JSON5 - **/*.JSON5",
+            name: "🧾 JSON5: **/*.JSON5",
             plugins: {
                 json: json,
                 ...jsonSchemaValidatorPlugins,
@@ -2975,7 +2856,7 @@ export const createConfig = (
                 parser: tomlEslintParser,
                 parserOptions: { tomlVersion: "1.0.0" },
             },
-            name: "TOML - **/*.TOML",
+            name: "🧾 TOML: **/*.TOML",
             plugins: { toml: eslintPluginToml },
             rules: {
                 // TOML Eslint Plugin Rules (toml/*)
@@ -3013,15 +2894,12 @@ export const createConfig = (
             files: ["scripts/**/*.{js,cjs,mjs}"],
             languageOptions: {
                 globals: {
-                    ...globals.node,
-                    __dirname: "readonly",
-                    __filename: "readonly",
-                    module: "readonly",
-                    process: "readonly",
-                    require: "readonly",
+                    ...globals.builtin,
+                    ...globals.nodeBuiltin,
+                    ...globals.commonjs,
                 },
             },
-            name: "JS JSDoc - **/*.{JS,CJS,MJS}",
+            name: "📚 JSDoc: **/*.{JS,CJS,MJS}",
             plugins: {
                 jsdoc: jsdocPlugin,
             },
@@ -3136,19 +3014,17 @@ export const createConfig = (
             ],
             languageOptions: {
                 globals: {
-                    ...globals.node,
-                    __dirname: "readonly",
-                    __filename: "readonly",
-                    module: "readonly",
-                    process: "readonly",
-                    require: "readonly",
+                    ...globals.builtin,
+                    ...globals.nodeBuiltin,
+                    ...globals.commonjs,
                 },
             },
-            name: "JS/MJS Config - **/*.config.{JS,MJS,CTS,CJS}",
+            name: "🧾 JS/MJS Config Files: **/*.config.{JS,MJS,CTS,CJS}",
             plugins: {
                 "@typescript-eslint": tseslint,
                 // Css: css,
                 depend: depend,
+                "etc-misc": etcMisc,
                 "import-x": importX,
                 js: js,
                 math: eslintPluginMath,
@@ -3156,7 +3032,6 @@ export const createConfig = (
                 perfectionist: perfectionist,
                 prettier: pluginPrettier,
                 promise: pluginPromise,
-                redos: pluginRedos,
                 regexp: pluginRegexp,
                 security: pluginSecurity,
                 sonarjs: sonarjs,
@@ -3173,7 +3048,6 @@ export const createConfig = (
                 ...eslintPluginUnicorn.configs.all.rules,
                 ...sonarjsConfigs.recommended.rules,
                 ...perfectionist.configs["recommended-natural"].rules,
-                ...pluginRedos.configs.recommended?.rules,
                 ...pluginSecurity.configs.recommended.rules,
                 ...nodePlugin.configs["flat/recommended"].rules,
                 ...eslintPluginMath.configs.recommended.rules,
@@ -3189,8 +3063,11 @@ export const createConfig = (
                             "pragma|ignored|import|prettier|eslint|tslint|copyright|license|eslint-disable|@ts-.*|jsx-a11y.*|@eslint.*|global|jsx|jsdoc|prettier|istanbul|jcoreio|metamask|microsoft|no-unsafe-optional-chaining|no-unnecessary-type-assertion|no-non-null-asserted-optional-chain|no-non-null-asserted-nullish-coalescing|@typescript-eslint.*|@docusaurus.*|@react.*|boundaries.*|depend.*|deprecation.*|etc.*|ex.*|functional.*|import-x.*|import-zod.*|jsx-a11y.*|loadable-imports.*|math.*|n.*|neverthrow.*|no-constructor-bind.*|no-explicit-type-exports.*|no-lookahead-lookbehind-regexp.*|no-secrets.*|no-unary-plus.*|no-unawaited-dot-catch-throw.*|no-unsanitized.*|no-use-extend-native.*|observers.*|prefer-arrow.*|perfectionist.*|prettier.*|promise.*|react.*|react-hooks.*|react-hooks-addons.*|redos.*|regexp.*|require-jsdoc.*|safe-jsx.*|security.*|sonarjs.*|sort-class-members.*|sort-destructure-keys.*|sort-keys-fix.*|sql-template.*|ssr-friendly.*|styled-components-a11y.*|switch-case.*|total-functions.*|tsdoc.*|unicorn.*|unused-imports.*|usememo-recommendations.*|validate-jsx-nesting.*|write-good-comments.*|xss.*|v8.*|c8.*|istanbul.*|nyc.*|codecov.*|coveralls.*|c8-coverage.*|codecov-coverage.*",
                     },
                 ],
-                "class-methods-use-this": "off",
+                "class-methods-use-this": "warn",
                 "dot-notation": "off",
+                "etc-misc/no-function-declare-after-return": "error",
+                "etc-misc/no-use-extend-native": "error",
+                "etc-misc/no-vulnerable": "error",
                 "func-style": "off",
                 "id-length": "off",
                 "max-classes-per-file": "off",
@@ -3382,7 +3259,7 @@ export const createConfig = (
                 "**/.github/workflow-templates/**/*.{yaml,yml}",
                 "**/.github/actions/**/*.{yaml,yml}",
             ],
-            name: "YAML/YML GitHub Workflows - Disables",
+            name: "🧾 YAML/YML GitHub Workflows - ⛔ Disables",
             rules: {
                 "yml/block-mapping-colon-indicator-newline": "off",
                 "yml/no-empty-key": "off",
@@ -3411,7 +3288,8 @@ export const createConfig = (
             ],
             languageOptions: {
                 globals: {
-                    ...globals.node,
+                    ...globals.nodeBuiltin,
+                    ...globals.vitest,
                     browser: "readonly",
                     context: "readonly",
                     expect: "readonly",
@@ -3429,7 +3307,7 @@ export const createConfig = (
                     warnOnUnsupportedTypeScriptVersion: true,
                 },
             },
-            name: "Playwright E2E Tests - playwright/**, test/e2e/**, **/*.e2e.*",
+            name: "🎭 Playwright E2E Tests: playwright/**, test/e2e/**, **/*.e2e.*",
             plugins: {
                 playwright: playwrightPlugin,
             },
@@ -3472,7 +3350,7 @@ export const createConfig = (
             ],
             languageOptions: {
                 globals: {
-                    ...globals.node,
+                    ...globals.nodeBuiltin,
                     browser: "readonly",
                     context: "readonly",
                     expect: "readonly",
@@ -3490,7 +3368,7 @@ export const createConfig = (
                     warnOnUnsupportedTypeScriptVersion: true,
                 },
             },
-            name: "Storybook Stories - **/*.stories.{ts,tsx,js,jsx}, .storybook/**",
+            name: "📖 Storybook Stories: **/*.stories.{ts,tsx,js,jsx}, .storybook/**",
             plugins: {
                 storybook: storybook,
             },
@@ -3526,7 +3404,8 @@ export const createConfig = (
             ],
             languageOptions: {
                 globals: {
-                    ...globals.node,
+                    ...globals.nodeBuiltin,
+                    ...globals.vue,
                     browser: "readonly",
                     context: "readonly",
                     expect: "readonly",
@@ -3545,7 +3424,7 @@ export const createConfig = (
                     warnOnUnsupportedTypeScriptVersion: true,
                 },
             },
-            name: "Vue SFCs - **/*.vue",
+            name: "🖖 Vue SFCs: **/*.vue",
             plugins: {
                 vue: vue,
             },
@@ -3771,8 +3650,10 @@ export const createConfig = (
             languageOptions: {
                 ecmaVersion: "latest",
                 globals: {
-                    ...globals.node,
-                    browser: "readonly",
+                    ...globals.nodeBuiltin,
+                    ...globals.astro,
+                    ...globals.browser,
+                    ...globals.vitest,
                     context: "readonly",
                     expect: "readonly",
                     page: "readonly",
@@ -3789,7 +3670,7 @@ export const createConfig = (
                 },
                 sourceType: "module",
             },
-            name: "Astro Components - **/*.astro",
+            name: "🚀 Astro Components: **/*.astro",
             plugins: {
                 astro: astroPlugin,
             },
@@ -3880,7 +3761,7 @@ export const createConfig = (
                     warnOnUnsupportedTypeScriptVersion: true,
                 },
             },
-            name: "Next.js Pages and App Router - app/**, pages/**, src/app/**, src/pages/**",
+            name: "⚛️ Next.js: Pages and App Router - app/**, pages/**, src/app/**, src/pages/**",
             plugins: {
                 "@next/next": nextPlugin,
             },
@@ -3914,20 +3795,20 @@ export const createConfig = (
         },
         // #endregion
         // #endregion
-        // #region 📴 Disables
+        // #region ⛔ Disables
         // ═══════════════════════════════════════════════════════════════════════════════
-        // SECTION: Disables
+        // SECTION: ⛔ Disables
         // ═══════════════════════════════════════════════════════════════════════════════
         {
             files: ["**/package.json", "**/package-lock.json"],
-            name: "JSON: Files - Disables",
+            name: "🧾 Package.JSON: Files - ⛔ Disables",
             rules: {
                 "json/sort-keys": "off",
             },
         },
         {
             files: ["**/.vscode/**"],
-            name: "VS Code Files - Disables",
+            name: "🛠️ VS Code Files - ⛔ Disables",
             rules: {
                 "jsonc/array-bracket-newline": "off",
             },
@@ -3939,7 +3820,7 @@ export const createConfig = (
         // ═══════════════════════════════════════════════════════════════════════════════
         {
             files: ["**/**"],
-            name: "Global: Stylistic Overrides",
+            name: "📐 Global: Stylistic - ⛔ Disables",
             plugins: {
                 "@stylistic": stylistic,
             },
@@ -3971,7 +3852,7 @@ export const createConfig = (
         // ═══════════════════════════════════════════════════════════════════════════════
         {
             files: ["**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}"],
-            name: "Global: Globals",
+            name: "🌐 Global:  ⛔ Disables",
             plugins: {
                 canonical: pluginCanonical,
                 "no-secrets": noSecrets,
@@ -4054,36 +3935,24 @@ export const createConfig = (
         },
         {
             files: [
-                "**/*.test.{ts,tsx}",
-                "**/*.spec.{ts,tsx}",
-                "src/test/**/*.{ts,tsx}",
-                "{tests,test}/**/*.{ts,tsx}",
+                "**/*.test.{ts,tsx,mts,cts,mjs,js,jsx,cjs}",
+                "**/*.spec.{ts,tsx,mts,cts,mjs,js,jsx,cjs}",
+                "src/test/**/*.{ts,tsx,mts,cts,mjs,js,jsx,cjs}",
+                "test/**/*.{ts,tsx,mts,cts,mjs,js,jsx,cjs}",
+                "tests/**/*.{ts,tsx,mts,cts,mjs,js,jsx,cjs}",
+                "benchmarks/**/*.{ts,tsx,mts,cts,mjs,js,jsx,cjs}",
+                "scripts/**/*.{ts,tsx,mts,cts,js,jsx,mjs,cjs}",
             ],
-            name: "Tests: relax strict void rules",
+            name: "📃 Typedoc: ⛔ Disable Require Exported Doc Comment in Test/Script/Benchmark Files",
             rules: {
                 // This rule is extremely noisy in tests (especially property-based
                 // tests) where callback return values are often incidental.
-                "@typescript-eslint/strict-void-return": "off",
                 "typedoc/require-exported-doc-comment": "off", // Tests often have non-exported members where doc comments would be low-value and high-effort.
             },
         },
         {
-            files: [
-                "benchmarks/**/*.{ts,tsx}",
-                "scripts/**/*.{ts,tsx,mts,cts,js,jsx,mjs,cjs}",
-            ],
-            name: "Benchmarks/Scripts: relax strict void rules",
-            rules: {
-                // Benchmarks frequently return measurement values from callbacks.
-                // Scripts commonly use void/Promise-returning callbacks where the
-                // return value is intentionally ignored.
-                "@typescript-eslint/strict-void-return": "off",
-                "typedoc/require-exported-doc-comment": "off", // Benchmarks and scripts often have non-exported members where doc comments would be low-value and high-effort.
-            },
-        },
-        {
             files: ["plugin.mjs", "src/**/*.{ts,tsx,mts,cts,js,mjs,cjs}"],
-            name: "Source runtime logging policy",
+            name: "📢 Source runtime logging policy: ⛔ Disables",
             rules: {
                 // Runtime/library code should not emit console output.
                 "no-console": "error",
@@ -4094,7 +3963,7 @@ export const createConfig = (
         },
         {
             files: ["eslint.config.mjs", "src/shared-config.ts"],
-            name: "Shared config implementation overrides",
+            name: "📦 Shared Config Implementation: ⛔ Disables",
             rules: {
                 "@typescript-eslint/strict-boolean-expressions": "off",
                 "max-lines-per-function": "off",
@@ -4119,12 +3988,13 @@ export const createConfig = (
                 "**/secretlint.config.{js,cjs,mjs}",
                 "**/secretlint.{js,cjs,mjs}",
             ],
-            name: "Secretlint Configs: relax strict void rules",
+            name: "🔒 Secretlint Configs: ⛔ Disables",
             // Secretlint configs often use CommonJS, and the import-x rule is too noisy to justify forcing all
             // configs to ESM.
             rules: {
                 "@typescript-eslint/no-require-imports": "off",
                 "import-x/no-commonjs": "off",
+                "import-x/unambiguous": "off",
             },
         },
         // #endregion

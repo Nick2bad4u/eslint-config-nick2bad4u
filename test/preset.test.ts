@@ -31,6 +31,82 @@ const hasRuleFromPlugin = (
     [...getRuleNames(configEntries)].some((ruleName) =>
         ruleName.startsWith(`${pluginName}/`)
     );
+
+const getPresetByName = (presetName: string): readonly Linter.Config[] => {
+    switch (presetName) {
+        case "withoutChunkyLint": {
+            return presets.withoutChunkyLint;
+        }
+
+        case "withoutCopilot": {
+            return presets.withoutCopilot;
+        }
+
+        case "withoutDocusaurus2": {
+            return presets.withoutDocusaurus2;
+        }
+
+        case "withoutEtcMisc": {
+            return presets.withoutEtcMisc;
+        }
+
+        case "withoutFileProgress2": {
+            return presets.withoutFileProgress2;
+        }
+
+        case "withoutGithubActions2": {
+            return presets.withoutGithubActions2;
+        }
+
+        case "withoutImmutable2": {
+            return presets.withoutImmutable2;
+        }
+
+        case "withoutRepo": {
+            return presets.withoutRepo;
+        }
+
+        case "withoutSdl2": {
+            return presets.withoutSdl2;
+        }
+
+        case "withoutStylelint2": {
+            return presets.withoutStylelint2;
+        }
+
+        case "withoutTsconfig": {
+            return presets.withoutTsconfig;
+        }
+
+        case "withoutTsdocRequire2": {
+            return presets.withoutTsdocRequire2;
+        }
+
+        case "withoutTypedoc": {
+            return presets.withoutTypedoc;
+        }
+
+        case "withoutTypefest": {
+            return presets.withoutTypefest;
+        }
+
+        case "withoutUptimeWatcher": {
+            return presets.withoutUptimeWatcher;
+        }
+
+        case "withoutVite": {
+            return presets.withoutVite;
+        }
+
+        case "withoutWriteGoodComments2": {
+            return presets.withoutWriteGoodComments2;
+        }
+
+        default: {
+            return presets.all;
+        }
+    }
+};
 /* eslint-enable @typescript-eslint/prefer-readonly-parameter-types -- Re-enable after local Linter.Config helpers. */
 
 describe("eslint-config-nick2bad4u presets", () => {
@@ -58,8 +134,8 @@ describe("eslint-config-nick2bad4u presets", () => {
         ["withoutStylelint2", "stylelint-2"],
         ["withoutTsconfig", "tsconfig"],
         ["withoutTsdocRequire2", "tsdoc-require-2"],
-        ["withoutTypefest", "typefest"],
         ["withoutTypedoc", "typedoc"],
+        ["withoutTypefest", "typefest"],
         ["withoutUptimeWatcher", "uptime-watcher"],
         ["withoutVite", "vite"],
         ["withoutWriteGoodComments2", "write-good-comments-2"],
@@ -68,7 +144,7 @@ describe("eslint-config-nick2bad4u presets", () => {
         (presetName, pluginName) => {
             expect.assertions(2);
 
-            const preset = presets[presetName] as readonly Linter.Config[];
+            const preset = getPresetByName(presetName);
             const registeredPluginNames = getRegisteredPluginNames(preset);
 
             expect(hasRuleFromPlugin(preset, pluginName)).toBeFalsy();

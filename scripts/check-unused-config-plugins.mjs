@@ -1,6 +1,35 @@
 import { createConfig } from "../dist/shared-config.js";
 
 /**
+ * @param {string} identifier
+ *
+ * @returns {string | null}
+ */
+const getNamespaceFromIdentifier = (identifier) => {
+    const parts = identifier.split("/");
+
+    if (parts.length === 0) {
+        return null;
+    }
+
+    const [firstPart, secondPart] = parts;
+
+    if (!firstPart) {
+        return null;
+    }
+
+    if (firstPart.startsWith("@")) {
+        if (parts.length >= 3 && secondPart) {
+            return `${firstPart}/${secondPart}`;
+        }
+
+        return firstPart;
+    }
+
+    return firstPart;
+};
+
+/**
  * @param {string} ruleName
  *
  * @returns {string | null}
@@ -14,15 +43,7 @@ const getRuleNamespace = (ruleName) => {
         return null;
     }
 
-    if (ruleName.startsWith("@")) {
-        const [scope, name] = ruleName.split("/");
-
-        return scope && name ? `${scope}/${name}` : null;
-    }
-
-    const [pluginName] = ruleName.split("/");
-
-    return pluginName ?? null;
+    return getNamespaceFromIdentifier(ruleName);
 };
 
 /**
@@ -35,15 +56,7 @@ const getProcessorNamespace = (processor) => {
         return null;
     }
 
-    if (processor.startsWith("@")) {
-        const [scope, name] = processor.split("/");
-
-        return scope && name ? `${scope}/${name}` : null;
-    }
-
-    const [pluginName] = processor.split("/");
-
-    return pluginName ?? null;
+    return getNamespaceFromIdentifier(processor);
 };
 
 const configs = createConfig();
