@@ -5,7 +5,7 @@
  */
 // eslint-disable-next-line @typescript-eslint/triple-slash-reference -- Local ambient declarations for untyped plugin modules.
 /// <reference path="./_types/eslint-plugin-shims.d.ts" />
-/* eslint-disable import-x/max-dependencies, @eslint-community/eslint-comments/disable-enable-pair, perfectionist/sort-imports, perfectionist/sort-modules, perfectionist/sort-interfaces, typefest/prefer-type-fest-except, typefest/prefer-type-fest-json-value, typefest/prefer-type-fest-unknown-record, typefest/prefer-ts-extras-is-defined, typefest/prefer-ts-extras-safe-cast-to, typefest/prefer-ts-extras-string-split, unicorn/no-array-reduce, @typescript-eslint/prefer-readonly-parameter-types -- Eslint doesn't use default */
+/* eslint-disable @eslint-community/eslint-comments/disable-enable-pair, perfectionist/sort-imports, perfectionist/sort-modules, perfectionist/sort-interfaces, typefest/prefer-type-fest-except, typefest/prefer-type-fest-json-value, typefest/prefer-type-fest-unknown-record, typefest/prefer-ts-extras-is-defined, typefest/prefer-ts-extras-safe-cast-to, typefest/prefer-ts-extras-string-split, unicorn/no-array-reduce, @typescript-eslint/prefer-readonly-parameter-types -- Eslint doesn't use default */
 
 import type { Linter } from "eslint";
 import pluginDocusaurus from "@docusaurus/eslint-plugin";
@@ -1276,19 +1276,7 @@ export const createConfig = (
                         allowPattern: "^[A-Z0-9_]+$",
                     },
                 ],
-                "@typescript-eslint/explicit-function-return-type": [
-                    "warn",
-                    {
-                        allowConciseArrowFunctionExpressionsStartingWithVoid: false,
-                        allowDirectConstAssertionInArrowFunctions: true,
-                        allowedNames: [],
-                        allowExpressions: false,
-                        allowFunctionsWithoutTypeParameters: false,
-                        allowHigherOrderFunctions: true,
-                        allowIIFEs: false,
-                        allowTypedFunctionExpressions: true,
-                    },
-                ],
+                "@typescript-eslint/explicit-function-return-type": "off",
                 "@typescript-eslint/explicit-member-accessibility": "warn",
                 "@typescript-eslint/explicit-module-boundary-types": "warn",
                 "@typescript-eslint/init-declarations": "warn",
@@ -1421,7 +1409,7 @@ export const createConfig = (
                 "@typescript-eslint/only-throw-error": "warn",
                 "@typescript-eslint/parameter-properties": "warn",
                 "@typescript-eslint/prefer-as-const": "warn",
-                "@typescript-eslint/prefer-destructuring": "warn",
+                "@typescript-eslint/prefer-destructuring": "off",
                 "@typescript-eslint/prefer-enum-initializers": "warn",
                 "@typescript-eslint/prefer-find": "warn",
                 "@typescript-eslint/prefer-for-of": "warn",
@@ -1692,6 +1680,7 @@ export const createConfig = (
                         tabSize: 4,
                     },
                 ],
+                complexity: "off",
                 "eslint-plugin/consistent-output": "error",
                 "eslint-plugin/fixer-return": "error",
                 "eslint-plugin/meta-property-ordering": [
@@ -1744,6 +1733,7 @@ export const createConfig = (
                 "etc-misc/no-function-declare-after-return": "warn",
                 "etc-misc/no-use-extend-native": "error",
                 "etc-misc/no-vulnerable": "error",
+                "func-style": "off",
                 "import-x/consistent-type-specifier-style": "off",
                 "import-x/default": "warn",
                 "import-x/dynamic-import-chunkname": "off",
@@ -1752,13 +1742,7 @@ export const createConfig = (
                 "import-x/extensions": "warn",
                 "import-x/first": "warn",
                 "import-x/group-exports": "off",
-                "import-x/max-dependencies": [
-                    "error",
-                    {
-                        ignoreTypeImports: true,
-                        max: 15,
-                    },
-                ],
+                "import-x/max-dependencies": "off",
                 "import-x/named": "warn",
                 "import-x/namespace": "warn",
                 "import-x/newline-after-import": "warn",
@@ -1807,17 +1791,20 @@ export const createConfig = (
                 "import-x/prefer-default-export": "off",
                 "import-x/prefer-namespace-import": "off",
                 "import-x/unambiguous": "warn",
+                "jsdoc/check-line-alignment": "off",
                 "jsdoc/require-description": "warn",
                 "jsdoc/require-param-description": "warn",
                 "jsdoc/require-returns-description": "off",
                 "math/abs": "warn",
                 "math/prefer-exponentiation-operator": "warn",
                 "math/prefer-math-sum-precise": "warn",
-                "module-interop/no-import-cjs": "warn",
+                "max-statements": "off",
+                "module-interop/no-import-cjs": "off",
                 "module-interop/no-require-esm": "warn",
                 "n/file-extension-in-import": "off",
                 "n/no-missing-file-extension": "off",
                 "n/no-missing-import": "off",
+                "no-continue": "off",
                 "perfectionist/sort-arrays": [
                     "warn",
                     {
@@ -1837,6 +1824,7 @@ export const createConfig = (
                         },
                     },
                 ],
+                "prefer-destructuring": "off",
                 "promise/no-multiple-resolved": "warn",
                 "promise/prefer-await-to-callbacks": "off",
                 "promise/prefer-await-to-then": "warn",
@@ -1846,7 +1834,8 @@ export const createConfig = (
                 "sdl/no-trusted-types-policy-pass-through": "error",
                 "sdl/no-unsafe-cast-to-trusted-types": "error",
                 "security/detect-non-literal-fs-filename": "warn",
-                "security/detect-object-injection": "warn",
+                "security/detect-object-injection": "off",
+                "sonarjs/cognitive-complexity": "off",
                 "sonarjs/cyclomatic-complexity": [
                     "warn",
                     {
@@ -1873,8 +1862,13 @@ export const createConfig = (
                         threshold: 7,
                     },
                 ],
+                "sonarjs/no-nested-conditional": "off",
                 "sort-imports": "off",
                 "sort-keys": "off",
+                "unicorn/consistent-destructuring": "off",
+                "unicorn/no-null": "off",
+                "unicorn/no-useless-undefined": "off",
+                "unicorn/prevent-abbreviations": "off",
                 "unused-imports/no-unused-imports": "error",
                 "unused-imports/no-unused-vars": "error",
             },
@@ -1886,7 +1880,6 @@ export const createConfig = (
                 "@typescript-eslint/no-unsafe-assignment": "off",
                 "@typescript-eslint/no-unsafe-member-access": "off",
                 "@typescript-eslint/no-unsafe-type-assertion": "off",
-                "canonical/id-match": "off",
                 "import-x/no-rename-default": "off",
                 "jsdoc/require-description": "off",
                 "jsdoc/require-param-description": "off",
@@ -1909,7 +1902,6 @@ export const createConfig = (
                 "@typescript-eslint/no-floating-promises": "off",
                 "@typescript-eslint/no-unsafe-assignment": "off",
                 canonical: "off",
-                "canonical/id-match": "off",
                 eqeqeq: "off",
                 "func-style": "off",
                 "max-statements": "off",
@@ -1999,7 +1991,10 @@ export const createConfig = (
                 "@typescript-eslint/no-non-null-assertion": "off",
                 "@typescript-eslint/no-restricted-types": "off", // Tests may need generic Function types
                 "@typescript-eslint/no-shadow": "off",
+                "@typescript-eslint/no-unnecessary-condition": "off",
+                "@typescript-eslint/no-unsafe-enum-comparison": "off",
                 "@typescript-eslint/no-unsafe-function-type": "off", // Tests may use generic handlers
+                "@typescript-eslint/no-unsafe-type-assertion": "off",
                 "@typescript-eslint/no-unused-vars": "off",
                 "@typescript-eslint/no-use-before-define": "off", // Allow use before define in tests
                 "@typescript-eslint/no-useless-default-assignment": "warn",
@@ -2074,6 +2069,8 @@ export const createConfig = (
                 "prefer-destructuring": "off",
                 "require-await": "off",
                 "require-unicode-regexp": "off",
+                "security/detect-non-literal-fs-filename": "off",
+                "sonarjs/no-duplicate-string": "off",
                 "sort-imports": "off",
                 "sort-keys": "off",
                 "testing-library/await-async-queries": "error",
@@ -2169,11 +2166,11 @@ export const createConfig = (
                 ], // Allow "class" prefix for className and other legitimate uses
                 "unicorn/no-null": "warn", // Null is common in test setups
                 "unicorn/no-unused-properties": "warn", // Allow unused properties in test setups
-                "unicorn/no-useless-undefined": "warn", // Allow undefined in test setups
+                "unicorn/no-useless-undefined": "off", // Allow undefined in test setups
                 "unicorn/prefer-global-this": "warn", // Allow globalThis for test setups
                 "unicorn/prefer-optional-catch-binding": "warn", // Allow optional catch binding for test flexibility
                 "unicorn/prevent-abbreviations": "warn", // Too many false positives in tests
-                "vitest/max-expects": "warn",
+                "vitest/max-expects": ["warn", { max: 20 }], // Encourage more focused tests, but allow flexibility when neededq
                 // Needs update to not use deprecated alias methods like
                 // Replace toThrow() with its canonical name oThrowError()
                 "vitest/no-alias-methods": "warn",
@@ -2190,7 +2187,7 @@ export const createConfig = (
                 "vitest/prefer-called-once": "warn",
                 // Conflicts with `prefer-called-once` for `.toHaveBeenCalledTimes(1)`.
                 // Keep the more specific once-only rule enabled.
-                "vitest/prefer-called-times": "warn",
+                "vitest/prefer-called-times": "off",
                 "vitest/prefer-called-with": "warn",
                 "vitest/prefer-comparison-matcher": "warn",
                 "vitest/prefer-describe-function-title": "warn",
@@ -2211,7 +2208,7 @@ export const createConfig = (
                 "vitest/prefer-to-have-length": "warn",
                 "vitest/prefer-todo": "warn",
                 "vitest/prefer-vi-mocked": "warn",
-                "vitest/require-hook": "warn",
+                "vitest/require-hook": "off",
                 "vitest/require-mock-type-parameters": "warn",
                 "vitest/require-test-timeout": "off",
                 "vitest/valid-expect": "warn",
@@ -2244,6 +2241,27 @@ export const createConfig = (
                 vitest: {
                     typecheck: true,
                 },
+            },
+        },
+        {
+            files: [
+                "benchmark/**/*.{ts,tsx,mts,cts,mjs,js,jsx,cjs}",
+                "benchmarks/**/*.{ts,tsx,mts,cts,mjs,js,jsx,cjs}",
+            ],
+            name: "🧪 Benchmarks: benchmark/** and benchmarks/**",
+            rules: {
+                "@typescript-eslint/no-unsafe-enum-comparison": "off",
+                "jsdoc/check-tag-names": "off",
+                "jsdoc/informative-docs": "off",
+                "jsdoc/no-defaults": "off",
+                "jsdoc/no-undefined-types": "off",
+                "jsdoc/require-returns-type": "off",
+                "jsdoc/require-template-description": "off",
+                "jsdoc/require-throws": "off",
+                "security/detect-non-literal-fs-filename": "off",
+                "unicorn/no-negated-condition": "off",
+                "unicorn/no-typeof-undefined": "off",
+                "vitest/require-hook": "off",
             },
         },
         // #endregion
@@ -3850,6 +3868,7 @@ export const createConfig = (
                 camelcase: "off",
                 "canonical/destructuring-property-newline": "off",
                 "canonical/export-specifier-newline": "off",
+                "canonical/id-match": "off",
                 "canonical/import-specifier-newline": "off",
                 "capitalized-comments": [
                     "error",
