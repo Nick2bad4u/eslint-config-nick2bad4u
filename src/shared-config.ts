@@ -3864,6 +3864,8 @@ export const createConfig = (
                 "no-unsanitized": nounsanitized,
             },
             rules: {
+                "@typescript-eslint/explicit-function-return-type": "off",
+                "@typescript-eslint/prefer-destructuring": "off",
                 "callback-return": "off",
                 camelcase: "off",
                 "canonical/destructuring-property-newline": "off",
@@ -3881,10 +3883,14 @@ export const createConfig = (
                     },
                 ],
                 "class-methods-use-this": "off",
+                complexity: "off",
                 "dot-notation": "off",
+                "func-style": "off",
                 "github-actions/no-top-level-permissions": "off",
                 // Deprecated rules - to be removed in future
                 "id-length": "off",
+                "import-x/max-dependencies": "off",
+                "jsdoc/check-line-alignment": "off",
                 "max-classes-per-file": "off",
                 "max-lines": "off",
                 // Sonar quality helpers
@@ -3898,7 +3904,10 @@ export const createConfig = (
                     },
                 ],
                 "max-params": "off",
+                "max-statements": "off",
+                "module-interop/no-import-cjs": "off",
                 "no-console": "off",
+                "no-continue": "off",
                 "no-debugger": "error",
                 "no-duplicate-imports": [
                     "error",
@@ -3932,10 +3941,18 @@ export const createConfig = (
                     "warn",
                     { allowNamedFunctions: true, allowUnboundThis: true },
                 ],
+                "prefer-destructuring": "off",
                 "prettier/prettier": "off", // Using in Prettier directly for less noise for AI
                 "require-await": "off",
                 "require-unicode-regexp": "off",
+                "security/detect-object-injection": "off",
+                "sonarjs/cognitive-complexity": "off",
                 "sonarjs/different-types-comparison": "off",
+                "sonarjs/no-nested-conditional": "off",
+                "unicorn/consistent-destructuring": "off",
+                "unicorn/no-null": "off",
+                "unicorn/no-useless-undefined": "off",
+                "unicorn/prevent-abbreviations": "off",
             },
         },
         {
