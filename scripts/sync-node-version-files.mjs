@@ -6,12 +6,12 @@
  * Source of truth:
  *
  * - Current runtime version by default (`process.versions.node`)
- * - Optional `--version x.y.z` override for automation
+ * - Optional `--version x.y.z` override for automation.
  *
  * Files managed:
  *
  * - `.node-version`
- * - `.nvmrc`
+ * - `.nvmrc`.
  */
 
 import { readFile, writeFile } from "node:fs/promises";
@@ -31,6 +31,8 @@ const nvmrcFilePath = fileURLToPath(new URL("../.nvmrc", import.meta.url));
  * @param {unknown} version
  *
  * @returns {string}
+ *
+ * @throws {TypeError} If version is not a string or does not match x.y.z format
  */
 const normalizeNodeVersion = (version) => {
     if (typeof version !== "string") {
@@ -64,7 +66,7 @@ const isRecord = (value) => typeof value === "object" && value !== null;
  *
  * - `--check`: validate file existence and synchronization only
  * - `--check-current`: validate files match current runtime version exactly
- * - `--version x.y.z` or `--version=x.y.z`: explicit version override
+ * - `--version x.y.z` or `--version=x.y.z`: explicit version override.
  *
  * @param {readonly string[]} argumentList
  *
@@ -73,6 +75,9 @@ const isRecord = (value) => typeof value === "object" && value !== null;
  *     checkCurrent: boolean;
  *     explicitVersion: string | null;
  * }}
+ *
+ * @throws {TypeError} If arguments are invalid or conflicting options are
+ *   provided
  */
 const parseArguments = (argumentList) => {
     /** @type {boolean} */
@@ -204,6 +209,9 @@ const compareExactVersions = (leftVersion, rightVersion) => {
  * @param {string | null} minimumEngineVersion
  *
  * @returns {void}
+ *
+ * @throws {RangeError} If preferred version is below the minimum supported
+ *   engine
  */
 const assertPreferredVersionSupported = (
     preferredVersion,

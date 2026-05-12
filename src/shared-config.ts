@@ -5,7 +5,7 @@
  */
 // eslint-disable-next-line @typescript-eslint/triple-slash-reference -- Local ambient declarations for untyped plugin modules.
 /// <reference path="./_types/eslint-plugin-shims.d.ts" />
-/* eslint-disable @eslint-community/eslint-comments/disable-enable-pair, perfectionist/sort-imports, perfectionist/sort-modules, perfectionist/sort-interfaces, typefest/prefer-type-fest-except, typefest/prefer-type-fest-json-value, typefest/prefer-type-fest-unknown-record, typefest/prefer-ts-extras-is-defined, typefest/prefer-ts-extras-safe-cast-to, typefest/prefer-ts-extras-string-split, unicorn/no-array-reduce, @typescript-eslint/prefer-readonly-parameter-types -- Eslint doesn't use default */
+/* eslint-disable import-x/max-dependencies, @eslint-community/eslint-comments/disable-enable-pair, perfectionist/sort-imports, perfectionist/sort-modules, perfectionist/sort-interfaces, typefest/prefer-type-fest-except, typefest/prefer-type-fest-json-value, typefest/prefer-type-fest-unknown-record, typefest/prefer-ts-extras-is-defined, typefest/prefer-ts-extras-safe-cast-to, typefest/prefer-ts-extras-string-split, unicorn/no-array-reduce, @typescript-eslint/prefer-readonly-parameter-types -- Eslint doesn't use default */
 
 import type { Linter } from "eslint";
 import pluginDocusaurus from "@docusaurus/eslint-plugin";
@@ -480,6 +480,17 @@ export const createConfig = (
         // SECTION: Custom Global Rules
         // ═══════════════════════════════════════════════════════════════════════════════
         // Add any global rules here that don't fit within specific plugin configs or that require custom options
+        // {
+        //     files: ["example.md"],
+        //     languageOptions: {
+        //         parser: example,
+        //         parserOptions: { jsonSyntax: "example" },
+        //     },
+        //     plugins: ["example"],
+        //     rules: {
+        //         "example/example": "error",
+        //     },
+        // },
         // #endregion
         // #region 🗣️ Global Language Options
         // ═══════════════════════════════════════════════════════════════════════════════
@@ -569,15 +580,13 @@ export const createConfig = (
         stylelint2.configs.all,
         {
             ...repoPlugin.configs.recommended,
+            // prettier-ignore
             rules: {
                 ...repoPlugin.configs.recommended.rules,
-                "repo-compliance/require-aws-amplify-artifacts-base-directory":
-                    "off",
-                "repo-compliance/require-aws-amplify-artifacts-base-directory-relative-path":
-                    "off",
+                "repo-compliance/require-aws-amplify-artifacts-base-directory": "off",
+                "repo-compliance/require-aws-amplify-artifacts-base-directory-relative-path": "off",
                 "repo-compliance/require-aws-amplify-artifacts-files": "off",
-                "repo-compliance/require-aws-amplify-artifacts-files-non-empty":
-                    "off",
+                "repo-compliance/require-aws-amplify-artifacts-files-non-empty": "off",
                 "repo-compliance/require-aws-amplify-build-commands": "off",
                 "repo-compliance/require-aws-amplify-config-file": "off",
                 "repo-compliance/require-aws-amplify-version": "off",
@@ -588,96 +597,68 @@ export const createConfig = (
                 "repo-compliance/require-azure-pipelines-pr-branches": "off",
                 "repo-compliance/require-azure-pipelines-pr-trigger": "off",
                 "repo-compliance/require-azure-pipelines-trigger": "off",
-                "repo-compliance/require-azure-pipelines-trigger-branches":
-                    "off",
-                "repo-compliance/require-azure-pipelines-trigger-include-branches":
-                    "off",
-                "repo-compliance/require-bitbucket-pipelines-clone-depth":
-                    "off",
-                "repo-compliance/require-bitbucket-pipelines-config-file":
-                    "off",
-                "repo-compliance/require-bitbucket-pipelines-default-pipeline":
-                    "off",
-                "repo-compliance/require-bitbucket-pipelines-image-pinned-tag":
-                    "off",
+                "repo-compliance/require-azure-pipelines-trigger-branches": "off",
+                "repo-compliance/require-azure-pipelines-trigger-include-branches": "off",
+                "repo-compliance/require-bitbucket-pipelines-clone-depth": "off",
+                "repo-compliance/require-bitbucket-pipelines-config-file": "off",
+                "repo-compliance/require-bitbucket-pipelines-default-pipeline": "off",
+                "repo-compliance/require-bitbucket-pipelines-image-pinned-tag": "off",
                 "repo-compliance/require-bitbucket-pipelines-max-time": "off",
-                "repo-compliance/require-bitbucket-pipelines-pull-requests":
-                    "off",
-                "repo-compliance/require-bitbucket-pipelines-pull-requests-target-branches":
-                    "off",
+                "repo-compliance/require-bitbucket-pipelines-pull-requests": "off",
+                "repo-compliance/require-bitbucket-pipelines-pull-requests-target-branches": "off",
                 "repo-compliance/require-bitbucket-pipelines-step-name": "off",
-                "repo-compliance/require-copilot-instructions-file": "off",
-                "repo-compliance/require-digitalocean-app-spec-component":
-                    "off",
+                "repo-compliance/require-copilot-instructions-file": "warn",
+                "repo-compliance/require-digitalocean-app-spec-component": "off",
                 "repo-compliance/require-digitalocean-app-spec-file": "off",
                 "repo-compliance/require-digitalocean-app-spec-name": "off",
-                "repo-compliance/require-digitalocean-app-spec-name-value":
-                    "off",
+                "repo-compliance/require-digitalocean-app-spec-name-value": "off",
                 "repo-compliance/require-digitalocean-app-spec-region": "off",
-                "repo-compliance/require-digitalocean-app-spec-region-lowercase":
-                    "off",
-                "repo-compliance/require-digitalocean-app-spec-region-value":
-                    "off",
+                "repo-compliance/require-digitalocean-app-spec-region-lowercase": "off",
+                "repo-compliance/require-digitalocean-app-spec-region-value": "off",
                 "repo-compliance/require-dockerfile": "off",
                 "repo-compliance/require-dockerfile-base-image-tag": "off",
                 "repo-compliance/require-dockerfile-cmd-or-entrypoint": "off",
-                "repo-compliance/require-dockerfile-first-instruction-from":
-                    "off",
+                "repo-compliance/require-dockerfile-first-instruction-from": "off",
                 "repo-compliance/require-dockerfile-from-instruction": "off",
                 "repo-compliance/require-dockerfile-user": "off",
                 "repo-compliance/require-dockerfile-workdir": "off",
                 "repo-compliance/require-dockerignore-file": "off",
                 "repo-compliance/require-forgejo-actions-concurrency": "off",
-                "repo-compliance/require-forgejo-actions-job-timeout-minutes":
-                    "off",
-                "repo-compliance/require-forgejo-actions-no-write-all-permissions":
-                    "off",
+                "repo-compliance/require-forgejo-actions-job-timeout-minutes": "off",
+                "repo-compliance/require-forgejo-actions-no-write-all-permissions": "off",
                 "repo-compliance/require-forgejo-actions-pinned-sha": "off",
-                "repo-compliance/require-forgejo-actions-workflow-dispatch":
-                    "off",
+                "repo-compliance/require-forgejo-actions-workflow-dispatch": "off",
                 "repo-compliance/require-forgejo-actions-workflow-file": "off",
                 "repo-compliance/require-forgejo-actions-workflow-name": "off",
-                "repo-compliance/require-forgejo-actions-workflow-permissions":
-                    "off",
-                "repo-compliance/require-forgejo-actions-workflow-trigger-coverage":
-                    "off",
+                "repo-compliance/require-forgejo-actions-workflow-permissions": "off",
+                "repo-compliance/require-forgejo-actions-workflow-trigger-coverage": "off",
                 "repo-compliance/require-gitlab-ci-cache-policy": "off",
                 "repo-compliance/require-gitlab-ci-config-file": "off",
                 "repo-compliance/require-gitlab-ci-default-timeout": "off",
                 "repo-compliance/require-gitlab-ci-interruptible": "off",
-                "repo-compliance/require-gitlab-ci-merge-request-pipelines":
-                    "off",
+                "repo-compliance/require-gitlab-ci-merge-request-pipelines": "off",
                 "repo-compliance/require-gitlab-ci-needs-dag": "off",
-                "repo-compliance/require-gitlab-ci-rules-over-only-except":
-                    "off",
+                "repo-compliance/require-gitlab-ci-rules-over-only-except": "off",
                 "repo-compliance/require-gitlab-ci-security-scanning": "off",
                 "repo-compliance/require-gitlab-ci-stages": "off",
                 "repo-compliance/require-gitlab-ci-workflow-rules": "off",
                 "repo-compliance/require-gitlab-issue-template-file": "off",
-                "repo-compliance/require-gitlab-merge-request-template-file":
-                    "off",
+                "repo-compliance/require-gitlab-merge-request-template-file": "off",
                 "repo-compliance/require-google-cloud-build-config-file": "off",
                 "repo-compliance/require-google-cloud-build-step-name": "off",
                 "repo-compliance/require-google-cloud-build-steps": "off",
-                "repo-compliance/require-google-cloud-build-steps-non-empty":
-                    "off",
+                "repo-compliance/require-google-cloud-build-steps-non-empty": "off",
                 "repo-compliance/require-google-cloud-build-timeout": "off",
-                "repo-compliance/require-google-cloud-build-timeout-format":
-                    "off",
+                "repo-compliance/require-google-cloud-build-timeout-format": "off",
                 "repo-compliance/require-google-cloud-build-timeout-max": "off",
-                "repo-compliance/require-google-cloud-build-timeout-positive":
-                    "off",
+                "repo-compliance/require-google-cloud-build-timeout-positive": "off",
                 "repo-compliance/require-netlify-build-command": "off",
-                "repo-compliance/require-netlify-build-command-non-empty":
-                    "off",
-                "repo-compliance/require-netlify-build-publish-directory":
-                    "off",
+                "repo-compliance/require-netlify-build-command-non-empty": "off",
+                "repo-compliance/require-netlify-build-publish-directory": "off",
                 "repo-compliance/require-netlify-build-section": "off",
                 "repo-compliance/require-netlify-config-file": "off",
-                "repo-compliance/require-netlify-publish-directory-no-trailing-slash":
-                    "off",
-                "repo-compliance/require-netlify-publish-directory-non-empty":
-                    "off",
+                "repo-compliance/require-netlify-publish-directory-no-trailing-slash": "off",
+                "repo-compliance/require-netlify-publish-directory-non-empty": "off",
                 "repo-compliance/require-netlify-publish-relative-path": "off",
                 "repo-compliance/require-pr-template-checklist-items": "warn",
                 "repo-compliance/require-readme-badges": "warn",
@@ -699,10 +680,10 @@ export const createConfig = (
             name: "⌨️ TypeDoc: recommended (repo tuned)",
             rules: {
                 ...typedocPlugin.configs.recommended.rules,
-                "typedoc/no-empty-private-remarks-tag": "off",
-                "typedoc/no-extra-type-param-tags": "off",
+                "typedoc/no-empty-private-remarks-tag": "warn",
+                "typedoc/no-extra-type-param-tags": "warn",
                 "typedoc/no-unknown-tags": "warn",
-                "typedoc/require-code-fence-language": "off",
+                "typedoc/require-code-fence-language": "warn",
                 "typedoc/require-default-value-tag": "off",
                 "typedoc/require-example-tag": "off",
                 "typedoc/require-package-documentation": "off",
@@ -711,10 +692,10 @@ export const createConfig = (
                 "typedoc/require-param-tags": "off",
                 "typedoc/require-returns-description": "off",
                 "typedoc/require-returns-tag": "off",
-                "typedoc/require-see-tag-link": "off",
+                "typedoc/require-see-tag-link": "warn",
                 "typedoc/require-since-tag-description": "off",
                 "typedoc/require-throws-description": "off",
-                "typedoc/require-throws-tag": "off",
+                "typedoc/require-throws-tag": "warn",
                 "typedoc/require-type-param-tag-description": "off",
                 "typedoc/require-type-param-tags": "off",
             },
@@ -759,6 +740,7 @@ export const createConfig = (
             name: "🧩 Array func: all (code files only)",
             rules: {
                 ...arrayFunc.configs.all.rules,
+                //  Always use spread. It's more performant and the TypeScript/JavaScript community standard.
                 "array-func/prefer-array-from": "off",
             },
         },
@@ -1079,10 +1061,12 @@ export const createConfig = (
                       plugins: {
                           "etc-misc": etcMisc,
                       },
+                      // prettier-ignore
                       rules: {
                           // Enable rules as needed or the config:
                           // ...etcMisc.configs.recommended.rules
-                          "etc-misc/class-match-filename": "off",
+
+                         "etc-misc/class-match-filename": "off",
                           "etc-misc/comment-spacing": "off",
                           "etc-misc/consistent-empty-lines": "off",
                           "etc-misc/consistent-enum-members": "off",
@@ -1102,31 +1086,31 @@ export const createConfig = (
                           "etc-misc/no-enum": "off",
                           "etc-misc/no-expression-empty-lines": "off",
                           "etc-misc/no-foreach": "off",
-                          "etc-misc/no-function-declare-after-return": "off",
-                          "etc-misc/no-implicit-any-catch": "off",
-                          "etc-misc/no-index-import": "off",
+                          "etc-misc/no-function-declare-after-return": "warn",
+                          "etc-misc/no-implicit-any-catch": "warn",
+                          "etc-misc/no-index-import": "warn",
                           "etc-misc/no-internal": "off",
                           "etc-misc/no-internal-modules": "off",
                           "etc-misc/no-language-mixing": "off",
                           "etc-misc/no-misused-generics": "off",
                           "etc-misc/no-negated-conditions": "off",
                           "etc-misc/no-nodejs-modules": "off",
-                          "etc-misc/no-param-reassign": "off",
+                          "etc-misc/no-param-reassign": "warn",
                           "etc-misc/no-sibling-import": "off",
                           "etc-misc/no-single-line-comment": "off",
                           "etc-misc/no-t": "off",
                           "etc-misc/no-underscore-export": "off",
                           "etc-misc/no-unnecessary-as-const": "off",
-                          "etc-misc/no-unnecessary-break": "off",
-                          "etc-misc/no-unnecessary-initialization": "off",
-                          "etc-misc/no-unnecessary-template-literal": "off",
-                          "etc-misc/no-use-extend-native": "off",
-                          "etc-misc/no-vulnerable": "off",
+                          "etc-misc/no-unnecessary-break": "warn",
+                          "etc-misc/no-unnecessary-initialization": "warn",
+                          "etc-misc/no-unnecessary-template-literal": "warn",
+                          "etc-misc/no-use-extend-native": "error",
+                          "etc-misc/no-vulnerable": "error",
                           "etc-misc/no-writeonly": "off",
                           "etc-misc/object-format": "off",
                           "etc-misc/only-export-name": "off",
                           "etc-misc/prefer-arrow-function-property": "off",
-                          "etc-misc/prefer-const-require": "off",
+                          "etc-misc/prefer-const-require": "warn",
                           "etc-misc/prefer-less-than": "off",
                           "etc-misc/prefer-only-export": "off",
                           "etc-misc/require-syntax": "off",
@@ -1138,87 +1122,54 @@ export const createConfig = (
                           "etc-misc/sort-keys": "off",
                           "etc-misc/sort-top-comments": "off",
                           "etc-misc/template-literal-format": "off",
-                          "etc-misc/throw-error": "off",
-                          "etc-misc/typescript/array-callback-return-type":
-                              "off",
-                          "etc-misc/typescript/consistent-array-type-name":
-                              "off",
-                          "etc-misc/typescript/define-function-in-one-statement":
-                              "off",
+                          "etc-misc/throw-error": "warn",
+                          "etc-misc/typescript/array-callback-return-type": "off",
+                          "etc-misc/typescript/consistent-array-type-name": "off",
+                          "etc-misc/typescript/define-function-in-one-statement": "off",
                           "etc-misc/typescript/no-boolean-literal-type": "off",
-                          "etc-misc/typescript/no-complex-declarator-type":
-                              "off",
+                          "etc-misc/typescript/no-complex-declarator-type": "off",
                           "etc-misc/typescript/no-complex-return-type": "off",
                           "etc-misc/typescript/no-multi-type-tuples": "off",
                           "etc-misc/typescript/no-never": "off",
-                          "etc-misc/typescript/no-redundant-undefined-const":
-                              "off",
-                          "etc-misc/typescript/no-redundant-undefined-default-parameter":
-                              "off",
-                          "etc-misc/typescript/no-redundant-undefined-let":
-                              "off",
-                          "etc-misc/typescript/no-redundant-undefined-optional":
-                              "off",
-                          "etc-misc/typescript/no-redundant-undefined-promise-return-type":
-                              "off",
-                          "etc-misc/typescript/no-redundant-undefined-readonly-property":
-                              "off",
-                          "etc-misc/typescript/no-redundant-undefined-return-type":
-                              "off",
-                          "etc-misc/typescript/no-redundant-undefined-var":
-                              "off",
+                          "etc-misc/typescript/no-redundant-undefined-const": "off",
+                          "etc-misc/typescript/no-redundant-undefined-default-parameter": "off",
+                          "etc-misc/typescript/no-redundant-undefined-let": "off",
+                          "etc-misc/typescript/no-redundant-undefined-optional": "off",
+                          "etc-misc/typescript/no-redundant-undefined-promise-return-type": "off",
+                          "etc-misc/typescript/no-redundant-undefined-readonly-property": "off",
+                          "etc-misc/typescript/no-redundant-undefined-return-type": "off",
+                          "etc-misc/typescript/no-redundant-undefined-var": "off",
                           "etc-misc/typescript/no-unsafe-object-assign": "off",
-                          "etc-misc/typescript/no-unsafe-object-assignment":
-                              "off",
+                          "etc-misc/typescript/no-unsafe-object-assignment": "off",
                           "etc-misc/typescript/prefer-array-type-alias": "off",
                           "etc-misc/typescript/prefer-class-method": "off",
                           "etc-misc/typescript/prefer-enum": "off",
-                          "etc-misc/typescript/prefer-named-tuple-members":
-                              "off",
+                          "etc-misc/typescript/prefer-named-tuple-members": "off",
                           "etc-misc/typescript/prefer-readonly-array": "off",
-                          "etc-misc/typescript/prefer-readonly-array-parameter":
-                              "off",
-                          "etc-misc/typescript/prefer-readonly-index-signature":
-                              "off",
+                          "etc-misc/typescript/prefer-readonly-array-parameter": "off",
+                          "etc-misc/typescript/prefer-readonly-index-signature": "off",
                           "etc-misc/typescript/prefer-readonly-map": "off",
                           "etc-misc/typescript/prefer-readonly-property": "off",
                           "etc-misc/typescript/prefer-readonly-record": "off",
                           "etc-misc/typescript/prefer-readonly-set": "off",
-                          "etc-misc/typescript/require-prop-type-annotation":
-                              "off",
-                          "etc-misc/typescript/require-readonly-array-property-type":
-                              "off",
-                          "etc-misc/typescript/require-readonly-array-return-type":
-                              "off",
-                          "etc-misc/typescript/require-readonly-array-type-alias":
-                              "off",
-                          "etc-misc/typescript/require-readonly-map-parameter-type":
-                              "off",
-                          "etc-misc/typescript/require-readonly-map-property-type":
-                              "off",
-                          "etc-misc/typescript/require-readonly-map-return-type":
-                              "off",
-                          "etc-misc/typescript/require-readonly-map-type-alias":
-                              "off",
-                          "etc-misc/typescript/require-readonly-record-parameter-type":
-                              "off",
-                          "etc-misc/typescript/require-readonly-record-property-type":
-                              "off",
-                          "etc-misc/typescript/require-readonly-record-return-type":
-                              "off",
-                          "etc-misc/typescript/require-readonly-record-type-alias":
-                              "off",
-                          "etc-misc/typescript/require-readonly-set-parameter-type":
-                              "off",
-                          "etc-misc/typescript/require-readonly-set-property-type":
-                              "off",
-                          "etc-misc/typescript/require-readonly-set-return-type":
-                              "off",
-                          "etc-misc/typescript/require-readonly-set-type-alias":
-                              "off",
+                          "etc-misc/typescript/require-prop-type-annotation": "off",
+                          "etc-misc/typescript/require-readonly-array-property-type": "off",
+                          "etc-misc/typescript/require-readonly-array-return-type": "off",
+                          "etc-misc/typescript/require-readonly-array-type-alias": "off",
+                          "etc-misc/typescript/require-readonly-map-parameter-type": "off",
+                          "etc-misc/typescript/require-readonly-map-property-type": "off",
+                          "etc-misc/typescript/require-readonly-map-return-type": "off",
+                          "etc-misc/typescript/require-readonly-map-type-alias": "off",
+                          "etc-misc/typescript/require-readonly-record-parameter-type": "off",
+                          "etc-misc/typescript/require-readonly-record-property-type": "off",
+                          "etc-misc/typescript/require-readonly-record-return-type": "off",
+                          "etc-misc/typescript/require-readonly-record-type-alias": "off",
+                          "etc-misc/typescript/require-readonly-set-parameter-type": "off",
+                          "etc-misc/typescript/require-readonly-set-property-type": "off",
+                          "etc-misc/typescript/require-readonly-set-return-type": "off",
+                          "etc-misc/typescript/require-readonly-set-type-alias": "off",
                           "etc-misc/typescript/require-this-void": "off",
-                          "etc-misc/underscore-internal": "off",
-                      },
+                          "etc-misc/underscore-internal": "off",           },
                   },
               ]),
         // #endregion
@@ -1790,7 +1741,7 @@ export const createConfig = (
                 "eslint-plugin/test-case-property-ordering": "warn",
                 "eslint-plugin/test-case-shorthand-strings": "error",
                 "eslint-plugin/unique-test-case-names": "error",
-                "etc-misc/no-function-declare-after-return": "error",
+                "etc-misc/no-function-declare-after-return": "warn",
                 "etc-misc/no-use-extend-native": "error",
                 "etc-misc/no-vulnerable": "error",
                 "import-x/consistent-type-specifier-style": "off",
@@ -1801,7 +1752,13 @@ export const createConfig = (
                 "import-x/extensions": "warn",
                 "import-x/first": "warn",
                 "import-x/group-exports": "off",
-                "import-x/max-dependencies": "off",
+                "import-x/max-dependencies": [
+                    "error",
+                    {
+                        ignoreTypeImports: true,
+                        max: 15,
+                    },
+                ],
                 "import-x/named": "warn",
                 "import-x/namespace": "warn",
                 "import-x/newline-after-import": "warn",
@@ -1852,7 +1809,7 @@ export const createConfig = (
                 "import-x/unambiguous": "warn",
                 "jsdoc/require-description": "warn",
                 "jsdoc/require-param-description": "warn",
-                "jsdoc/require-returns-description": "warn",
+                "jsdoc/require-returns-description": "off",
                 "math/abs": "warn",
                 "math/prefer-exponentiation-operator": "warn",
                 "math/prefer-math-sum-precise": "warn",
@@ -1890,6 +1847,32 @@ export const createConfig = (
                 "sdl/no-unsafe-cast-to-trusted-types": "error",
                 "security/detect-non-literal-fs-filename": "warn",
                 "security/detect-object-injection": "warn",
+                "sonarjs/cyclomatic-complexity": [
+                    "warn",
+                    {
+                        threshold: 25,
+                    },
+                ],
+                "sonarjs/elseif-without-else": "warn",
+                "sonarjs/max-union-size": [
+                    "warn",
+                    {
+                        threshold: 8,
+                    },
+                ],
+                "sonarjs/nested-control-flow": [
+                    "warn",
+                    {
+                        maximumNestingLevel: 6,
+                    },
+                ],
+                "sonarjs/no-duplicate-string": [
+                    "warn",
+                    {
+                        ignoreStrings: "application/json",
+                        threshold: 7,
+                    },
+                ],
                 "sort-imports": "off",
                 "sort-keys": "off",
                 "unused-imports/no-unused-imports": "error",
@@ -2276,12 +2259,15 @@ export const createConfig = (
             },
             name: "📦 Package: **/Package.json",
             plugins: {
+                depend: depend,
                 json: json,
                 "node-dependencies": nodeDependencies,
                 "package-json": packageJson,
             },
             rules: {
                 ...json.configs.recommended.rules,
+
+                "depend/ban-dependencies": "error",
                 // NOTE: Keeping node-dependencies scoped to package.json avoids perf + parser issues.
                 "node-dependencies/absolute-version": [
                     "error",
@@ -2656,6 +2642,7 @@ export const createConfig = (
                 "html/prefer-https": "warn",
                 "html/require-attrs": "warn",
                 "html/require-button-type": "warn",
+                // Conflicts with prettier
                 "html/require-closing-tags": "off",
                 "html/require-content": "warn",
                 "html/require-details-summary": "warn",
@@ -2891,7 +2878,7 @@ export const createConfig = (
         // SECTION: JS JsDoc
         // ═══════════════════════════════════════════════════════════════════════════════
         {
-            files: ["scripts/**/*.{js,cjs,mjs}"],
+            files: ["**/*.{js,cjs,mjs,jsx}"],
             languageOptions: {
                 globals: {
                     ...globals.builtin,
@@ -2910,11 +2897,11 @@ export const createConfig = (
                 "jsdoc/check-access": "warn", // Recommended
                 "jsdoc/check-alignment": "warn", // Recommended
                 "jsdoc/check-indentation": "off",
-                "jsdoc/check-line-alignment": "off",
+                "jsdoc/check-line-alignment": "warn",
                 "jsdoc/check-param-names": "warn", // Recommended
                 "jsdoc/check-property-names": "warn", // Recommended
                 "jsdoc/check-syntax": "warn",
-                "jsdoc/check-tag-names": "off", // Recommended
+                "jsdoc/check-tag-names": "warn", // Recommended
                 "jsdoc/check-template-names": "warn",
                 "jsdoc/check-types": "warn", // Recommended
                 "jsdoc/check-values": "warn", // Recommended
@@ -2923,23 +2910,23 @@ export const createConfig = (
                 "jsdoc/escape-inline-tags": "warn", // Recommended for TS configs
                 "jsdoc/implements-on-classes": "warn", // Recommended
                 "jsdoc/imports-as-dependencies": "warn",
-                "jsdoc/informative-docs": "off",
+                "jsdoc/informative-docs": "warn",
                 "jsdoc/lines-before-block": "warn",
-                "jsdoc/match-description": "off",
+                "jsdoc/match-description": "warn",
                 "jsdoc/match-name": "off",
                 "jsdoc/multiline-blocks": "warn", // Recommended
                 "jsdoc/no-bad-blocks": "warn",
                 "jsdoc/no-blank-block-descriptions": "warn",
-                "jsdoc/no-blank-blocks": "off",
+                "jsdoc/no-blank-blocks": "warn",
                 "jsdoc/no-defaults": "warn", // Recommended
                 "jsdoc/no-missing-syntax": "off",
                 "jsdoc/no-multi-asterisks": "warn", // Recommended
                 "jsdoc/no-restricted-syntax": "off",
                 "jsdoc/no-types": "off", // Recommended for TS configs
-                "jsdoc/no-undefined-types": "off", // Too noisy for tooling scripts
-                "jsdoc/prefer-import-tag": "off",
-                "jsdoc/reject-any-type": "off",
-                "jsdoc/reject-function-type": "off",
+                "jsdoc/no-undefined-types": "warn", // Too noisy for tooling scripts
+                "jsdoc/prefer-import-tag": "warn",
+                "jsdoc/reject-any-type": "warn",
+                "jsdoc/reject-function-type": "warn",
                 "jsdoc/require-asterisk-prefix": "warn",
                 "jsdoc/require-description": "off",
                 "jsdoc/require-description-complete-sentence": "off",
@@ -2952,7 +2939,7 @@ export const createConfig = (
                 "jsdoc/require-param": "off", // Too noisy for tooling scripts
                 "jsdoc/require-param-description": "off", // Too noisy for tooling scripts
                 "jsdoc/require-param-name": "warn", // Recommended
-                "jsdoc/require-param-type": "off",
+                "jsdoc/require-param-type": "warn",
                 "jsdoc/require-property": "warn", // Recommended
                 "jsdoc/require-property-description": "warn", // Recommended
                 "jsdoc/require-property-name": "warn", // Recommended
@@ -2961,19 +2948,19 @@ export const createConfig = (
                 "jsdoc/require-returns": "off", // Too noisy for tooling scripts
                 "jsdoc/require-returns-check": "warn", // Recommended
                 "jsdoc/require-returns-description": "off", // Too noisy for tooling scripts
-                "jsdoc/require-returns-type": "off",
+                "jsdoc/require-returns-type": "warn",
                 "jsdoc/require-tags": "off",
                 "jsdoc/require-template": "warn",
                 "jsdoc/require-template-description": "warn",
-                "jsdoc/require-throws": "off",
+                "jsdoc/require-throws": "warn",
                 "jsdoc/require-throws-description": "warn",
-                "jsdoc/require-throws-type": "off",
+                "jsdoc/require-throws-type": "warn",
                 "jsdoc/require-yields": "warn", // Recommended
                 "jsdoc/require-yields-check": "warn", // Recommended
                 "jsdoc/require-yields-description": "warn",
                 "jsdoc/require-yields-type": "warn", // Recommended
-                "jsdoc/sort-tags": "off",
-                "jsdoc/tag-lines": "off", // Recommended
+                "jsdoc/sort-tags": "off", // Conflicts with Prettier
+                "jsdoc/tag-lines": "off", // Conflicts with Prettier
                 "jsdoc/text-escaping": [
                     "warn",
                     {
@@ -3065,7 +3052,7 @@ export const createConfig = (
                 ],
                 "class-methods-use-this": "warn",
                 "dot-notation": "off",
-                "etc-misc/no-function-declare-after-return": "error",
+                "etc-misc/no-function-declare-after-return": "warn",
                 "etc-misc/no-use-extend-native": "error",
                 "etc-misc/no-vulnerable": "error",
                 "func-style": "off",
@@ -3730,7 +3717,7 @@ export const createConfig = (
                 "astro/prefer-object-class-list": "warn",
                 "astro/prefer-split-class-list": "warn",
                 "astro/semi": "warn",
-                "astro/sort-attributes": "off",
+                "astro/sort-attributes": "warn",
                 "astro/valid-compile": "error",
             },
         },
@@ -3875,7 +3862,6 @@ export const createConfig = (
                     },
                 ],
                 "class-methods-use-this": "off",
-                "depend/ban-dependencies": "off",
                 "dot-notation": "off",
                 "github-actions/no-top-level-permissions": "off",
                 // Deprecated rules - to be removed in future
