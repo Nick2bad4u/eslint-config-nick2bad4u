@@ -395,6 +395,7 @@ export const createConfig = (
     const configs = [
         globalIgnores(
             [
+                "**/AGENTS.md",
                 "**/CHANGELOG.md",
                 ".remarkrc.mjs",
                 "test/fixtures/**",

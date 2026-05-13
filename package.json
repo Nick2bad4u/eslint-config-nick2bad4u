@@ -125,7 +125,7 @@
         "eslint-plugin-depend": "^1.5.0",
         "eslint-plugin-docusaurus-2": "^1.0.0",
         "eslint-plugin-eslint-plugin": "^7.3.3",
-        "eslint-plugin-etc-misc": "^1.1.3",
+        "eslint-plugin-etc-misc": "^1.1.4",
         "eslint-plugin-file-progress-2": "^5.1.1",
         "eslint-plugin-github-actions-2": "^1.1.3",
         "eslint-plugin-immutable-2": "^1.2.1",
