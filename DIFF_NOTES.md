@@ -1,4 +1,4 @@
-## Removed README wording
+# Removed README wording
 
 Moved out of `README.md` per maintainer request:
 

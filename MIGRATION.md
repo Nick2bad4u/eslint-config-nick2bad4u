@@ -86,7 +86,7 @@ Remove the old file and create a minimal one that delegates to the shared config
 Remove-Item "eslint.config.mjs","eslint.config.js","eslint.config.cjs" -ErrorAction SilentlyContinue
 ```
 
-There are two styles — pick the one that fits your repo.
+Pick one of two styles — pick the one that fits your repo.
 
 ---
 
@@ -152,6 +152,8 @@ Use this style when you need to customise:
 - `rootDirectory` — project root for the TypeScript parser
 - `tsconfigPaths` — which tsconfig files to use (e.g. add `tsconfig.docusaurus.json` for docs builds)
 - `plugins` — swap out or disable specific plugin namespaces
+
+For example:
 
 ```js
 import { createConfig } from "eslint-config-nick2bad4u";
@@ -389,8 +391,11 @@ npm run lint
 Write-Host "Migration complete! Review the new eslint.config.mjs and adjust presets or add overrides as needed. Make sure to add "**/*", "**/.*" to your tsconfig.eslint.json include if you haven't already." -ForegroundColor Green
 ```
 
+## Files missed due to accompanying d.mts files
 
-## If you have issues with files not being picked up due to accompanying d.mts files, ensure your `tsconfig.eslint.json` includes the following in the `files` and `include` lists:
+If files are not being picked up due to accompanying d.mts files, ensure your
+`tsconfig.eslint.json` includes the following in the `files` and `include`
+lists:
 
 ```json
     "files": [

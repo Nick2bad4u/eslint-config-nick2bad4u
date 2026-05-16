@@ -67,43 +67,39 @@ const findings = [];
 for (const config of configs) {
     const plugins = config.plugins;
 
-    if (plugins === undefined || plugins === null) {
-        continue;
-    }
+    if (plugins !== undefined && plugins !== null) {
+        const declaredPluginNames = Object.keys(plugins);
 
-    const declaredPluginNames = Object.keys(plugins);
+        if (declaredPluginNames.length > 0) {
+            const usedPluginNamespaces = new Set();
 
-    if (declaredPluginNames.length === 0) {
-        continue;
-    }
+            const rules = config.rules ?? {};
 
-    const usedPluginNamespaces = new Set();
+            for (const ruleName of Object.keys(rules)) {
+                const namespace = getRuleNamespace(ruleName);
 
-    const rules = config.rules ?? {};
+                if (namespace !== null) {
+                    usedPluginNamespaces.add(namespace);
+                }
+            }
 
-    for (const ruleName of Object.keys(rules)) {
-        const namespace = getRuleNamespace(ruleName);
+            const processorNamespace = getProcessorNamespace(config.processor);
 
-        if (namespace !== null) {
-            usedPluginNamespaces.add(namespace);
+            if (processorNamespace !== null) {
+                usedPluginNamespaces.add(processorNamespace);
+            }
+
+            const unusedPlugins = declaredPluginNames.filter(
+                (pluginName) => !usedPluginNamespaces.has(pluginName)
+            );
+
+            if (unusedPlugins.length > 0) {
+                findings.push({
+                    name: config.name ?? "(unnamed config block)",
+                    plugins: unusedPlugins,
+                });
+            }
         }
-    }
-
-    const processorNamespace = getProcessorNamespace(config.processor);
-
-    if (processorNamespace !== null) {
-        usedPluginNamespaces.add(processorNamespace);
-    }
-
-    const unusedPlugins = declaredPluginNames.filter(
-        (pluginName) => !usedPluginNamespaces.has(pluginName)
-    );
-
-    if (unusedPlugins.length > 0) {
-        findings.push({
-            name: config.name ?? "(unnamed config block)",
-            plugins: unusedPlugins,
-        });
     }
 }
 

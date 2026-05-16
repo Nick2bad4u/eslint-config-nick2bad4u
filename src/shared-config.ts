@@ -5,7 +5,7 @@
  */
 // eslint-disable-next-line @typescript-eslint/triple-slash-reference -- Local ambient declarations for untyped plugin modules.
 /// <reference path="./_types/eslint-plugin-shims.d.ts" />
-/* eslint-disable @eslint-community/eslint-comments/disable-enable-pair, perfectionist/sort-imports, perfectionist/sort-modules, perfectionist/sort-interfaces, typefest/prefer-type-fest-except, typefest/prefer-type-fest-json-value, typefest/prefer-type-fest-unknown-record, typefest/prefer-ts-extras-is-defined, typefest/prefer-ts-extras-safe-cast-to, typefest/prefer-ts-extras-string-split, unicorn/no-array-reduce, @typescript-eslint/prefer-readonly-parameter-types -- Eslint doesn't use default */
+/* eslint-disable @eslint-community/eslint-comments/disable-enable-pair, sonarjs/no-duplicate-string, perfectionist/sort-imports, perfectionist/sort-modules, perfectionist/sort-interfaces, typefest/prefer-type-fest-except, typefest/prefer-type-fest-json-value, typefest/prefer-type-fest-unknown-record, typefest/prefer-ts-extras-is-defined, typefest/prefer-ts-extras-safe-cast-to, typefest/prefer-ts-extras-string-split, unicorn/no-array-reduce, @typescript-eslint/prefer-readonly-parameter-types -- Eslint doesn't use default */
 
 import type { Linter } from "eslint";
 import pluginDocusaurus from "@docusaurus/eslint-plugin";
@@ -61,10 +61,11 @@ import playwrightPlugin from "eslint-plugin-playwright";
 import pluginPrettier from "eslint-plugin-prettier";
 import pluginPromise from "eslint-plugin-promise";
 import pluginRegexp from "eslint-plugin-regexp";
+import remark from "eslint-plugin-remark";
 import repoPlugin from "eslint-plugin-repo";
 import sdl from "eslint-plugin-sdl-2";
 import pluginSecurity from "eslint-plugin-security";
-import sonarjs, { configs as sonarjsConfigs } from "eslint-plugin-sonarjs";
+import { configs as sonarjsConfigs } from "eslint-plugin-sonarjs";
 import storybook from "eslint-plugin-storybook";
 import stylelint2 from "eslint-plugin-stylelint-2";
 import pluginTestingLibrary from "eslint-plugin-testing-library";
@@ -143,8 +144,8 @@ const DEFAULT_TSCONFIG_PATHS = Object.freeze(["./tsconfig.eslint.json"]);
 type EslintConfig = Linter.Config;
 
 interface ConfigurablePlugin {
-    readonly configs?: Readonly<Record<string, unknown>>;
-    readonly flat?: Readonly<Record<string, unknown>>;
+    readonly configs?: object;
+    readonly flat?: object;
 }
 
 type PluginOverride = ConfigurablePlugin | false | null | undefined;
@@ -397,7 +398,6 @@ export const createConfig = (
             [
                 "**/AGENTS.md",
                 "**/CHANGELOG.md",
-                ".remarkrc.mjs",
                 "test/fixtures/**",
                 "**/**-instructions.md",
                 "**/**.instructions.md",
@@ -520,7 +520,7 @@ export const createConfig = (
         },
         // #endregion
         {
-            files: ["**/*.d.{ts,mts,cts}"],
+            files: ["**/*.d.{ts,tsx,mts,cts}"],
             languageOptions: {
                 parser: tseslintParser,
                 parserOptions: {
@@ -544,6 +544,71 @@ export const createConfig = (
             ...importX.flatConfigs.typescript,
             files: ["**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}"],
             name: "📦 Import-X: TypeScript (code files only)",
+        },
+        {
+            ...sonarjsConfigs.recommended,
+            files: ["**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}"],
+            name: "📦 SonarJS: Recommended (code files only)",
+            rules: {
+                ...sonarjsConfigs.recommended.rules,
+                "sonarjs/arguments-usage": "warn",
+                "sonarjs/array-constructor": "warn",
+                "sonarjs/aws-iam-all-resources-accessible": "warn",
+                "sonarjs/cognitive-complexity": ["warn", 30],
+                "sonarjs/comment-regex": "warn",
+                "sonarjs/cyclomatic-complexity": [
+                    "warn",
+                    {
+                        threshold: 25,
+                    },
+                ],
+                "sonarjs/declarations-in-global-scope": "off",
+                "sonarjs/different-types-comparison": "off",
+                "sonarjs/elseif-without-else": "warn",
+                "sonarjs/expression-complexity": ["warn", { max: 10 }],
+                "sonarjs/for-in": "warn",
+                "sonarjs/max-union-size": [
+                    "warn",
+                    {
+                        threshold: 8,
+                    },
+                ],
+                "sonarjs/nested-control-flow": [
+                    "warn",
+                    {
+                        maximumNestingLevel: 6,
+                    },
+                ],
+                "sonarjs/no-built-in-override": "warn",
+                "sonarjs/no-collapsible-if": "warn",
+                "sonarjs/no-duplicate-string": [
+                    "warn",
+                    {
+                        ignoreStrings: "application/json",
+                        threshold: 7,
+                    },
+                ],
+                "sonarjs/no-for-in-iterable": "warn",
+                "sonarjs/no-function-declaration-in-block": "warn",
+                "sonarjs/no-implicit-dependencies": "warn",
+                "sonarjs/no-inconsistent-returns": "warn",
+                "sonarjs/no-incorrect-string-concat": "warn",
+                "sonarjs/no-nested-conditional": "off",
+                "sonarjs/no-nested-incdec": "warn",
+                "sonarjs/no-nested-switch": "warn",
+                "sonarjs/no-reference-error": "warn",
+                "sonarjs/no-require-or-define": "warn",
+                "sonarjs/no-return-type-any": "warn",
+                "sonarjs/no-sonar-comments": "error",
+                "sonarjs/no-undefined-assignment": "warn",
+                "sonarjs/no-unused-function-argument": "warn",
+                "sonarjs/non-number-in-arithmetic-expression": "warn",
+                "sonarjs/operation-returning-nan": "warn",
+                "sonarjs/prefer-immediate-return": "warn",
+                "sonarjs/shorthand-property-grouping": "off",
+                "sonarjs/strings-comparison": "warn",
+                "sonarjs/too-many-break-or-continue-in-loop": "warn",
+            },
         },
         {
             files: ["**/*.d.ts"],
@@ -573,6 +638,7 @@ export const createConfig = (
                 ...tsconfigPlugin.configs.all.rules,
             },
         },
+        remark.configs.all,
         progress.configs["recommended-ci"],
         copilot.configs.all,
         sdl.configs.required,
@@ -745,7 +811,11 @@ export const createConfig = (
                 "array-func/prefer-array-from": "off",
             },
         },
-        deMorgan.configs.recommended,
+        {
+            files: ["**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}"],
+            name: "🧩 De Morgan: recommended (code files only)",
+            ...deMorgan.configs.recommended,
+        },
         ...pluginCasePolice.configs.recommended,
         // ...jsdocPlugin.configs["examples-and-default-expressions"],
         // #endregion
@@ -907,7 +977,7 @@ export const createConfig = (
         // SECTION: Docusaurus (docusaurus/*)
         // ═══════════════════════════════════════════════════════════════════════════════
         {
-            files: ["docs/docusaurus/**/*.{js,mjs,cjs,ts,mts,cts,tsx,jsx}"],
+            files: ["docs/docusaurus/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}"],
             ignores: [
                 "docs/docusaurus/.docusaurus/**",
                 "docs/docusaurus/build/**",
@@ -1055,8 +1125,8 @@ export const createConfig = (
             : [
                   {
                       files: [
-                          "src/**/*.{ts,tsx,mts,cts}",
-                          //    "test/**/*.{ts,tsx,mts,cts}"
+                          "src/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
+                          //    "test/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}"
                       ],
                       name: "⌨️ Etc-Misc: Rules for Source",
                       plugins: {
@@ -1170,7 +1240,8 @@ export const createConfig = (
                           "etc-misc/typescript/require-readonly-set-return-type": "off",
                           "etc-misc/typescript/require-readonly-set-type-alias": "off",
                           "etc-misc/typescript/require-this-void": "off",
-                          "etc-misc/underscore-internal": "off",           },
+                          "etc-misc/underscore-internal": "off",
+                      },
                   },
               ]),
         // #endregion
@@ -1180,10 +1251,10 @@ export const createConfig = (
         // ═══════════════════════════════════════════════════════════════════════════════
         {
             files: [
-                "*.{js,mjs,cjs,ts,mts,cts,tsx}",
-                "src/**/*.{js,mjs,cjs,ts,mts,cts,tsx}",
-                "test/**/*.{js,mjs,cjs,ts,mts,cts,tsx}",
-                "benchmarks/**/*.{js,mjs,cjs,ts,mts,cts,tsx}",
+                "*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
+                "src/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
+                "test/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
+                "benchmarks/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
             ],
             ignores: ["plugin.mjs"],
             languageOptions: {
@@ -1220,10 +1291,10 @@ export const createConfig = (
                 math: eslintPluginMath,
                 "module-interop": moduleInterop,
                 perfectionist: perfectionist,
+                prettier: pluginPrettier,
                 promise: pluginPromise,
                 regexp: pluginRegexp,
                 security: pluginSecurity,
-                sonarjs: sonarjs,
                 "tsdoc-require-2": tsdocRequire,
                 unicorn: eslintPluginUnicorn,
                 "unused-imports": pluginUnusedImports,
@@ -1243,12 +1314,10 @@ export const createConfig = (
                 ...importX.flatConfigs.typescript.rules,
                 ...pluginPromise.configs["flat/recommended"].rules,
                 ...eslintPluginUnicorn.configs.all.rules,
-                ...sonarjsConfigs.recommended.rules,
                 ...perfectionist.configs["recommended-natural"].rules,
                 ...pluginSecurity.configs.recommended.rules,
                 ...nodePlugin.configs["flat/all"].rules,
                 ...eslintPluginMath.configs.recommended.rules,
-                ...comments.recommended.rules,
                 ...pluginCanonical.configs.recommended.rules,
                 ...listeners.configs.strict?.rules,
                 ...moduleInterop.configs.recommended.rules,
@@ -1258,16 +1327,10 @@ export const createConfig = (
                 "@eslint-community/eslint-comments/no-use": "off",
                 "@eslint-community/eslint-comments/require-description": "warn",
                 "@typescript-eslint/await-thenable": "error", // Prevent awaiting non-promises
-                "@typescript-eslint/ban-ts-comment": "warn",
-                "@typescript-eslint/ban-tslint-comment": "warn",
-                "@typescript-eslint/class-literal-property-style": "warn",
                 "@typescript-eslint/class-methods-use-this": "warn",
-                "@typescript-eslint/consistent-generic-constructors": "warn",
-                "@typescript-eslint/consistent-indexed-object-style": "warn",
                 "@typescript-eslint/consistent-return": "warn",
                 // Function and type safety rules
                 "@typescript-eslint/consistent-type-assertions": "error",
-                "@typescript-eslint/consistent-type-definitions": "warn",
                 "@typescript-eslint/consistent-type-exports": "warn",
                 "@typescript-eslint/consistent-type-imports": "warn",
                 "@typescript-eslint/default-param-last": "warn",
@@ -1291,16 +1354,12 @@ export const createConfig = (
                 "@typescript-eslint/member-ordering": "warn",
                 "@typescript-eslint/method-signature-style": "warn",
                 "@typescript-eslint/naming-convention": "off",
-                "@typescript-eslint/no-array-constructor": "warn",
                 "@typescript-eslint/no-array-delete": "warn",
                 "@typescript-eslint/no-base-to-string": "warn",
-                "@typescript-eslint/no-confusing-non-null-assertion": "warn",
                 "@typescript-eslint/no-confusing-void-expression": "warn",
                 "@typescript-eslint/no-deprecated": "error",
                 "@typescript-eslint/no-dupe-class-members": "warn",
-                "@typescript-eslint/no-duplicate-enum-values": "warn",
                 "@typescript-eslint/no-duplicate-type-constituents": "warn",
-                "@typescript-eslint/no-dynamic-delete": "warn",
                 "@typescript-eslint/no-empty-function": [
                     "error",
                     {
@@ -1308,10 +1367,6 @@ export const createConfig = (
                     },
                 ],
                 "@typescript-eslint/no-empty-object-type": "error",
-                // Disable overly strict rules for this project
-                "@typescript-eslint/no-explicit-any": "warn", // Sometimes needed
-                "@typescript-eslint/no-extra-non-null-assertion": "warn",
-                "@typescript-eslint/no-extraneous-class": "warn",
                 // Advanced type-checked rules for async safety and runtime error prevention
                 "@typescript-eslint/no-floating-promises": [
                     "error",
@@ -1325,13 +1380,10 @@ export const createConfig = (
                 // Keep enabled: Helps with bundle optimization and makes type vs runtime imports clearer.
                 // Can be resolved incrementally as warnings.
                 "@typescript-eslint/no-import-type-side-effects": "warn",
-                "@typescript-eslint/no-inferrable-types": "warn", // Allow explicit types for React components
                 "@typescript-eslint/no-invalid-this": "warn",
-                "@typescript-eslint/no-invalid-void-type": "warn",
                 "@typescript-eslint/no-loop-func": "warn",
                 "@typescript-eslint/no-magic-numbers": "off",
                 "@typescript-eslint/no-meaningless-void-operator": "warn",
-                "@typescript-eslint/no-misused-new": "warn",
                 "@typescript-eslint/no-misused-promises": [
                     "error",
                     {
@@ -1342,15 +1394,8 @@ export const createConfig = (
                 ],
                 "@typescript-eslint/no-misused-spread": "warn",
                 "@typescript-eslint/no-mixed-enums": "warn",
-                "@typescript-eslint/no-namespace": "warn",
-                "@typescript-eslint/no-non-null-asserted-nullish-coalescing":
-                    "warn",
-                "@typescript-eslint/no-non-null-asserted-optional-chain":
-                    "warn",
-                "@typescript-eslint/no-non-null-assertion": "warn", // Zustand patterns
                 "@typescript-eslint/no-redeclare": "warn",
                 "@typescript-eslint/no-redundant-type-constituents": "warn",
-                "@typescript-eslint/no-require-imports": "warn",
                 // Granular selector rules still need to be added manually here.
                 "@typescript-eslint/no-restricted-imports": "warn",
                 "@typescript-eslint/no-restricted-types": [
@@ -1369,7 +1414,6 @@ export const createConfig = (
                     },
                 ],
                 "@typescript-eslint/no-shadow": "warn",
-                "@typescript-eslint/no-this-alias": "warn",
                 "@typescript-eslint/no-unnecessary-boolean-literal-compare":
                     "warn",
                 // Null safety for backend operations
@@ -1386,38 +1430,26 @@ export const createConfig = (
                 "@typescript-eslint/no-unnecessary-type-arguments": "warn",
                 // Enhanced type safety for backend services
                 "@typescript-eslint/no-unnecessary-type-assertion": "error", // Remove redundant type assertions
-                "@typescript-eslint/no-unnecessary-type-constraint": "warn",
                 "@typescript-eslint/no-unnecessary-type-conversion": "warn",
                 "@typescript-eslint/no-unnecessary-type-parameters": "warn",
                 "@typescript-eslint/no-unsafe-argument": "warn", // Warn on passing any to typed parameters
                 "@typescript-eslint/no-unsafe-assignment": "warn", // Warn on unsafe assignments to any
                 "@typescript-eslint/no-unsafe-call": "warn", // Warn on calling any-typed functions
-                "@typescript-eslint/no-unsafe-declaration-merging": "warn",
                 "@typescript-eslint/no-unsafe-enum-comparison": "warn",
-                "@typescript-eslint/no-unsafe-function-type": "error",
                 "@typescript-eslint/no-unsafe-member-access": "warn", // Warn on accessing any-typed properties
                 "@typescript-eslint/no-unsafe-return": "warn", // Warn on returning any from typed functions
                 "@typescript-eslint/no-unsafe-type-assertion": "warn",
                 "@typescript-eslint/no-unsafe-unary-minus": "warn",
-                "@typescript-eslint/no-unused-expressions": "warn",
                 "@typescript-eslint/no-unused-private-class-members": "warn",
-                "@typescript-eslint/no-unused-vars": "warn",
                 "@typescript-eslint/no-use-before-define": "warn",
-                "@typescript-eslint/no-useless-constructor": "warn",
                 "@typescript-eslint/no-useless-empty-export": "warn",
                 "@typescript-eslint/no-wrapper-object-types": "error",
                 "@typescript-eslint/non-nullable-type-assertion-style": "warn",
                 "@typescript-eslint/only-throw-error": "warn",
                 "@typescript-eslint/parameter-properties": "warn",
-                "@typescript-eslint/prefer-as-const": "warn",
-                "@typescript-eslint/prefer-destructuring": "off",
                 "@typescript-eslint/prefer-enum-initializers": "warn",
                 "@typescript-eslint/prefer-find": "warn",
-                "@typescript-eslint/prefer-for-of": "warn",
-                "@typescript-eslint/prefer-function-type": "error",
                 "@typescript-eslint/prefer-includes": "warn",
-                "@typescript-eslint/prefer-literal-enum-member": "warn",
-                "@typescript-eslint/prefer-namespace-keyword": "warn",
                 "@typescript-eslint/prefer-nullish-coalescing": [
                     "error",
                     {
@@ -1498,15 +1530,15 @@ export const createConfig = (
                 "@typescript-eslint/return-await": ["error", "in-try-catch"], // Proper await handling in try-catch
                 "@typescript-eslint/strict-boolean-expressions": "warn",
                 "@typescript-eslint/switch-exhaustiveness-check": "error", // Ensure switch statements are exhaustive
-                "@typescript-eslint/triple-slash-reference": "warn",
                 "@typescript-eslint/unbound-method": "warn",
-                "@typescript-eslint/unified-signatures": "warn",
                 "@typescript-eslint/use-unknown-in-catch-callback-variable":
                     "warn",
+                "canonical/destructuring-property-newline": "off",
                 "canonical/export-specifier-newline": "off",
                 "canonical/filename-match-exported": "off",
                 "canonical/filename-match-regex": "off", // Taken care of by unicorn rules
                 "canonical/filename-no-index": "error",
+                "canonical/id-match": "off",
                 "canonical/import-specifier-newline": "off",
                 "canonical/no-barrel-import": "error",
                 "canonical/no-export-all": "error",
@@ -1531,6 +1563,7 @@ export const createConfig = (
                 "canonical/prefer-react-lazy": "off",
                 "canonical/prefer-use-mount": "warn",
                 "canonical/sort-react-dependencies": "warn",
+                "class-methods-use-this": "off", // Use the TypeScript version of this rule which is more type-aware and works better with class properties and React components.
                 "comment-length/limit-multi-line-comments": [
                     "warn",
                     {
@@ -1681,7 +1714,8 @@ export const createConfig = (
                         tabSize: 4,
                     },
                 ],
-                complexity: "off",
+                "dot-notation": "off", // Use the TypeScript version instead
+                eqeqeq: "off", // Use the TypeScript version instead
                 "eslint-plugin/consistent-output": "error",
                 "eslint-plugin/fixer-return": "error",
                 "eslint-plugin/meta-property-ordering": [
@@ -1731,10 +1765,8 @@ export const createConfig = (
                 "eslint-plugin/test-case-property-ordering": "warn",
                 "eslint-plugin/test-case-shorthand-strings": "error",
                 "eslint-plugin/unique-test-case-names": "error",
-                "etc-misc/no-function-declare-after-return": "warn",
-                "etc-misc/no-use-extend-native": "error",
-                "etc-misc/no-vulnerable": "error",
                 "func-style": "off",
+                "id-length": "off",
                 "import-x/consistent-type-specifier-style": "off",
                 "import-x/default": "warn",
                 "import-x/dynamic-import-chunkname": "off",
@@ -1743,7 +1775,6 @@ export const createConfig = (
                 "import-x/extensions": "warn",
                 "import-x/first": "warn",
                 "import-x/group-exports": "off",
-                "import-x/max-dependencies": "off",
                 "import-x/named": "warn",
                 "import-x/namespace": "warn",
                 "import-x/newline-after-import": "warn",
@@ -1792,20 +1823,32 @@ export const createConfig = (
                 "import-x/prefer-default-export": "off",
                 "import-x/prefer-namespace-import": "off",
                 "import-x/unambiguous": "warn",
-                "jsdoc/check-line-alignment": "off",
-                "jsdoc/require-description": "warn",
-                "jsdoc/require-param-description": "warn",
-                "jsdoc/require-returns-description": "off",
                 "math/abs": "warn",
                 "math/prefer-exponentiation-operator": "warn",
                 "math/prefer-math-sum-precise": "warn",
-                "max-statements": "off",
+                "max-lines": "off",
                 "module-interop/no-import-cjs": "off",
                 "module-interop/no-require-esm": "warn",
                 "n/file-extension-in-import": "off",
+                // Deprecated Rule: https://github.com/eslint-community/eslint-plugin-n/blob/HEAD/docs/rules/no-hide-core-modules.md
+                //  This is deprecated since v4.2.0. This rule was based on an invalid assumption.
+                // @see https://github.com/mysticatea/eslint-plugin-node/issues/69
+                "n/no-hide-core-modules": "off",
                 "n/no-missing-file-extension": "off",
                 "n/no-missing-import": "off",
-                "no-continue": "off",
+                // Deprecated Rule: Old alias for hashbang
+                // @see https://github.com/eslint-community/eslint-plugin-n/issues/529
+                "n/shebang": "off",
+                "no-empty-character-class": "error",
+                "no-inline-comments": "off", // Allow inline comments for complex logic explanations
+                "no-invalid-regexp": "error",
+                "no-magic-numbers": "off",
+                "no-ternary": "off",
+                "no-undefined": "off", // Use explicit `undefined` for clarity and type safety
+                "no-useless-backreference": "error",
+                "no-void": "off",
+                "object-shorthand": "off",
+                "one-var": "off",
                 "perfectionist/sort-arrays": [
                     "warn",
                     {
@@ -1825,51 +1868,26 @@ export const createConfig = (
                         },
                     },
                 ],
-                "prefer-destructuring": "off",
+                "prefer-arrow-callback": [
+                    "warn",
+                    { allowNamedFunctions: true, allowUnboundThis: true },
+                ],
                 "promise/no-multiple-resolved": "warn",
                 "promise/prefer-await-to-callbacks": "off",
                 "promise/prefer-await-to-then": "warn",
                 "promise/prefer-catch": "warn",
                 "promise/spec-only": "warn",
+                "require-await": "off", // Use the TypeScript version of this rule which is more type-aware and works better with async functions in general.
+                "require-unicode-regexp": "off",
                 "sdl/no-nonnull-assertion-on-security-input": "error",
                 "sdl/no-trusted-types-policy-pass-through": "error",
                 "sdl/no-unsafe-cast-to-trusted-types": "error",
                 "security/detect-non-literal-fs-filename": "warn",
-                "security/detect-object-injection": "off",
-                "sonarjs/cognitive-complexity": "off",
-                "sonarjs/cyclomatic-complexity": [
-                    "warn",
-                    {
-                        threshold: 25,
-                    },
-                ],
-                "sonarjs/elseif-without-else": "warn",
-                "sonarjs/max-union-size": [
-                    "warn",
-                    {
-                        threshold: 8,
-                    },
-                ],
-                "sonarjs/nested-control-flow": [
-                    "warn",
-                    {
-                        maximumNestingLevel: 6,
-                    },
-                ],
-                "sonarjs/no-duplicate-string": [
-                    "warn",
-                    {
-                        ignoreStrings: "application/json",
-                        threshold: 7,
-                    },
-                ],
-                "sonarjs/no-nested-conditional": "off",
                 "sort-imports": "off",
                 "sort-keys": "off",
+                "sort-vars": "off",
                 "unicorn/consistent-destructuring": "off",
                 "unicorn/no-null": "off",
-                "unicorn/no-useless-undefined": "off",
-                "unicorn/prevent-abbreviations": "off",
                 "unused-imports/no-unused-imports": "error",
                 "unused-imports/no-unused-vars": "error",
             },
@@ -1882,12 +1900,7 @@ export const createConfig = (
                 "@typescript-eslint/no-unsafe-member-access": "off",
                 "@typescript-eslint/no-unsafe-type-assertion": "off",
                 "import-x/no-rename-default": "off",
-                "jsdoc/require-description": "off",
-                "jsdoc/require-param-description": "off",
-                "jsdoc/require-returns-description": "off",
-                "module-interop/no-import-cjs": "off",
                 "unicorn/import-style": "off",
-                "unicorn/no-null": "off",
             },
         },
         // #endregion
@@ -1896,39 +1909,22 @@ export const createConfig = (
         // SECTION: 🧪 Internal Tooling
         // ═══════════════════════════════════════════════════════════════════════════════
         {
-            files: ["test/**/*.{test,spec}.{ts,tsx}", "test/**/*.{ts,tsx}"],
+            files: [
+                "test/**/*.{test,spec}.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
+                "test/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
+            ],
             name: "🧪 ESLint Plugin Tests: internal tooling",
             rules: {
                 "@typescript-eslint/array-type": "off",
                 "@typescript-eslint/no-floating-promises": "off",
                 "@typescript-eslint/no-unsafe-assignment": "off",
                 canonical: "off",
-                eqeqeq: "off",
-                "func-style": "off",
-                "max-statements": "off",
-                "n/no-missing-import": "off",
                 "n/no-sync": "off",
                 "n/no-unpublished-import": "off",
-                "no-magic-numbers": "off",
-                "no-ternary": "off",
-                "no-undefined": "off",
-                "no-underscore-dangle": "off",
-                "no-use-before-define": "off",
-                "one-var": "off",
-                "sort-imports": "off",
                 "unicorn/import-style": "off",
                 "unicorn/no-array-callback-reference": "off",
-                "unicorn/no-null": "off",
                 "unicorn/prefer-at": "off",
                 "unicorn/prefer-spread": "off",
-                "unicorn/prevent-abbreviations": "off",
-            },
-        },
-        {
-            files: ["test/_internal/ruleTester.ts"],
-            name: "🧪 ESLint Plugin Tests: ruleTester.ts ⛔ Disables",
-            rules: {
-                "unicorn/filename-case": "off",
             },
         },
         // #endregion
@@ -1938,11 +1934,11 @@ export const createConfig = (
         // ═══════════════════════════════════════════════════════════════════════════════
         {
             files: [
-                "test/**/*.{ts,tsx,mts,cts,mjs,js,jsx,cjs}",
-                "tests/**/*.{ts,tsx,mts,cts,mjs,js,jsx,cjs}",
-                "src/test/**/*.{ts,tsx,mts,cts,mjs,js,jsx,cjs}",
-                "benchmarks/**/*.{ts,tsx,mts,cts,mjs,js,jsx,cjs}",
-                "benchmark/**/*.{ts,tsx,mts,cts,mjs,js,jsx,cjs}",
+                "test/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
+                "tests/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
+                "src/test/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
+                "benchmarks/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
+                "benchmark/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
             ],
             languageOptions: {
                 globals: {
@@ -1988,7 +1984,6 @@ export const createConfig = (
                 ...pluginTestingLibrary.configs["flat/react"].rules,
                 "@typescript-eslint/no-empty-function": "off", // Empty mocks/stubs are common
                 "@typescript-eslint/no-explicit-any": "off",
-                "@typescript-eslint/no-inferrable-types": "warn", // Allow explicit types for React components
                 "@typescript-eslint/no-non-null-assertion": "off",
                 "@typescript-eslint/no-restricted-types": "off", // Tests may need generic Function types
                 "@typescript-eslint/no-shadow": "off",
@@ -2001,7 +1996,6 @@ export const createConfig = (
                 "@typescript-eslint/no-useless-default-assignment": "warn",
                 "@typescript-eslint/strict-void-return": "warn",
                 "@typescript-eslint/unbound-method": "off",
-                camelcase: "off",
                 "capitalized-comments": [
                     "error",
                     "always",
@@ -2013,14 +2007,13 @@ export const createConfig = (
                     },
                 ],
                 "class-methods-use-this": "off",
-                complexity: "off",
                 "default-case": "off",
                 "dot-notation": "off",
                 eqeqeq: "off", // Allow == and != in tests for flexibility
                 "func-name-matching": "off", // Allow function names to not match variable names
                 "func-names": "off",
+                "func-style": "off", // Allow function declarations for test setup and readability
                 // Relaxed function rules for backend tests (explicit for clarity)
-                "func-style": "off",
                 "id-length": "off",
                 "init-declarations": "off",
                 "max-classes-per-file": "off",
@@ -2035,14 +2028,10 @@ export const createConfig = (
                         skipComments: true,
                     },
                 ],
-                "max-params": "off",
-                "max-statements": "off",
-                "module-interop/no-import-cjs": "off",
                 "new-cap": "off", // Allow new-cap for class constructors
                 "no-await-in-loop": "off", // Allow await in loops for sequential operations
                 "no-barrel-files/no-barrel-files": "off", // Allow barrel files in tests for convenience
                 "no-console": "off",
-                "no-duplicate-imports": "off", // Allow duplicate imports for test setups
                 "no-inline-comments": "off",
                 "no-loop-func": "off", // Allow functions in loops for test setups
                 "no-magic-numbers": "off",
@@ -2067,13 +2056,13 @@ export const createConfig = (
                     "warn",
                     { allowNamedFunctions: true, allowUnboundThis: true },
                 ],
-                "prefer-destructuring": "off",
                 "require-await": "off",
                 "require-unicode-regexp": "off",
                 "security/detect-non-literal-fs-filename": "off",
                 "sonarjs/no-duplicate-string": "off",
                 "sort-imports": "off",
                 "sort-keys": "off",
+                "sort-vars": "off",
                 "testing-library/await-async-queries": "error",
                 "testing-library/consistent-data-testid": [
                     "warn",
@@ -2093,6 +2082,7 @@ export const createConfig = (
                 "testing-library/prefer-screen-queries": "warn",
                 "testing-library/prefer-user-event": "warn",
                 "testing-library/prefer-user-event-setup": "warn",
+                "unicorn/consistent-destructuring": "off",
                 "unicorn/consistent-function-scoping": "off", // Tests often use different scoping
                 "unicorn/filename-case": "off", // Allow test files to have any case
                 "unicorn/import-style": [
@@ -2165,12 +2155,8 @@ export const createConfig = (
                         ],
                     },
                 ], // Allow "class" prefix for className and other legitimate uses
-                "unicorn/no-null": "warn", // Null is common in test setups
+                "unicorn/no-null": "off", // Null is common in test setups
                 "unicorn/no-unused-properties": "warn", // Allow unused properties in test setups
-                "unicorn/no-useless-undefined": "off", // Allow undefined in test setups
-                "unicorn/prefer-global-this": "warn", // Allow globalThis for test setups
-                "unicorn/prefer-optional-catch-binding": "warn", // Allow optional catch binding for test flexibility
-                "unicorn/prevent-abbreviations": "warn", // Too many false positives in tests
                 "vitest/max-expects": ["warn", { max: 20 }], // Encourage more focused tests, but allow flexibility when neededq
                 // Needs update to not use deprecated alias methods like
                 // Replace toThrow() with its canonical name oThrowError()
@@ -2246,8 +2232,8 @@ export const createConfig = (
         },
         {
             files: [
-                "benchmark/**/*.{ts,tsx,mts,cts,mjs,js,jsx,cjs}",
-                "benchmarks/**/*.{ts,tsx,mts,cts,mjs,js,jsx,cjs}",
+                "benchmark/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
+                "benchmarks/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
             ],
             name: "🧪 Benchmarks: benchmark/** and benchmarks/**",
             rules: {
@@ -2262,7 +2248,6 @@ export const createConfig = (
                 "security/detect-non-literal-fs-filename": "off",
                 "unicorn/no-negated-condition": "off",
                 "unicorn/no-typeof-undefined": "off",
-                "vitest/require-hook": "off",
             },
         },
         // #endregion
@@ -2784,7 +2769,6 @@ export const createConfig = (
                 "jsonc/space-unary-ops": "warn",
                 "jsonc/valid-json-number": "warn",
                 "jsonc/vue-custom-block/no-parsing-error": "warn",
-                "no-secrets/no-pattern-match": "off",
                 "no-secrets/no-secrets": [
                     "error",
                     {
@@ -2815,7 +2799,6 @@ export const createConfig = (
                 ...jsonSchemaValidatorRules,
                 "json/sort-keys": ["warn"],
                 "json/top-level-interop": "warn",
-                "no-secrets/no-pattern-match": "off",
                 "no-secrets/no-secrets": [
                     "error",
                     {
@@ -2841,7 +2824,6 @@ export const createConfig = (
             rules: {
                 ...json.configs.recommended.rules,
                 ...jsonSchemaValidatorRules,
-                "no-secrets/no-pattern-match": "off",
                 "no-secrets/no-secrets": [
                     "error",
                     {
@@ -2916,7 +2898,7 @@ export const createConfig = (
                 "jsdoc/check-access": "warn", // Recommended
                 "jsdoc/check-alignment": "warn", // Recommended
                 "jsdoc/check-indentation": "off",
-                "jsdoc/check-line-alignment": "warn",
+                "jsdoc/check-line-alignment": "off",
                 "jsdoc/check-param-names": "warn", // Recommended
                 "jsdoc/check-property-names": "warn", // Recommended
                 "jsdoc/check-syntax": "warn",
@@ -3009,14 +2991,14 @@ export const createConfig = (
             },
         },
         // #endregion
-        // #region 🧾 JS/MJS Configuration files
+        // #region 🧾 Config JS/MJS Configuration files
         // ═══════════════════════════════════════════════════════════════════════════════
-        // SECTION: JS/MJS Configuration files
+        // SECTION: 🧾 Config JS/MJS Configuration files
         // ═══════════════════════════════════════════════════════════════════════════════
         {
             files: [
-                "**/*.config.{js,mjs,cts,cjs}",
-                "**/*.config.**.*.{js,mjs,cts,cjs}",
+                "**/*.config.{js,jsx,mjs,cjs}",
+                "**/*.config.**.*.{js,jsx,mjs,cjs}",
             ],
             languageOptions: {
                 globals: {
@@ -3025,81 +3007,16 @@ export const createConfig = (
                     ...globals.commonjs,
                 },
             },
-            name: "🧾 JS/MJS Config Files: **/*.config.{JS,MJS,CTS,CJS}",
+            name: "🧾 JS/MJS Config Files: **/*.config.{js,jsx,mjs,cjs}",
             plugins: {
-                "@typescript-eslint": tseslint,
-                // Css: css,
-                depend: depend,
-                "etc-misc": etcMisc,
-                "import-x": importX,
-                js: js,
-                math: eslintPluginMath,
-                "no-unsanitized": nounsanitized,
-                perfectionist: perfectionist,
-                prettier: pluginPrettier,
-                promise: pluginPromise,
-                regexp: pluginRegexp,
-                security: pluginSecurity,
-                sonarjs: sonarjs,
+                perfectionist,
                 unicorn: eslintPluginUnicorn,
                 "unused-imports": pluginUnusedImports,
             },
             rules: {
-                ...js.configs.all.rules,
-                ...pluginRegexp.configs.all.rules,
-                ...importX.flatConfigs.recommended.rules,
-                ...importX.flatConfigs.electron.rules,
-                ...importX.flatConfigs.typescript.rules,
-                ...pluginPromise.configs["flat/recommended"].rules,
-                ...eslintPluginUnicorn.configs.all.rules,
-                ...sonarjsConfigs.recommended.rules,
-                ...perfectionist.configs["recommended-natural"].rules,
-                ...pluginSecurity.configs.recommended.rules,
-                ...nodePlugin.configs["flat/recommended"].rules,
-                ...eslintPluginMath.configs.recommended.rules,
-
-                camelcase: "off",
-                "capitalized-comments": [
-                    "error",
-                    "always",
-                    {
-                        ignoreConsecutiveComments: true,
-                        ignoreInlineComments: true,
-                        ignorePattern:
-                            "pragma|ignored|import|prettier|eslint|tslint|copyright|license|eslint-disable|@ts-.*|jsx-a11y.*|@eslint.*|global|jsx|jsdoc|prettier|istanbul|jcoreio|metamask|microsoft|no-unsafe-optional-chaining|no-unnecessary-type-assertion|no-non-null-asserted-optional-chain|no-non-null-asserted-nullish-coalescing|@typescript-eslint.*|@docusaurus.*|@react.*|boundaries.*|depend.*|deprecation.*|etc.*|ex.*|functional.*|import-x.*|import-zod.*|jsx-a11y.*|loadable-imports.*|math.*|n.*|neverthrow.*|no-constructor-bind.*|no-explicit-type-exports.*|no-lookahead-lookbehind-regexp.*|no-secrets.*|no-unary-plus.*|no-unawaited-dot-catch-throw.*|no-unsanitized.*|no-use-extend-native.*|observers.*|prefer-arrow.*|perfectionist.*|prettier.*|promise.*|react.*|react-hooks.*|react-hooks-addons.*|redos.*|regexp.*|require-jsdoc.*|safe-jsx.*|security.*|sonarjs.*|sort-class-members.*|sort-destructure-keys.*|sort-keys-fix.*|sql-template.*|ssr-friendly.*|styled-components-a11y.*|switch-case.*|total-functions.*|tsdoc.*|unicorn.*|unused-imports.*|usememo-recommendations.*|validate-jsx-nesting.*|write-good-comments.*|xss.*|v8.*|c8.*|istanbul.*|nyc.*|codecov.*|coveralls.*|c8-coverage.*|codecov-coverage.*",
-                    },
-                ],
-                "class-methods-use-this": "warn",
-                "dot-notation": "off",
-                "etc-misc/no-function-declare-after-return": "warn",
-                "etc-misc/no-use-extend-native": "error",
-                "etc-misc/no-vulnerable": "error",
-                "func-style": "off",
-                "id-length": "off",
                 "max-classes-per-file": "off",
-                "max-lines": "off",
-                // Sonar quality helpers
-                "max-lines-per-function": [
-                    "error",
-                    {
-                        IIFEs: false,
-                        max: 1000,
-                        skipBlankLines: true,
-                        skipComments: true,
-                    },
-                ],
-                "max-params": "off",
-                "max-statements": "off",
                 "no-console": "off",
-                "no-inline-comments": "off",
-                "no-magic-numbers": "off",
-                "no-plusplus": "off",
-                "no-ternary": "off",
                 "no-undef-init": "off",
-                "no-undefined": "off",
-                "no-void": "off",
-                "object-shorthand": "off",
-                "one-var": "off",
                 "perfectionist/sort-arrays": [
                     "off",
                     {
@@ -3119,45 +3036,7 @@ export const createConfig = (
                         },
                     },
                 ],
-                "prefer-arrow-callback": [
-                    "warn",
-                    { allowNamedFunctions: true, allowUnboundThis: true },
-                ],
-                "require-await": "off",
-                "require-unicode-regexp": "off",
-                "sonarjs/arguments-usage": "warn",
-                "sonarjs/array-constructor": "warn",
-                "sonarjs/aws-iam-all-resources-accessible": "warn",
-                "sonarjs/cognitive-complexity": ["warn", 30],
-                "sonarjs/comment-regex": "warn",
-                "sonarjs/declarations-in-global-scope": "off",
-                "sonarjs/elseif-without-else": "off",
-                "sonarjs/for-in": "warn",
-                "sonarjs/nested-control-flow": "off",
-                "sonarjs/no-built-in-override": "warn",
-                "sonarjs/no-collapsible-if": "warn",
                 "sonarjs/no-duplicate-string": "off",
-                "sonarjs/no-for-in-iterable": "warn",
-                "sonarjs/no-function-declaration-in-block": "warn",
-                "sonarjs/no-implicit-dependencies": "warn",
-                "sonarjs/no-inconsistent-returns": "warn",
-                "sonarjs/no-incorrect-string-concat": "warn",
-                "sonarjs/no-nested-incdec": "warn",
-                "sonarjs/no-nested-switch": "warn",
-                "sonarjs/no-reference-error": "warn",
-                "sonarjs/no-require-or-define": "warn",
-                "sonarjs/no-return-type-any": "warn",
-                "sonarjs/no-sonar-comments": "error",
-                "sonarjs/no-undefined-assignment": "off",
-                "sonarjs/no-unused-function-argument": "warn",
-                "sonarjs/non-number-in-arithmetic-expression": "warn",
-                "sonarjs/operation-returning-nan": "warn",
-                "sonarjs/prefer-immediate-return": "warn",
-                "sonarjs/shorthand-property-grouping": "off",
-                "sonarjs/strings-comparison": "warn",
-                "sonarjs/too-many-break-or-continue-in-loop": "warn",
-                "sort-imports": "off",
-                "sort-keys": "off",
                 "unicorn/consistent-function-scoping": "off", // Configs often use different scoping
                 "unicorn/filename-case": "off", // Allow config files to have any case
                 "unicorn/import-style": [
@@ -3230,10 +3109,7 @@ export const createConfig = (
                         ],
                     },
                 ], // Allow "class" prefix for className and other legitimate uses
-                "unicorn/no-null": "off", // Null is common in config setups
                 "unicorn/no-unused-properties": "off", // Allow unused properties in config setups
-                "unicorn/no-useless-undefined": "off", // Allow undefined in config setups
-                "unicorn/prevent-abbreviations": "off", // Too many false positives in configs
                 "unused-imports/no-unused-imports": "error",
                 "unused-imports/no-unused-vars": "error",
             },
@@ -3265,7 +3141,7 @@ export const createConfig = (
                 "**/.github/workflow-templates/**/*.{yaml,yml}",
                 "**/.github/actions/**/*.{yaml,yml}",
             ],
-            name: "🧾 YAML/YML GitHub Workflows - ⛔ Disables",
+            name: "🧾 YAML/YML GitHub Workflows - ⛔ Overrides",
             rules: {
                 "yml/block-mapping-colon-indicator-newline": "off",
                 "yml/no-empty-key": "off",
@@ -3286,11 +3162,11 @@ export const createConfig = (
         // ═══════════════════════════════════════════════════════════════════════════════
         {
             files: [
-                "playwright/**/*.{ts,tsx,js,jsx,mts,mjs}",
-                "test/e2e/**/*.{ts,tsx,js,jsx,mts,mjs}",
-                "e2e/**/*.{ts,tsx,js,jsx,mts,mjs}",
-                "**/*.e2e.{ts,tsx,js,jsx,mts,mjs}",
-                "**/*.pw.{ts,tsx,js,jsx,mts,mjs}",
+                "playwright/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
+                "test/e2e/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
+                "e2e/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
+                "**/*.e2e.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
+                "**/*.pw.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
             ],
             languageOptions: {
                 globals: {
@@ -3351,8 +3227,8 @@ export const createConfig = (
         // ═══════════════════════════════════════════════════════════════════════════════
         {
             files: [
-                "**/*.stories.{ts,tsx,js,jsx}",
-                ".storybook/**/*.{ts,tsx,js,jsx,mts,mjs}",
+                "**/*.stories.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
+                ".storybook/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
             ],
             languageOptions: {
                 globals: {
@@ -3374,7 +3250,7 @@ export const createConfig = (
                     warnOnUnsupportedTypeScriptVersion: true,
                 },
             },
-            name: "📖 Storybook Stories: **/*.stories.{ts,tsx,js,jsx}, .storybook/**",
+            name: "📖 Storybook Stories: **/*.stories.{js,jsx,mjs,cjs,ts,tsx,cts,mts}, .storybook/**",
             plugins: {
                 storybook: storybook,
             },
@@ -3747,10 +3623,10 @@ export const createConfig = (
         // ═══════════════════════════════════════════════════════════════════════════════
         {
             files: [
-                "app/**/*.{ts,tsx,js,jsx}",
-                "pages/**/*.{ts,tsx,js,jsx}",
-                "src/app/**/*.{ts,tsx,js,jsx}",
-                "src/pages/**/*.{ts,tsx,js,jsx}",
+                "app/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
+                "pages/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
+                "src/app/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
+                "src/pages/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
             ],
             languageOptions: {
                 parser: tseslintParser,
@@ -3801,20 +3677,20 @@ export const createConfig = (
         },
         // #endregion
         // #endregion
-        // #region ⛔ Disables
+        // #region ⛔ Overrides
         // ═══════════════════════════════════════════════════════════════════════════════
-        // SECTION: ⛔ Disables
+        // SECTION: ⛔ Overrides
         // ═══════════════════════════════════════════════════════════════════════════════
         {
             files: ["**/package.json", "**/package-lock.json"],
-            name: "🧾 Package.JSON: Files - ⛔ Disables",
+            name: "🧾 Package.JSON: Files - ⛔ Overrides",
             rules: {
                 "json/sort-keys": "off",
             },
         },
         {
             files: ["**/.vscode/**"],
-            name: "🛠️ VS Code Files - ⛔ Disables",
+            name: "🛠️ VS Code Files: ⛔ Overrides",
             rules: {
                 "jsonc/array-bracket-newline": "off",
             },
@@ -3826,7 +3702,7 @@ export const createConfig = (
         // ═══════════════════════════════════════════════════════════════════════════════
         {
             files: ["**/**"],
-            name: "📐 Global: Stylistic - ⛔ Disables",
+            name: "📐 Global: Stylistic - ⛔ Overrides",
             plugins: {
                 "@stylistic": stylistic,
             },
@@ -3858,21 +3734,16 @@ export const createConfig = (
         // ═══════════════════════════════════════════════════════════════════════════════
         {
             files: ["**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}"],
-            name: "🌐 Global:  ⛔ Disables",
+            name: "🌐 Global:  ⛔ Overrides",
             plugins: {
                 canonical: pluginCanonical,
                 "no-secrets": noSecrets,
                 "no-unsanitized": nounsanitized,
             },
             rules: {
-                "@typescript-eslint/explicit-function-return-type": "off",
                 "@typescript-eslint/prefer-destructuring": "off",
                 "callback-return": "off",
                 camelcase: "off",
-                "canonical/destructuring-property-newline": "off",
-                "canonical/export-specifier-newline": "off",
-                "canonical/id-match": "off",
-                "canonical/import-specifier-newline": "off",
                 "capitalized-comments": [
                     "error",
                     "always",
@@ -3883,44 +3754,11 @@ export const createConfig = (
                             "pragma|ignored|import|prettier|eslint|tslint|copyright|license|eslint-disable|@ts-.*|jsx-a11y.*|@eslint.*|global|jsx|jsdoc|prettier|istanbul|jcoreio|metamask|microsoft|no-unsafe-optional-chaining|no-unnecessary-type-assertion|no-non-null-asserted-optional-chain|no-non-null-asserted-nullish-coalescing|@typescript-eslint.*|@docusaurus.*|@react.*|boundaries.*|depend.*|deprecation.*|etc.*|ex.*|functional.*|import-x.*|import-zod.*|jsx-a11y.*|loadable-imports.*|math.*|n.*|neverthrow.*|no-constructor-bind.*|no-explicit-type-exports.*|no-lookahead-lookbehind-regexp.*|no-secrets.*|no-unary-plus.*|no-unawaited-dot-catch-throw.*|no-unsanitized.*|no-use-extend-native.*|observers.*|prefer-arrow.*|perfectionist.*|prettier.*|promise.*|react.*|react-hooks.*|react-hooks-addons.*|redos.*|regexp.*|require-jsdoc.*|safe-jsx.*|security.*|sonarjs.*|sort-class-members.*|sort-destructure-keys.*|sort-keys-fix.*|sql-template.*|ssr-friendly.*|styled-components-a11y.*|switch-case.*|total-functions.*|tsdoc.*|unicorn.*|unused-imports.*|usememo-recommendations.*|validate-jsx-nesting.*|write-good-comments.*|xss.*|v8.*|c8.*|istanbul.*|nyc.*|codecov.*|coveralls.*|c8-coverage.*|codecov-coverage.*",
                     },
                 ],
-                "class-methods-use-this": "off",
-                complexity: "off",
-                "dot-notation": "off",
-                "func-style": "off",
                 "github-actions/no-top-level-permissions": "off",
                 // Deprecated rules - to be removed in future
-                "id-length": "off",
                 "import-x/max-dependencies": "off",
-                "jsdoc/check-line-alignment": "off",
-                "max-classes-per-file": "off",
-                "max-lines": "off",
-                // Sonar quality helpers
-                "max-lines-per-function": [
-                    "error",
-                    {
-                        IIFEs: false,
-                        max: 1000,
-                        skipBlankLines: true,
-                        skipComments: true,
-                    },
-                ],
                 "max-params": "off",
                 "max-statements": "off",
-                "module-interop/no-import-cjs": "off",
-                "no-console": "off",
-                "no-continue": "off",
-                "no-debugger": "error",
-                "no-duplicate-imports": [
-                    "error",
-                    {
-                        allowSeparateTypeImports: true,
-                    },
-                ],
-                "no-empty-character-class": "error",
-                "no-inline-comments": "off",
-                "no-invalid-regexp": "error",
-                "no-magic-numbers": "off",
-                "no-plusplus": "off",
                 "no-secrets/no-pattern-match": "off",
                 "no-secrets/no-secrets": [
                     "error",
@@ -3928,43 +3766,25 @@ export const createConfig = (
                         tolerance: 5,
                     },
                 ],
-                "no-ternary": "off",
-                "no-undef-init": "off",
-                "no-undefined": "off",
-                "no-unexpected-multiline": "error",
                 "no-unsanitized/method": "error",
                 "no-unsanitized/property": "error",
-                "no-useless-backreference": "error",
-                "no-void": "off",
-                "object-shorthand": "off",
-                "one-var": "off",
-                "prefer-arrow-callback": [
-                    "warn",
-                    { allowNamedFunctions: true, allowUnboundThis: true },
-                ],
                 "prefer-destructuring": "off",
                 "prettier/prettier": "off", // Using in Prettier directly for less noise for AI
-                "require-await": "off",
-                "require-unicode-regexp": "off",
+                "remark/require-remark-config-file-naming-convention": "off",
                 "security/detect-object-injection": "off",
-                "sonarjs/cognitive-complexity": "off",
-                "sonarjs/different-types-comparison": "off",
-                "sonarjs/no-nested-conditional": "off",
-                "unicorn/consistent-destructuring": "off",
-                "unicorn/no-null": "off",
                 "unicorn/no-useless-undefined": "off",
                 "unicorn/prevent-abbreviations": "off",
             },
         },
         {
             files: [
-                "**/*.test.{ts,tsx,mts,cts,mjs,js,jsx,cjs}",
-                "**/*.spec.{ts,tsx,mts,cts,mjs,js,jsx,cjs}",
-                "src/test/**/*.{ts,tsx,mts,cts,mjs,js,jsx,cjs}",
-                "test/**/*.{ts,tsx,mts,cts,mjs,js,jsx,cjs}",
-                "tests/**/*.{ts,tsx,mts,cts,mjs,js,jsx,cjs}",
-                "benchmarks/**/*.{ts,tsx,mts,cts,mjs,js,jsx,cjs}",
-                "scripts/**/*.{ts,tsx,mts,cts,js,jsx,mjs,cjs}",
+                "**/*.test.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
+                "**/*.spec.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
+                "src/test/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
+                "test/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
+                "tests/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
+                "benchmarks/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
+                "scripts/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
             ],
             name: "📃 Typedoc: ⛔ Disable Require Exported Doc Comment in Test/Script/Benchmark Files",
             rules: {
@@ -3975,7 +3795,7 @@ export const createConfig = (
         },
         {
             files: ["plugin.mjs", "src/**/*.{ts,tsx,mts,cts,js,mjs,cjs}"],
-            name: "📢 Source runtime logging policy: ⛔ Disables",
+            name: "📢 Source runtime logging policy: ⛔ Overrides",
             rules: {
                 // Runtime/library code should not emit console output.
                 "no-console": "error",
@@ -3986,7 +3806,7 @@ export const createConfig = (
         },
         {
             files: ["eslint.config.mjs", "src/shared-config.ts"],
-            name: "📦 Shared Config Implementation: ⛔ Disables",
+            name: "📦 Shared Config Implementation: ⛔ Overrides",
             rules: {
                 "@typescript-eslint/strict-boolean-expressions": "off",
                 "max-lines-per-function": "off",
@@ -4000,7 +3820,6 @@ export const createConfig = (
                 "typefest/prefer-ts-extras-object-entries": "off",
                 "typefest/prefer-ts-extras-object-from-entries": "off",
                 "typefest/prefer-ts-extras-set-has": "off",
-                "unicorn/no-useless-undefined": "off",
             },
         },
         {
@@ -4011,18 +3830,23 @@ export const createConfig = (
                 "**/secretlint.config.{js,cjs,mjs}",
                 "**/secretlint.{js,cjs,mjs}",
             ],
-            name: "🔒 Secretlint Configs: ⛔ Disables",
+            name: "🔒 Secretlint Configs: ⛔ Overrides",
             // Secretlint configs often use CommonJS, and the import-x rule is too noisy to justify forcing all
             // configs to ESM.
             rules: {
                 "@typescript-eslint/no-require-imports": "off",
                 "import-x/no-commonjs": "off",
                 "import-x/unambiguous": "off",
+                "n/no-mixed-requires": "off",
+                "sonarjs/no-require-or-define": "off",
             },
         },
         // #endregion
         // #region 🧹 Prettier Disable Config
-        eslintConfigPrettier,
+        {
+            name: "🌍 Global: 🎨 Prettier ⛔ Overrides",
+            ...eslintConfigPrettier,
+        },
         // #endregion
     ];
 

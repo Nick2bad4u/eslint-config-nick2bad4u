@@ -1,6 +1,6 @@
-## Maintainer guide: rules, plugins, and without presets
+# Maintainer guide: rules, plugins, and without presets
 
-### 1) Add or edit rules
+## 1) Add or edit rules
 
 1. Open `src/shared-config.ts`.
 2. Locate the nearest matching config block by `files`/`name`.
@@ -8,7 +8,7 @@
 4. Use actionable comments for non-obvious rule decisions.
 5. If a rule needs type info, keep it in a TypeScript parser block with project service or explicit `project` paths.
 
-### 2) Add a new plugin package
+## 2) Add a new plugin package
 
 1. Add the plugin package to `dependencies` in `package.json`.
 2. Import it in `src/shared-config.ts`.
@@ -16,26 +16,26 @@
 4. Add/adjust rules using that plugin's namespace.
 5. Decide whether the plugin should have a dedicated `without*` preset.
 
-### 3) Add a new `without*` preset
+## 3) Add a new `without*` preset
 
 Use this when consumers need to dogfood local plugin builds or disable packaged plugin rules.
 
 1. In `src/shared-config.ts`, add a preset entry under exported `configs`:
 
-```js
-withoutMyPlugin: createConfig({
-    plugins: {
-        "my-plugin": false,
-    },
-}),
-```
+   ```js
+   withoutMyPlugin: createConfig({
+       plugins: {
+           "my-plugin": false,
+       },
+   }),
+   ```
 
 2. In `src/preset.ts`, re-export the new preset from `sharedConfigs`.
 3. In `index.d.ts`, add the preset property to `Nick2Bad4UEslintConfigPresets`.
 4. In `test/preset.test.ts`, add the preset/plugin namespace pair to the `it.each` matrix.
 5. In `README.md`, document the new preset in the presets list.
 
-### 4) Dogfood a local plugin in a consumer repo
+## 4) Dogfood a local plugin in a consumer repo
 
 Use the matching `without*` preset, then append your local plugin registration and rules:
 
