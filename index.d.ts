@@ -62,6 +62,9 @@ export interface Nick2Bad4UEslintConfigPresets {
     /** Full shared config without Immutable 2 rules. */
     readonly withoutImmutable2: Linter.Config[];
 
+    /** Full shared config without Remark plugin rules. */
+    readonly withoutRemark: Linter.Config[];
+
     /** Full shared config without Repo plugin rules. */
     readonly withoutRepo: Linter.Config[];
 

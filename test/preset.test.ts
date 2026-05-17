@@ -62,6 +62,10 @@ const getPresetByName = (presetName: string): readonly Linter.Config[] => {
             return presets.withoutImmutable2;
         }
 
+        case "withoutRemark": {
+            return presets.withoutRemark;
+        }
+
         case "withoutRepo": {
             return presets.withoutRepo;
         }
@@ -129,6 +133,7 @@ describe("eslint-config-nick2bad4u presets", () => {
         ["withoutFileProgress2", "file-progress-2"],
         ["withoutGithubActions2", "github-actions-2"],
         ["withoutImmutable2", "immutable-2"],
+        ["withoutRemark", "remark"],
         ["withoutRepo", "repo"],
         ["withoutSdl2", "sdl-2"],
         ["withoutStylelint2", "stylelint-2"],

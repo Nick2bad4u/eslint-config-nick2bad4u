@@ -76,6 +76,7 @@ Available presets:
 - `nick2bad4u.configs.withoutFileProgress2` - disable `file-progress-2` namespace rules.
 - `nick2bad4u.configs.withoutGithubActions2` - disable `github-actions-2` namespace rules.
 - `nick2bad4u.configs.withoutImmutable2` - disable `immutable-2` namespace rules.
+- `nick2bad4u.configs.withoutRemark` - disable `remark` namespace rules.
 - `nick2bad4u.configs.withoutRepo` - disable `repo` namespace rules.
 - `nick2bad4u.configs.withoutSdl2` - disable `sdl-2` namespace rules.
 - `nick2bad4u.configs.withoutStylelint2` - disable `stylelint-2` namespace rules.

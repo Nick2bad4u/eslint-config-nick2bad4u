@@ -292,6 +292,7 @@ All presets are exposed on the default export (`.configs`) and as the `presets` 
 | `withoutFileProgress2` | Omits file-progress reporting plugin |
 | `withoutGithubActions2` | Omits GitHub Actions YAML rules |
 | `withoutImmutable2` | Omits immutability-enforcing rules |
+| `withoutRemark` | Omits Remark linting rules |
 | `withoutRepo` | Omits repo-specific rules |
 | `withoutSdl2` | Omits SDL/security rules |
 | `withoutStylelint2` | Omits Stylelint bridge rules |
