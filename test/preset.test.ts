@@ -24,11 +24,11 @@ const getRegisteredPluginNames = (
     return new Set(pluginNames);
 };
 
-const hasRuleFromPlugin = (
+const getRuleNamesForPlugin = (
     configEntries: readonly Linter.Config[],
     pluginName: string
-): boolean =>
-    [...getRuleNames(configEntries)].some((ruleName) =>
+): string[] =>
+    [...getRuleNames(configEntries)].filter((ruleName) =>
         ruleName.startsWith(`${pluginName}/`)
     );
 
@@ -68,7 +68,16 @@ describe("eslint-config-nick2bad4u presets", () => {
         expect(nickTwoBadFourU.configs).toBe(presets);
         expect(allPreset.length).toBeGreaterThan(0);
         expect(presets.recommended).toBe(presets.all);
-        expect(Array.isArray(allPreset)).toBeTruthy();
+        expect(allPreset).toStrictEqual(
+            expect.arrayContaining([expect.any(Object)])
+        );
+    });
+
+    it("falls back only for unknown preset names", () => {
+        expect.assertions(2);
+
+        expect(getPresetByName("missing-preset")).toBe(presets.all);
+        expect(getPresetByName("withoutTypefest")).not.toBe(presets.all);
     });
 
     it.each([
@@ -100,18 +109,28 @@ describe("eslint-config-nick2bad4u presets", () => {
             const preset = getPresetByName(presetName);
             const registeredPluginNames = getRegisteredPluginNames(preset);
 
-            expect(hasRuleFromPlugin(preset, pluginName)).toBeFalsy();
-            expect(registeredPluginNames.has(pluginName)).toBeFalsy();
+            expect(getRuleNamesForPlugin(preset, pluginName)).toHaveLength(0);
+            expect([...registeredPluginNames]).not.toContain(pluginName);
         }
     );
 
     it("keeps full preset rules in the all preset", () => {
-        expect.assertions(2);
+        expect.assertions(4);
 
         const allPreset = presets.all as readonly Linter.Config[];
 
-        expect(hasRuleFromPlugin(allPreset, "copilot")).toBeTruthy();
-        expect(hasRuleFromPlugin(allPreset, "typefest")).toBeTruthy();
+        expect(
+            getRuleNamesForPlugin(allPreset, "copilot").length
+        ).toBeGreaterThan(0);
+        expect(
+            getRuleNamesForPlugin(allPreset, "runtime-cleanup").length
+        ).toBeGreaterThan(0);
+        expect(
+            getRuleNamesForPlugin(allPreset, "test-signal").length
+        ).toBeGreaterThan(0);
+        expect(
+            getRuleNamesForPlugin(allPreset, "typefest").length
+        ).toBeGreaterThan(0);
     });
 
     it("supports local source-rule plugin replacement via createConfig", () => {
@@ -134,22 +153,22 @@ describe("eslint-config-nick2bad4u presets", () => {
             },
         }) as readonly Linter.Config[];
 
-        expect(
-            getRuleNames(configEntries).has("typefest/local-only")
-        ).toBeTruthy();
+        expect([...getRuleNames(configEntries)]).toContain(
+            "typefest/local-only"
+        );
     });
 
     it.each([
         ["runtime-cleanup", "runtime-cleanup/local-only"],
         ["test-signal", "test-signal/local-only"],
     ] as const)(
-        "supports optional %s plugin replacement via createConfig",
+        "supports %s plugin replacement via createConfig",
         (pluginName, ruleName) => {
             expect.assertions(2);
 
             const localPlugin = {
                 configs: {
-                    recommended: {
+                    all: {
                         plugins: {
                             [pluginName]: {
                                 rules: {},
@@ -174,10 +193,10 @@ describe("eslint-config-nick2bad4u presets", () => {
                 },
             }) as readonly Linter.Config[];
 
-            expect(getRuleNames(configEntries).has(ruleName)).toBeTruthy();
-            expect(
-                getRuleNames(disabledConfigEntries).has(ruleName)
-            ).toBeFalsy();
+            expect([...getRuleNames(configEntries)]).toContain(ruleName);
+            expect([...getRuleNames(disabledConfigEntries)]).not.toContain(
+                ruleName
+            );
         }
     );
 });

@@ -63,11 +63,13 @@ import promise from "eslint-plugin-promise";
 import regexp from "eslint-plugin-regexp";
 import remark from "eslint-plugin-remark";
 import repo from "eslint-plugin-repo";
+import runtimeCleanup from "eslint-plugin-runtime-cleanup";
 import sdl from "eslint-plugin-sdl-2";
 import security from "eslint-plugin-security";
 import { configs as sonarjsConfigs } from "eslint-plugin-sonarjs";
 import storybook from "eslint-plugin-storybook";
 import stylelint2 from "eslint-plugin-stylelint-2";
+import testSignal from "eslint-plugin-test-signal";
 import testingLibrary from "eslint-plugin-testing-library";
 import toml from "eslint-plugin-toml";
 import tsconfig from "eslint-plugin-tsconfig";
@@ -91,9 +93,11 @@ import * as yamlEslintParser from "yaml-eslint-parser";
 import {
     arrayFirst,
     arrayJoin,
+    isPresent,
     keyIn,
     objectEntries,
     objectFromEntries,
+    objectHasOwn,
     setHas,
 } from "ts-extras";
 
@@ -194,72 +198,6 @@ type MutableEslintConfig = Omit<EslintConfig, "plugins" | "rules"> & {
     rules?: Record<string, unknown>;
 };
 
-type UnknownRecord = Record<PropertyKey, unknown>;
-
-const isUnknownRecord = (value: unknown): value is UnknownRecord =>
-    typeof value === "object" && value !== null && !Array.isArray(value);
-
-const hasDefaultExport = (
-    value: unknown
-): value is Readonly<{ default?: unknown }> =>
-    isUnknownRecord(value) && keyIn(value, "default");
-
-const isConfigurablePlugin = (value: unknown): value is ConfigurablePlugin =>
-    typeof value === "object" && value !== null;
-
-const isErrorRecord = (value: unknown): value is Error & UnknownRecord =>
-    value instanceof Error && isUnknownRecord(value);
-
-const isModuleNotFoundForPackage = (
-    error: unknown,
-    packageName: string
-): boolean =>
-    isErrorRecord(error) &&
-    keyIn(error, "code") &&
-    error["code"] === "MODULE_NOT_FOUND" &&
-    error.message.includes(packageName);
-
-const normalizePluginModule = (loadedModule: unknown): unknown =>
-    hasDefaultExport(loadedModule)
-        ? (loadedModule.default ?? loadedModule)
-        : loadedModule;
-
-const isConfigOrConfigArray = (
-    value: unknown
-): value is EslintConfig | readonly EslintConfig[] =>
-    Array.isArray(value) || (typeof value === "object" && value !== null);
-
-const loadOptionalConfigurablePlugin = (
-    packageName: string
-): ConfigurablePlugin | null => {
-    try {
-        // eslint-disable-next-line import-x/no-dynamic-require, security/detect-non-literal-require -- Optional plugin package name is a trusted local constant.
-        const loadedModule: unknown = require(packageName);
-        const loadedPlugin = normalizePluginModule(loadedModule);
-
-        if (isConfigurablePlugin(loadedPlugin)) {
-            return loadedPlugin;
-        }
-
-        throw new TypeError(
-            `${packageName} did not export an ESLint plugin object.`
-        );
-    } catch (error: unknown) {
-        if (isModuleNotFoundForPackage(error, packageName)) {
-            return null;
-        }
-
-        throw error;
-    }
-};
-
-const runtimeCleanupFallback = loadOptionalConfigurablePlugin(
-    "eslint-plugin-runtime-cleanup"
-);
-const testSignalFallback = loadOptionalConfigurablePlugin(
-    "eslint-plugin-test-signal"
-);
-
 /**
  * @param {ReadonlyMap<string, PluginOverride>} pluginOverrideEntries
  * @param {string} pluginName
@@ -293,37 +231,6 @@ const resolveTypedPlugin = <TPlugin extends ConfigurablePlugin>(
     );
 
     return resolvedPlugin === null ? null : (resolvedPlugin as TPlugin);
-};
-
-const resolveOptionalPlugin = <TPlugin extends ConfigurablePlugin>(
-    pluginOverrideEntries: ReadonlyMap<string, PluginOverride>,
-    pluginName: string,
-    fallbackPlugin: null | TPlugin
-): null | TPlugin => {
-    const configuredPlugin = pluginOverrideEntries.get(pluginName);
-
-    if (configuredPlugin === false || configuredPlugin === null) {
-        return null;
-    }
-
-    if (configuredPlugin === undefined) {
-        return fallbackPlugin;
-    }
-
-    return configuredPlugin as TPlugin;
-};
-
-const getPluginPresetConfigs = (
-    plugin: ConfigurablePlugin | null,
-    presetName: string
-): readonly (EslintConfig | readonly EslintConfig[])[] => {
-    if (plugin?.configs === undefined) {
-        return [];
-    }
-
-    const presetConfig: unknown = Reflect.get(plugin.configs, presetName);
-
-    return isConfigOrConfigArray(presetConfig) ? [presetConfig] : [];
 };
 
 /**
@@ -399,6 +306,33 @@ const flattenConfigs = (
 
         return flattenedConfigs;
     }, []);
+
+const withoutProjectServiceParserOption = (
+    config: EslintConfig
+): EslintConfig => {
+    const languageOptions = config.languageOptions;
+    const parserOptions = languageOptions?.["parserOptions"];
+
+    if (
+        !isPresent(parserOptions) ||
+        typeof parserOptions !== "object" ||
+        Array.isArray(parserOptions) ||
+        !objectHasOwn(parserOptions, "projectService")
+    ) {
+        return config;
+    }
+
+    const nextParserOptions: Record<string, unknown> = { ...parserOptions };
+    Reflect.deleteProperty(nextParserOptions, "projectService");
+
+    return {
+        ...config,
+        languageOptions: {
+            ...languageOptions,
+            parserOptions: nextParserOptions,
+        },
+    };
+};
 
 /**
  * Controls eslint-plugin-file-progress behavior.
@@ -480,15 +414,15 @@ export const createConfig = (
         "etc-misc",
         etcMiscPlugin
     );
-    const runtimeCleanup = resolveOptionalPlugin(
+    const runtimeCleanupPlugin = resolveTypedPlugin(
         pluginOverrideEntries,
         "runtime-cleanup",
-        runtimeCleanupFallback
+        runtimeCleanup
     );
-    const testSignal = resolveOptionalPlugin(
+    const testSignalPlugin = resolveTypedPlugin(
         pluginOverrideEntries,
         "test-signal",
-        testSignalFallback
+        testSignal
     );
 
     // NOTE: In ESLint flat config, ignore-only entries are safest when
@@ -753,8 +687,14 @@ export const createConfig = (
         copilot.configs.all,
         sdl.configs.required,
         githubActions.configs.all,
-        ...getPluginPresetConfigs(runtimeCleanup, "recommended"),
-        ...getPluginPresetConfigs(testSignal, "recommended"),
+        ...(runtimeCleanupPlugin === null
+            ? []
+            : [
+                  withoutProjectServiceParserOption(
+                      runtimeCleanupPlugin.configs.all
+                  ),
+              ]),
+        ...(testSignalPlugin === null ? [] : [testSignalPlugin.configs.all]),
         vite.configs.all,
         stylelint2.configs.all,
         {
