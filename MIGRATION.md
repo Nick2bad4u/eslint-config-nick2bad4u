@@ -294,8 +294,10 @@ All presets are exposed on the default export (`.configs`) and as the `presets` 
 | `withoutImmutable2` | Omits immutability-enforcing rules |
 | `withoutRemark` | Omits Remark linting rules |
 | `withoutRepo` | Omits repo-specific rules |
+| `withoutRuntimeCleanup` | Omits runtime-cleanup rules |
 | `withoutSdl2` | Omits SDL/security rules |
 | `withoutStylelint2` | Omits Stylelint bridge rules |
+| `withoutTestSignal` | Omits weak-test signal rules |
 | `withoutTsconfig` | Omits tsconfig-validation rules |
 | `withoutTsdocRequire2` | Omits TSDoc `@param`/`@returns` requirements |
 | `withoutTypedoc` | Omits TypeDoc comment rules |

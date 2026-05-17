@@ -68,11 +68,17 @@ export interface Nick2Bad4UEslintConfigPresets {
     /** Full shared config without Repo plugin rules. */
     readonly withoutRepo: Linter.Config[];
 
+    /** Full shared config without Runtime Cleanup plugin rules. */
+    readonly withoutRuntimeCleanup: Linter.Config[];
+
     /** Full shared config without SDL 2 rules. */
     readonly withoutSdl2: Linter.Config[];
 
     /** Full shared config without Stylelint 2 rules. */
     readonly withoutStylelint2: Linter.Config[];
+
+    /** Full shared config without Test Signal plugin rules. */
+    readonly withoutTestSignal: Linter.Config[];
 
     /** Full shared config without future eslint-plugin-tsconfig rules. */
     readonly withoutTsconfig: Linter.Config[];

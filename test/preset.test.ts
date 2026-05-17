@@ -32,85 +32,31 @@ const hasRuleFromPlugin = (
         ruleName.startsWith(`${pluginName}/`)
     );
 
-const getPresetByName = (presetName: string): readonly Linter.Config[] => {
-    switch (presetName) {
-        case "withoutChunkyLint": {
-            return presets.withoutChunkyLint;
-        }
-
-        case "withoutCopilot": {
-            return presets.withoutCopilot;
-        }
-
-        case "withoutDocusaurus2": {
-            return presets.withoutDocusaurus2;
-        }
-
-        case "withoutEtcMisc": {
-            return presets.withoutEtcMisc;
-        }
-
-        case "withoutFileProgress2": {
-            return presets.withoutFileProgress2;
-        }
-
-        case "withoutGithubActions2": {
-            return presets.withoutGithubActions2;
-        }
-
-        case "withoutImmutable2": {
-            return presets.withoutImmutable2;
-        }
-
-        case "withoutRemark": {
-            return presets.withoutRemark;
-        }
-
-        case "withoutRepo": {
-            return presets.withoutRepo;
-        }
-
-        case "withoutSdl2": {
-            return presets.withoutSdl2;
-        }
-
-        case "withoutStylelint2": {
-            return presets.withoutStylelint2;
-        }
-
-        case "withoutTsconfig": {
-            return presets.withoutTsconfig;
-        }
-
-        case "withoutTsdocRequire2": {
-            return presets.withoutTsdocRequire2;
-        }
-
-        case "withoutTypedoc": {
-            return presets.withoutTypedoc;
-        }
-
-        case "withoutTypefest": {
-            return presets.withoutTypefest;
-        }
-
-        case "withoutUptimeWatcher": {
-            return presets.withoutUptimeWatcher;
-        }
-
-        case "withoutVite": {
-            return presets.withoutVite;
-        }
-
-        case "withoutWriteGoodComments2": {
-            return presets.withoutWriteGoodComments2;
-        }
-
-        default: {
-            return presets.all;
-        }
-    }
+const presetByName: Readonly<Record<string, readonly Linter.Config[]>> = {
+    withoutChunkyLint: presets.withoutChunkyLint,
+    withoutCopilot: presets.withoutCopilot,
+    withoutDocusaurus2: presets.withoutDocusaurus2,
+    withoutEtcMisc: presets.withoutEtcMisc,
+    withoutFileProgress2: presets.withoutFileProgress2,
+    withoutGithubActions2: presets.withoutGithubActions2,
+    withoutImmutable2: presets.withoutImmutable2,
+    withoutRemark: presets.withoutRemark,
+    withoutRepo: presets.withoutRepo,
+    withoutRuntimeCleanup: presets.withoutRuntimeCleanup,
+    withoutSdl2: presets.withoutSdl2,
+    withoutStylelint2: presets.withoutStylelint2,
+    withoutTestSignal: presets.withoutTestSignal,
+    withoutTsconfig: presets.withoutTsconfig,
+    withoutTsdocRequire2: presets.withoutTsdocRequire2,
+    withoutTypedoc: presets.withoutTypedoc,
+    withoutTypefest: presets.withoutTypefest,
+    withoutUptimeWatcher: presets.withoutUptimeWatcher,
+    withoutVite: presets.withoutVite,
+    withoutWriteGoodComments2: presets.withoutWriteGoodComments2,
 };
+
+const getPresetByName = (presetName: string): readonly Linter.Config[] =>
+    presetByName[presetName] ?? presets.all;
 /* eslint-enable @typescript-eslint/prefer-readonly-parameter-types -- Re-enable after local Linter.Config helpers. */
 
 describe("eslint-config-nick2bad4u presets", () => {
@@ -135,8 +81,10 @@ describe("eslint-config-nick2bad4u presets", () => {
         ["withoutImmutable2", "immutable-2"],
         ["withoutRemark", "remark"],
         ["withoutRepo", "repo"],
+        ["withoutRuntimeCleanup", "runtime-cleanup"],
         ["withoutSdl2", "sdl-2"],
         ["withoutStylelint2", "stylelint-2"],
+        ["withoutTestSignal", "test-signal"],
         ["withoutTsconfig", "tsconfig"],
         ["withoutTsdocRequire2", "tsdoc-require-2"],
         ["withoutTypedoc", "typedoc"],
@@ -190,4 +138,46 @@ describe("eslint-config-nick2bad4u presets", () => {
             getRuleNames(configEntries).has("typefest/local-only")
         ).toBeTruthy();
     });
+
+    it.each([
+        ["runtime-cleanup", "runtime-cleanup/local-only"],
+        ["test-signal", "test-signal/local-only"],
+    ] as const)(
+        "supports optional %s plugin replacement via createConfig",
+        (pluginName, ruleName) => {
+            expect.assertions(2);
+
+            const localPlugin = {
+                configs: {
+                    recommended: {
+                        plugins: {
+                            [pluginName]: {
+                                rules: {},
+                            },
+                        },
+                        rules: {
+                            [ruleName]: "error" as const,
+                        },
+                    },
+                },
+                rules: {},
+            };
+
+            const configEntries = createConfig({
+                plugins: {
+                    [pluginName]: localPlugin,
+                },
+            }) as readonly Linter.Config[];
+            const disabledConfigEntries = createConfig({
+                plugins: {
+                    [pluginName]: false,
+                },
+            }) as readonly Linter.Config[];
+
+            expect(getRuleNames(configEntries).has(ruleName)).toBeTruthy();
+            expect(
+                getRuleNames(disabledConfigEntries).has(ruleName)
+            ).toBeFalsy();
+        }
+    );
 });

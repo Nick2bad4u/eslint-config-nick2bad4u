@@ -78,8 +78,10 @@ Available presets:
 - `nick2bad4u.configs.withoutImmutable2` - disable `immutable-2` namespace rules.
 - `nick2bad4u.configs.withoutRemark` - disable `remark` namespace rules.
 - `nick2bad4u.configs.withoutRepo` - disable `repo` namespace rules.
+- `nick2bad4u.configs.withoutRuntimeCleanup` - disable `runtime-cleanup` namespace rules.
 - `nick2bad4u.configs.withoutSdl2` - disable `sdl-2` namespace rules.
 - `nick2bad4u.configs.withoutStylelint2` - disable `stylelint-2` namespace rules.
+- `nick2bad4u.configs.withoutTestSignal` - disable `test-signal` namespace rules.
 - `nick2bad4u.configs.withoutTsconfig` - disable `tsconfig` namespace rules.
 - `nick2bad4u.configs.withoutTsdocRequire2` - disable `tsdoc-require-2` namespace rules.
 - `nick2bad4u.configs.withoutTypedoc` - disable `typedoc` namespace rules.

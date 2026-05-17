@@ -176,8 +176,10 @@ export interface Nick2Bad4UEslintConfigPresets {
     readonly withoutImmutable2: EslintConfig[];
     readonly withoutRemark: EslintConfig[];
     readonly withoutRepo: EslintConfig[];
+    readonly withoutRuntimeCleanup: EslintConfig[];
     readonly withoutSdl2: EslintConfig[];
     readonly withoutStylelint2: EslintConfig[];
+    readonly withoutTestSignal: EslintConfig[];
     readonly withoutTsconfig: EslintConfig[];
     readonly withoutTsdocRequire2: EslintConfig[];
     readonly withoutTypedoc: EslintConfig[];
@@ -191,6 +193,72 @@ type MutableEslintConfig = Omit<EslintConfig, "plugins" | "rules"> & {
     plugins?: Record<string, unknown>;
     rules?: Record<string, unknown>;
 };
+
+type UnknownRecord = Record<PropertyKey, unknown>;
+
+const isUnknownRecord = (value: unknown): value is UnknownRecord =>
+    typeof value === "object" && value !== null && !Array.isArray(value);
+
+const hasDefaultExport = (
+    value: unknown
+): value is Readonly<{ default?: unknown }> =>
+    isUnknownRecord(value) && keyIn(value, "default");
+
+const isConfigurablePlugin = (value: unknown): value is ConfigurablePlugin =>
+    typeof value === "object" && value !== null;
+
+const isErrorRecord = (value: unknown): value is Error & UnknownRecord =>
+    value instanceof Error && isUnknownRecord(value);
+
+const isModuleNotFoundForPackage = (
+    error: unknown,
+    packageName: string
+): boolean =>
+    isErrorRecord(error) &&
+    keyIn(error, "code") &&
+    error["code"] === "MODULE_NOT_FOUND" &&
+    error.message.includes(packageName);
+
+const normalizePluginModule = (loadedModule: unknown): unknown =>
+    hasDefaultExport(loadedModule)
+        ? (loadedModule.default ?? loadedModule)
+        : loadedModule;
+
+const isConfigOrConfigArray = (
+    value: unknown
+): value is EslintConfig | readonly EslintConfig[] =>
+    Array.isArray(value) || (typeof value === "object" && value !== null);
+
+const loadOptionalConfigurablePlugin = (
+    packageName: string
+): ConfigurablePlugin | null => {
+    try {
+        // eslint-disable-next-line import-x/no-dynamic-require, security/detect-non-literal-require -- Optional plugin package name is a trusted local constant.
+        const loadedModule: unknown = require(packageName);
+        const loadedPlugin = normalizePluginModule(loadedModule);
+
+        if (isConfigurablePlugin(loadedPlugin)) {
+            return loadedPlugin;
+        }
+
+        throw new TypeError(
+            `${packageName} did not export an ESLint plugin object.`
+        );
+    } catch (error: unknown) {
+        if (isModuleNotFoundForPackage(error, packageName)) {
+            return null;
+        }
+
+        throw error;
+    }
+};
+
+const runtimeCleanupFallback = loadOptionalConfigurablePlugin(
+    "eslint-plugin-runtime-cleanup"
+);
+const testSignalFallback = loadOptionalConfigurablePlugin(
+    "eslint-plugin-test-signal"
+);
 
 /**
  * @param {ReadonlyMap<string, PluginOverride>} pluginOverrideEntries
@@ -225,6 +293,37 @@ const resolveTypedPlugin = <TPlugin extends ConfigurablePlugin>(
     );
 
     return resolvedPlugin === null ? null : (resolvedPlugin as TPlugin);
+};
+
+const resolveOptionalPlugin = <TPlugin extends ConfigurablePlugin>(
+    pluginOverrideEntries: ReadonlyMap<string, PluginOverride>,
+    pluginName: string,
+    fallbackPlugin: null | TPlugin
+): null | TPlugin => {
+    const configuredPlugin = pluginOverrideEntries.get(pluginName);
+
+    if (configuredPlugin === false || configuredPlugin === null) {
+        return null;
+    }
+
+    if (configuredPlugin === undefined) {
+        return fallbackPlugin;
+    }
+
+    return configuredPlugin as TPlugin;
+};
+
+const getPluginPresetConfigs = (
+    plugin: ConfigurablePlugin | null,
+    presetName: string
+): readonly (EslintConfig | readonly EslintConfig[])[] => {
+    if (plugin?.configs === undefined) {
+        return [];
+    }
+
+    const presetConfig: unknown = Reflect.get(plugin.configs, presetName);
+
+    return isConfigOrConfigArray(presetConfig) ? [presetConfig] : [];
 };
 
 /**
@@ -380,6 +479,16 @@ export const createConfig = (
         pluginOverrideEntries,
         "etc-misc",
         etcMiscPlugin
+    );
+    const runtimeCleanup = resolveOptionalPlugin(
+        pluginOverrideEntries,
+        "runtime-cleanup",
+        runtimeCleanupFallback
+    );
+    const testSignal = resolveOptionalPlugin(
+        pluginOverrideEntries,
+        "test-signal",
+        testSignalFallback
     );
 
     // NOTE: In ESLint flat config, ignore-only entries are safest when
@@ -644,6 +753,8 @@ export const createConfig = (
         copilot.configs.all,
         sdl.configs.required,
         githubActions.configs.all,
+        ...getPluginPresetConfigs(runtimeCleanup, "recommended"),
+        ...getPluginPresetConfigs(testSignal, "recommended"),
         vite.configs.all,
         stylelint2.configs.all,
         {
@@ -3786,6 +3897,11 @@ const sharedConfigs: Nick2Bad4UEslintConfigPresets = {
             "repo-compliance": false,
         },
     }),
+    withoutRuntimeCleanup: createConfig({
+        plugins: {
+            "runtime-cleanup": false,
+        },
+    }),
     withoutSdl2: withoutSdl2HasNodePlugin
         ? withoutSdl2BaseConfig
         : [
@@ -3800,6 +3916,11 @@ const sharedConfigs: Nick2Bad4UEslintConfigPresets = {
     withoutStylelint2: createConfig({
         plugins: {
             "stylelint-2": false,
+        },
+    }),
+    withoutTestSignal: createConfig({
+        plugins: {
+            "test-signal": false,
         },
     }),
     withoutTsconfig: createConfig({
