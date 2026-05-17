@@ -148,8 +148,8 @@ const DEFAULT_TSCONFIG_PATHS = Object.freeze(["./tsconfig.eslint.json"]);
 
 type EslintConfig = Linter.Config;
 
-const casePoliceRecommendedConfigs =
-    casePolice.configs.recommended as unknown as readonly EslintConfig[];
+const casePoliceRecommendedConfigs = casePolice.configs
+    .recommended as unknown as readonly EslintConfig[];
 const casePoliceRulePlugin =
     casePoliceRecommendedConfigs.find(
         (config) => config.plugins?.["case-police"] !== undefined
@@ -162,8 +162,8 @@ const eslintCommentsRulePlugin =
 const fileProgressRecommendedConfig = progress.configs["recommended-ci"];
 const fileProgressRulePlugin =
     fileProgressRecommendedConfig.plugins?.["file-progress"] ?? progress;
-const sdlRequiredConfigs =
-    sdl.configs.required as unknown as readonly EslintConfig[];
+const sdlRequiredConfigs = sdl.configs
+    .required as unknown as readonly EslintConfig[];
 const nodeRulePlugin =
     sdlRequiredConfigs.find((config) => config.plugins?.["n"] !== undefined)
         ?.plugins?.["n"] ?? nodePlugin;

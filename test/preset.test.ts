@@ -67,7 +67,9 @@ const getMissingEnabledRulePluginRegistrations = (
     readonly ruleName: string;
 }> =>
     configEntries.flatMap((configEntry, configIndex) => {
-        const localPluginNames = new Set(Object.keys(configEntry.plugins ?? {}));
+        const localPluginNames = new Set(
+            Object.keys(configEntry.plugins ?? {})
+        );
 
         return Object.entries(configEntry.rules ?? {}).flatMap(
             ([ruleName, ruleConfig]) => {
