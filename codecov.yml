@@ -23,10 +23,10 @@ component_management:
               type: project
     individual_components:
         - component_id: package_entry
-          name: "Package entrypoint"
+          name: "Package source"
           paths:
-              - preset.mjs
-              - eslint.config.mjs
+              - src/preset.ts
+              - src/shared-config.ts
 
 coverage:
     precision: 2
@@ -46,20 +46,17 @@ flags:
     os-linux:
         carryforward: true
         paths:
-            - eslint.config.mjs
-            - preset.mjs
+            - src/
 
     os-macos:
         carryforward: true
         paths:
-            - eslint.config.mjs
-            - preset.mjs
+            - src/
 
     os-windows:
         carryforward: true
         paths:
-            - eslint.config.mjs
-            - preset.mjs
+            - src/
 
 ignore:
     - "benchmarks/**"

@@ -159,7 +159,7 @@ const isCiEnvironment = process.env["CI"] === "true",
                 ],
                 reportOnFailure: true,
                 reportsDirectory: "./coverage",
-                skipFull: true, // Don't skip full coverage collection
+                skipFull: true, // Keep human-readable coverage output focused on files with gaps.
                 // NOTE: Coverage thresholds adjusted after empirical analysis of current
                 // instrumentation (November 2025). JSX-heavy components and patched CSS
                 // modules generate synthetic branches that Vitest counts but cannot be

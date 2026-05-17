@@ -9,6 +9,7 @@
 
 import type { Linter } from "eslint";
 import docusaurus from "@docusaurus/eslint-plugin";
+import * as eslintCommentsPlugin from "@eslint-community/eslint-plugin-eslint-comments";
 import comments from "@eslint-community/eslint-plugin-eslint-comments/configs";
 import react from "@eslint-react/eslint-plugin";
 import { globalIgnores } from "@eslint/config-helpers";
@@ -146,6 +147,29 @@ const processEnvironment = globalThis.process.env;
 const DEFAULT_TSCONFIG_PATHS = Object.freeze(["./tsconfig.eslint.json"]);
 
 type EslintConfig = Linter.Config;
+
+const casePoliceRecommendedConfigs =
+    casePolice.configs.recommended as unknown as readonly EslintConfig[];
+const casePoliceRulePlugin =
+    casePoliceRecommendedConfigs.find(
+        (config) => config.plugins?.["case-police"] !== undefined
+    )?.plugins?.["case-police"] ?? casePolice;
+const eslintCommentsRecommendedConfig = comments.recommended;
+const eslintCommentsRulePlugin =
+    eslintCommentsRecommendedConfig.plugins?.[
+        "@eslint-community/eslint-comments"
+    ] ?? eslintCommentsPlugin;
+const fileProgressRecommendedConfig = progress.configs["recommended-ci"];
+const fileProgressRulePlugin =
+    fileProgressRecommendedConfig.plugins?.["file-progress"] ?? progress;
+const sdlRequiredConfigs =
+    sdl.configs.required as unknown as readonly EslintConfig[];
+const nodeRulePlugin =
+    sdlRequiredConfigs.find((config) => config.plugins?.["n"] !== undefined)
+        ?.plugins?.["n"] ?? nodePlugin;
+const sdlRulePlugin =
+    sdlRequiredConfigs.find((config) => config.plugins?.["sdl"] !== undefined)
+        ?.plugins?.["sdl"] ?? sdl;
 
 interface ConfigurablePlugin {
     readonly configs?: object;
@@ -361,6 +385,9 @@ const HIDE_PROGRESS_FILENAMES = ESLINT_PROGRESS_MODE === "nofile";
 /** @type {import("eslint").Linter.Config} */
 const fileProgressOverridesConfig = {
     name: "⏱️ CLI: File Progress Overrides",
+    plugins: {
+        "file-progress": fileProgressRulePlugin,
+    },
     rules: {
         // The preset already auto-hides on CI, but we also support explicit
         // local toggles.
@@ -868,7 +895,13 @@ export const createConfig = (
             name: "🧩 De Morgan: recommended (code files only)",
             ...deMorgan.configs.recommended,
         },
-        ...casePolice.configs.recommended,
+        ...casePolice.configs.recommended.map((config) => ({
+            ...config,
+            plugins: {
+                ...config.plugins,
+                "case-police": casePoliceRulePlugin,
+            },
+        })),
         // ...jsdocPlugin.configs["examples-and-default-expressions"],
         // #endregion
         // #region 🧩 Custom Flat Configs
@@ -1330,6 +1363,7 @@ export const createConfig = (
             },
             name: "📂 Source Files - Src, Test, Benchmarks, and Root JS/TS files",
             plugins: {
+                "@eslint-community/eslint-comments": eslintCommentsRulePlugin,
                 "@typescript-eslint": tseslint,
                 canonical: canonical,
                 "comment-length": commentLength,
@@ -1340,10 +1374,12 @@ export const createConfig = (
                 listeners,
                 math: math,
                 "module-interop": moduleInterop,
+                n: nodeRulePlugin,
                 perfectionist: perfectionist,
                 prettier: prettierBridge,
                 promise: promise,
                 regexp: regexp,
+                sdl: sdlRulePlugin,
                 security: security,
                 "tsdoc-require-2": tsdocRequire,
                 unicorn: unicorn,
@@ -2111,6 +2147,7 @@ export const createConfig = (
             },
             name: "🧪 Tests: Tests, Benchmarks",
             plugins: {
+                "@typescript-eslint": tseslint,
                 "no-only-tests": noOnly,
                 "testing-library": testingLibrary,
                 vitest: vitest,

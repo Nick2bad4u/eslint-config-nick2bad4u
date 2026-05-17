@@ -32,6 +32,73 @@ const getRuleNamesForPlugin = (
         ruleName.startsWith(`${pluginName}/`)
     );
 
+const isRuleEnabled = (ruleConfig: unknown): boolean => {
+    const severity = Array.isArray(ruleConfig) ? ruleConfig[0] : ruleConfig;
+
+    return severity !== "off" && severity !== 0;
+};
+
+const getPluginNameForRule = (
+    ruleName: string,
+    pluginNames: ReadonlySet<string>
+): string | undefined => {
+    let matchingPluginName: string | undefined;
+
+    for (const pluginName of pluginNames) {
+        if (
+            ruleName.startsWith(`${pluginName}/`) &&
+            (matchingPluginName === undefined ||
+                pluginName.length > matchingPluginName.length)
+        ) {
+            matchingPluginName = pluginName;
+        }
+    }
+
+    return matchingPluginName;
+};
+
+const getMissingEnabledRulePluginRegistrations = (
+    configEntries: readonly Linter.Config[],
+    pluginNames: ReadonlySet<string>
+): Array<{
+    readonly configIndex: number;
+    readonly configName: string;
+    readonly pluginName: string;
+    readonly ruleName: string;
+}> =>
+    configEntries.flatMap((configEntry, configIndex) => {
+        const localPluginNames = new Set(Object.keys(configEntry.plugins ?? {}));
+
+        return Object.entries(configEntry.rules ?? {}).flatMap(
+            ([ruleName, ruleConfig]) => {
+                if (!isRuleEnabled(ruleConfig)) {
+                    return [];
+                }
+
+                const pluginName = getPluginNameForRule(ruleName, pluginNames);
+
+                if (
+                    pluginName === undefined ||
+                    localPluginNames.has(pluginName)
+                ) {
+                    return [];
+                }
+
+                return [
+                    {
+                        configIndex,
+                        configName:
+                            typeof configEntry.name === "string"
+                                ? configEntry.name
+                                : "(unnamed config)",
+                        pluginName,
+                        ruleName,
+                    },
+                ];
+            }
+        );
+    });
+
 const presetByName: Readonly<Record<string, readonly Linter.Config[]>> = {
     withoutChunkyLint: presets.withoutChunkyLint,
     withoutCopilot: presets.withoutCopilot,
@@ -58,6 +125,13 @@ const presetByName: Readonly<Record<string, readonly Linter.Config[]>> = {
 const getPresetByName = (presetName: string): readonly Linter.Config[] =>
     presetByName[presetName] ?? presets.all;
 /* eslint-enable @typescript-eslint/prefer-readonly-parameter-types -- Re-enable after local Linter.Config helpers. */
+
+const presetEntriesByName: Readonly<Record<string, readonly Linter.Config[]>> =
+    {
+        all: presets.all,
+        base: presets.base,
+        ...presetByName,
+    };
 
 describe("eslint-config-nick2bad4u presets", () => {
     it("exposes plugin-style flat config presets", () => {
@@ -132,6 +206,19 @@ describe("eslint-config-nick2bad4u presets", () => {
             getRuleNamesForPlugin(allPreset, "typefest").length
         ).toBeGreaterThan(0);
     });
+
+    it.each(Object.entries(presetEntriesByName))(
+        "keeps enabled plugin rules self-contained in the %s preset",
+        (_presetName, preset) => {
+            expect.assertions(1);
+
+            const pluginNames = getRegisteredPluginNames(presets.all);
+
+            expect(
+                getMissingEnabledRulePluginRegistrations(preset, pluginNames)
+            ).toStrictEqual([]);
+        }
+    );
 
     it("supports local source-rule plugin replacement via createConfig", () => {
         expect.assertions(1);
