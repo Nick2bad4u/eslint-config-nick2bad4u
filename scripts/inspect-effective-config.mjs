@@ -68,6 +68,14 @@ const isRecord = (value) =>
 const getRecordKeys = (value) => (isRecord(value) ? Object.keys(value) : []);
 
 /**
+ * @param {readonly string[]} values
+ *
+ * @returns {string[]}
+ */
+const sortStrings = (values) =>
+    [...values].sort((left, right) => left.localeCompare(right));
+
+/**
  * @param {unknown} value
  *
  * @returns {string}
@@ -312,20 +320,20 @@ const summarizeConfig = (config, target, showRules) => {
 
     const surface = {
         counts: countRuleSeverities(rules),
-        globals: getRecordKeys(languageOptions["globals"]).sort(),
+        globals: sortStrings(getRecordKeys(languageOptions["globals"])),
         languageOptions: {
             ecmaVersion: stringifyValue(languageOptions["ecmaVersion"]),
             parser: getDisplayName(languageOptions["parser"]),
-            parserOptions: getRecordKeys(
-                languageOptions["parserOptions"]
-            ).sort(),
+            parserOptions: sortStrings(
+                getRecordKeys(languageOptions["parserOptions"])
+            ),
             sourceType: stringifyValue(languageOptions["sourceType"]),
         },
-        linterOptions: getRecordKeys(config["linterOptions"]).sort(),
-        plugins: getRecordKeys(config["plugins"]).sort(),
+        linterOptions: sortStrings(getRecordKeys(config["linterOptions"])),
+        plugins: sortStrings(getRecordKeys(config["plugins"])),
         processor: getDisplayName(config["processor"]),
         rulesByNamespace: countRulesByNamespace(rules),
-        settings: getRecordKeys(config["settings"]).sort(),
+        settings: sortStrings(getRecordKeys(config["settings"])),
         target: relative(process.cwd(), target),
     };
 
