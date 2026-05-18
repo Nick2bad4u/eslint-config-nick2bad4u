@@ -101,6 +101,38 @@ const getMissingEnabledRulePluginRegistrations = (
         );
     });
 
+const isNonArrayObject = (
+    value: unknown
+): value is Record<PropertyKey, unknown> =>
+    typeof value === "object" && value !== null && !Array.isArray(value);
+
+const getParserOptionsGlobalsEntries = (
+    configEntries: readonly Linter.Config[]
+): Array<{
+    readonly configIndex: number;
+    readonly configName: string;
+}> =>
+    configEntries.flatMap((configEntry, configIndex) => {
+        const parserOptions = configEntry.languageOptions?.["parserOptions"];
+
+        if (
+            !isNonArrayObject(parserOptions) ||
+            !Object.hasOwn(parserOptions, "globals")
+        ) {
+            return [];
+        }
+
+        return [
+            {
+                configIndex,
+                configName:
+                    typeof configEntry.name === "string"
+                        ? configEntry.name
+                        : "(unnamed config)",
+            },
+        ];
+    });
+
 const presetByName: Readonly<Record<string, readonly Linter.Config[]>> = {
     withoutChunkyLint: presets.withoutChunkyLint,
     withoutCopilot: presets.withoutCopilot,
@@ -221,6 +253,30 @@ describe("eslint-config-nick2bad4u presets", () => {
             ).toStrictEqual([]);
         }
     );
+
+    it.each(Object.entries(presetEntriesByName))(
+        "keeps globals out of parserOptions in the %s preset",
+        (_presetName, preset) => {
+            expect.assertions(1);
+
+            expect(getParserOptionsGlobalsEntries(preset)).toStrictEqual([]);
+        }
+    );
+
+    it("configures browser and Node globals for Docusaurus workspace files", () => {
+        expect.assertions(1);
+
+        const docusaurusConfig = presets.all.find(
+            (configEntry) =>
+                configEntry.name === "🦖 Docusaurus: Workspace Files"
+        );
+        const docusaurusGlobals =
+            docusaurusConfig?.languageOptions?.["globals"];
+
+        expect(Object.keys(docusaurusGlobals ?? {})).toStrictEqual(
+            expect.arrayContaining(["document", "process", "window"])
+        );
+    });
 
     it("supports local source-rule plugin replacement via createConfig", () => {
         expect.assertions(1);

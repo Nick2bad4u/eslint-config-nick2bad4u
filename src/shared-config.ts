@@ -141,6 +141,9 @@ const jsonSchemaValidatorRules =
 
 const processEnvironment = globalThis.process.env;
 
+// Parser project defaults intentionally live in this package instead of each
+// plugin preset. Consumers get type-aware rules out of the box, but can point
+// the shared config at a repo-specific ESLint project when needed.
 // A single catch-all tsconfig.eslint.json (includes **/* and **/.* for dotfiles,
 // extends tsconfig.json, allowJs:true) is the only project ESLint needs.
 // Consumer repos can override via createConfig({ tsconfigPaths: [...] }).
@@ -148,6 +151,10 @@ const DEFAULT_TSCONFIG_PATHS = Object.freeze(["./tsconfig.eslint.json"]);
 
 type EslintConfig = Linter.Config;
 
+// ESLint flat config rejects duplicate plugin namespace registrations unless
+// they reference the exact same plugin object. Some upstream presets split
+// setup and rule entries, so local override slices must reuse the upstream
+// plugin object instead of importing a second equivalent copy.
 const casePoliceRecommendedConfigs = casePolice.configs
     .recommended as unknown as readonly EslintConfig[];
 const casePoliceRulePlugin =
@@ -171,6 +178,9 @@ const sdlRulePlugin =
     sdlRequiredConfigs.find((config) => config.plugins?.["sdl"] !== undefined)
         ?.plugins?.["sdl"] ?? sdl;
 
+// The public factory accepts plugin overrides so downstream repos can disable
+// heavy integrations with withoutX presets or inject a local plugin build while
+// keeping the rest of the shared config unchanged.
 interface ConfigurablePlugin {
     readonly configs?: object;
     readonly flat?: object;
@@ -661,7 +671,18 @@ export const createConfig = (
                 ],
                 "sonarjs/no-for-in-iterable": "warn",
                 "sonarjs/no-function-declaration-in-block": "warn",
-                "sonarjs/no-implicit-dependencies": "warn",
+                "sonarjs/no-implicit-dependencies": [
+                    "warn",
+                    {
+                        whitelist: [
+                            "@docusaurus/Head",
+                            "@docusaurus/Link",
+                            "@docusaurus/useBaseUrl",
+                            "@theme/Heading",
+                            "@theme/Layout",
+                        ],
+                    },
+                ],
                 "sonarjs/no-inconsistent-returns": "warn",
                 "sonarjs/no-incorrect-string-concat": "warn",
                 "sonarjs/no-nested-conditional": "off",
@@ -690,6 +711,7 @@ export const createConfig = (
         },
         {
             ...docusaurus2.configs.all,
+            name: "📦 Docusaurus 2: All",
             rules: {
                 ...docusaurus2.configs.experimental.rules,
                 ...docusaurus2.configs["strict-mdx-upgrade"].rules,
@@ -697,18 +719,7 @@ export const createConfig = (
                 "docusaurus-2/local-search-will-not-work-in-dev": "off",
             },
         },
-        {
-            files: [
-                "tsconfig*.json",
-                "**/tsconfig*.json",
-                "**/.*tsconfig.*.json",
-                "**/tsconfig*.*.json",
-            ],
-            ...tsconfig.configs.strictest,
-            rules: {
-                ...tsconfig.configs.all.rules,
-            },
-        },
+        tsconfig.configs.strictest,
         remark.configs.all,
         progress.configs["recommended-ci"],
         copilot.configs.all,
@@ -1067,8 +1078,14 @@ export const createConfig = (
                 "docs/docusaurus/.docusaurus/**",
                 "docs/docusaurus/build/**",
                 "docs/docusaurus/static/eslint-inspector/**",
+                "docs/docusaurus/static/stylelint-inspector/**",
+                "docs/docusaurus/static/remark-inspector/**",
             ],
             languageOptions: {
+                globals: {
+                    ...globals.browser,
+                    ...globals.node,
+                },
                 parser: tseslintParser,
                 parserOptions: {
                     ecmaFeatures: {
@@ -3737,6 +3754,26 @@ export const createConfig = (
                 // This rule is extremely noisy in tests (especially property-based
                 // tests) where callback return values are often incidental.
                 "typedoc/require-exported-doc-comment": "off", // Tests often have non-exported members where doc comments would be low-value and high-effort.
+            },
+        },
+        {
+            files: ["docs/docusaurus/typedoc-plugins/**/*.mjs"],
+            name: "📡 SonarJS: ⛔ Overrides for Typedoc Plugin Docs",
+            rules: {
+                "sonarjs/elseif-without-else": "off",
+            },
+        },
+        {
+            files: [
+                "scripts/**/*.{ts,tsx,mts,cts,js,mjs,cjs}",
+                "script/**/*.{ts,tsx,mts,cts,js,mjs,cjs}",
+            ],
+            name: "📡 SonarJS: ⛔ Overrides for Maintenance Scripts",
+            rules: {
+                "sonarjs/cognitive-complexity": "off",
+                "sonarjs/cyclomatic-complexity": "off",
+                "sonarjs/no-undefined-assignment": "off",
+                "sonarjs/too-many-break-or-continue-in-loop": "off",
             },
         },
         {
