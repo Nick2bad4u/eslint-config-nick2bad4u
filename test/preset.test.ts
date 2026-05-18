@@ -274,7 +274,11 @@ describe("eslint-config-nick2bad4u presets", () => {
             docusaurusConfig?.languageOptions?.["globals"];
 
         expect(Object.keys(docusaurusGlobals ?? {})).toStrictEqual(
-            expect.arrayContaining(["document", "process", "window"])
+            expect.arrayContaining([
+                "document",
+                "process",
+                "window",
+            ])
         );
     });
 

@@ -42,7 +42,6 @@
     "main": "./dist/preset.js",
     "types": "./index.d.ts",
     "files": [
-        "dist/preset.js",
         "dist/preset.js.map",
         "dist/shared-config.js",
         "dist/shared-config.js.map",

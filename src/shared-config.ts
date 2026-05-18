@@ -719,7 +719,7 @@ export const createConfig = (
                 "docusaurus-2/local-search-will-not-work-in-dev": "off",
             },
         },
-        tsconfig.configs.strictest,
+        tsconfig.configs.all,
         remark.configs.all,
         progress.configs["recommended-ci"],
         copilot.configs.all,
@@ -1125,6 +1125,7 @@ export const createConfig = (
                 "@eslint-react/no-implicit-ref": "warn",
                 "@eslint-react/no-missing-component-display-name": "warn",
                 "@eslint-react/no-missing-context-display-name": "warn",
+                "@eslint-react/no-unused-state": "warn",
                 "@eslint-react/refs": "warn",
                 "@eslint-react/static-components": "warn",
                 "@eslint-react/web-api-no-leaked-fetch": "warn",
@@ -2366,7 +2367,7 @@ export const createConfig = (
                 "package-json/bin-name-casing": "warn",
                 "package-json/exports-subpaths-style": "warn",
                 "package-json/no-empty-fields": "warn",
-                "package-json/no-redundant-files": "off",
+                "package-json/no-redundant-files": "warn",
                 "package-json/no-redundant-publishConfig": "warn",
                 "package-json/order-properties": "warn",
                 "package-json/repository-shorthand": "warn",
@@ -2374,8 +2375,10 @@ export const createConfig = (
                 "package-json/require-author": "warn",
                 // Not a CLI package.
                 "package-json/require-bin": "off",
+                "package-json/require-browser": "off",
                 "package-json/require-bugs": "warn",
                 "package-json/require-bundleDependencies": "off",
+                "package-json/require-config": "off",
                 // Optional metadata for this repository.
                 "package-json/require-contributors": "warn",
                 "package-json/require-cpu": "off",
@@ -2396,8 +2399,10 @@ export const createConfig = (
                 "package-json/require-files": "warn",
                 // Optional for this project.
                 "package-json/require-funding": "off",
+                "package-json/require-gypfile": "off",
                 "package-json/require-homepage": "warn",
                 "package-json/require-keywords": "warn",
+                "package-json/require-libc": "off",
                 "package-json/require-license": "warn",
                 "package-json/require-main": "warn",
                 // Not a manpage-distributed package.
@@ -2427,7 +2432,12 @@ export const createConfig = (
                 ],
                 "package-json/require-version": "warn",
                 "package-json/restrict-dependency-ranges": "warn",
-                "package-json/restrict-private-properties": "warn",
+                "package-json/restrict-private-properties": [
+                    "warn",
+                    {
+                        blockedProperties: ["publishConfig"],
+                    },
+                ],
                 // Package.json Plugin Rules (package-json/*)
                 "package-json/restrict-top-level-properties": [
                     "error",
@@ -2516,6 +2526,7 @@ export const createConfig = (
                 "package-json/unique-dependencies": "warn",
                 "package-json/valid-author": "warn",
                 "package-json/valid-bin": "warn",
+                "package-json/valid-browser": "warn",
                 "package-json/valid-bugs": "warn",
                 "package-json/valid-bundleDependencies": "warn",
                 "package-json/valid-config": "warn",
@@ -2530,8 +2541,10 @@ export const createConfig = (
                 "package-json/valid-exports": "warn",
                 "package-json/valid-files": "warn",
                 "package-json/valid-funding": "warn",
+                "package-json/valid-gypfile": "warn",
                 "package-json/valid-homepage": "warn",
                 "package-json/valid-keywords": "warn",
+                "package-json/valid-libc": "warn",
                 "package-json/valid-license": "warn",
                 "package-json/valid-main": "warn",
                 "package-json/valid-man": "warn",
@@ -2543,6 +2556,8 @@ export const createConfig = (
                 "package-json/valid-package-definition": "off",
                 "package-json/valid-packageManager": "warn",
                 "package-json/valid-peerDependencies": "warn",
+                "package-json/valid-peerDependenciesMeta": "warn",
+                "package-json/valid-peerDependenciesMeta-relationship": "warn",
                 "package-json/valid-private": "warn",
                 "package-json/valid-publishConfig": "warn",
                 "package-json/valid-repository": "warn",
@@ -2552,13 +2567,6 @@ export const createConfig = (
                 "package-json/valid-type": "warn",
                 "package-json/valid-version": "warn",
                 "package-json/valid-workspaces": "warn",
-            },
-        },
-        {
-            files: ["docs/docusaurus/package.json"],
-            name: "📦 Package: Docusaurus Private Override",
-            rules: {
-                "package-json/restrict-private-properties": "off",
             },
         },
         // #endregion
