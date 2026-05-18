@@ -2367,7 +2367,7 @@ export const createConfig = (
                 "package-json/bin-name-casing": "warn",
                 "package-json/exports-subpaths-style": "warn",
                 "package-json/no-empty-fields": "warn",
-                "package-json/no-redundant-files": "warn",
+                "package-json/no-redundant-files": "off",
                 "package-json/no-redundant-publishConfig": "warn",
                 "package-json/order-properties": "warn",
                 "package-json/repository-shorthand": "warn",
