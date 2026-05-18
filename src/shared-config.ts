@@ -5,7 +5,7 @@
  */
 // eslint-disable-next-line @typescript-eslint/triple-slash-reference -- Local ambient declarations for untyped plugin modules.
 /// <reference path="./_types/eslint-plugin-shims.d.ts" />
-/* eslint-disable @eslint-community/eslint-comments/disable-enable-pair, sonarjs/no-duplicate-string, perfectionist/sort-imports, perfectionist/sort-modules, perfectionist/sort-interfaces, typefest/prefer-type-fest-except, typefest/prefer-type-fest-json-value, typefest/prefer-type-fest-unknown-record, typefest/prefer-ts-extras-is-defined, typefest/prefer-ts-extras-safe-cast-to, typefest/prefer-ts-extras-string-split, unicorn/no-array-reduce, @typescript-eslint/prefer-readonly-parameter-types -- Eslint doesn't use default */
+/* eslint-disable @eslint-community/eslint-comments/disable-enable-pair, perfectionist/sort-imports, perfectionist/sort-modules, perfectionist/sort-interfaces, typefest/prefer-type-fest-except, typefest/prefer-type-fest-json-value, typefest/prefer-type-fest-unknown-record, typefest/prefer-ts-extras-is-defined, typefest/prefer-ts-extras-safe-cast-to, typefest/prefer-ts-extras-string-split, unicorn/no-array-reduce, @typescript-eslint/prefer-readonly-parameter-types -- Eslint doesn't use default */
 
 import type { Linter } from "eslint";
 import docusaurus from "@docusaurus/eslint-plugin";
@@ -67,7 +67,6 @@ import repo from "eslint-plugin-repo";
 import runtimeCleanup from "eslint-plugin-runtime-cleanup";
 import sdl from "eslint-plugin-sdl-2";
 import security from "eslint-plugin-security";
-import { configs as sonarjsConfigs } from "eslint-plugin-sonarjs";
 import storybook from "eslint-plugin-storybook";
 import stylelint2 from "eslint-plugin-stylelint-2";
 import testSignal from "eslint-plugin-test-signal";
@@ -123,6 +122,7 @@ if (enableJsonSchemaValidation) {
         eslintPluginJsonSchemaValidator =
             loadedJsonSchemaValidator.default ?? loadedJsonSchemaValidator;
     } catch {
+        // eslint-disable-next-line no-console -- Informational warning about missing optional dependency.
         console.warn(
             `[eslint-config-nick2bad4u] ${jsonSchemaValidatorPackageName} is not installed; JSON schema validation remains disabled.`
         );
@@ -527,6 +527,13 @@ export const createConfig = (
                 "public/mockServiceWorker.js",
                 "temp/**",
                 ".temp/**",
+                "**/*.secretlintrc.cjs",
+                "**/*.secretlintrc.mjs",
+                "**/*.secretlintrc.js",
+                "**/secretlint.config.{js,cjs,mjs}",
+                "**/secretlint.{js,cjs,mjs}",
+                "scripts/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
+                "script/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
             ],
             "🌍 Global: Ignore Patterns"
         ),
@@ -600,23 +607,6 @@ export const createConfig = (
             },
         },
         // #endregion
-        {
-            files: ["**/*.d.{ts,tsx,mts,cts}"],
-            languageOptions: {
-                parser: tseslintParser,
-                parserOptions: {
-                    ecmaVersion: "latest",
-                    jsDocParsingMode: "all",
-                    sourceType: "module",
-                    warnOnUnsupportedTypeScriptVersion: true,
-                },
-            },
-            name: "🗄️ Type Declarations: TypeScript Parser",
-            rules: {
-                "import-x/unambiguous": "off",
-            },
-        },
-        // #endregion
         // #region 🧱 Base Flat Configs
         // ═══════════════════════════════════════════════════════════════════════════════
         // SECTION:  Base Flat Configs
@@ -625,82 +615,6 @@ export const createConfig = (
             ...importX.flatConfigs.typescript,
             files: ["**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}"],
             name: "📦 Import-X: TypeScript (code files only)",
-        },
-        {
-            ...sonarjsConfigs.recommended,
-            files: ["**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}"],
-            name: "📦 SonarJS: Recommended (code files only)",
-            rules: {
-                ...sonarjsConfigs.recommended.rules,
-                "sonarjs/arguments-usage": "warn",
-                "sonarjs/array-constructor": "warn",
-                "sonarjs/aws-iam-all-resources-accessible": "warn",
-                "sonarjs/cognitive-complexity": ["warn", 30],
-                "sonarjs/comment-regex": "warn",
-                "sonarjs/cyclomatic-complexity": [
-                    "warn",
-                    {
-                        threshold: 25,
-                    },
-                ],
-                "sonarjs/declarations-in-global-scope": "off",
-                "sonarjs/different-types-comparison": "off",
-                "sonarjs/elseif-without-else": "warn",
-                "sonarjs/expression-complexity": ["warn", { max: 10 }],
-                "sonarjs/for-in": "warn",
-                "sonarjs/max-union-size": [
-                    "warn",
-                    {
-                        threshold: 8,
-                    },
-                ],
-                "sonarjs/nested-control-flow": [
-                    "warn",
-                    {
-                        maximumNestingLevel: 6,
-                    },
-                ],
-                "sonarjs/no-built-in-override": "warn",
-                "sonarjs/no-collapsible-if": "warn",
-                "sonarjs/no-duplicate-string": [
-                    "warn",
-                    {
-                        ignoreStrings: "application/json",
-                        threshold: 7,
-                    },
-                ],
-                "sonarjs/no-for-in-iterable": "warn",
-                "sonarjs/no-function-declaration-in-block": "warn",
-                "sonarjs/no-implicit-dependencies": [
-                    "warn",
-                    {
-                        whitelist: [
-                            "@docusaurus/Head",
-                            "@docusaurus/Link",
-                            "@docusaurus/useBaseUrl",
-                            "@theme/Heading",
-                            "@theme/Layout",
-                        ],
-                    },
-                ],
-                "sonarjs/no-inconsistent-returns": "warn",
-                "sonarjs/no-incorrect-string-concat": "warn",
-                "sonarjs/no-nested-conditional": "off",
-                "sonarjs/no-nested-incdec": "warn",
-                "sonarjs/no-nested-switch": "warn",
-                "sonarjs/no-reference-error": "warn",
-                "sonarjs/no-require-or-define": "warn",
-                "sonarjs/no-return-type-any": "warn",
-                "sonarjs/no-sonar-comments": "error",
-                "sonarjs/no-undefined-assignment": "warn",
-                "sonarjs/no-unused-function-argument": "warn",
-                "sonarjs/non-number-in-arithmetic-expression": "warn",
-                "sonarjs/operation-returning-nan": "warn",
-                "sonarjs/prefer-immediate-return": "warn",
-                "sonarjs/shorthand-property-grouping": "off",
-                "sonarjs/strings-comparison": "warn",
-                "sonarjs/too-many-break-or-continue-in-loop": "warn",
-            },
         },
         {
             files: ["**/*.d.ts"],
@@ -1432,7 +1346,10 @@ export const createConfig = (
                 "@eslint-community/eslint-comments/require-description": "warn",
                 "@typescript-eslint/await-thenable": "error", // Prevent awaiting non-promises
                 "@typescript-eslint/class-methods-use-this": "warn",
-                "@typescript-eslint/consistent-return": "warn",
+                // @see https://typescript-eslint.io/rules/consistent-return/
+                // Recommended to use `noImplicitReturns` in Tsconfig for better coverage and to avoid edge cases where
+                // the ESLint rule can miss certain code paths.
+                "@typescript-eslint/consistent-return": "off",
                 // Function and type safety rules
                 "@typescript-eslint/consistent-type-assertions": "error",
                 "@typescript-eslint/consistent-type-exports": "warn",
@@ -1444,6 +1361,7 @@ export const createConfig = (
                         allowPattern: "^[A-Z0-9_]+$",
                     },
                 ],
+
                 "@typescript-eslint/explicit-function-return-type": "off",
                 "@typescript-eslint/explicit-member-accessibility": "warn",
                 "@typescript-eslint/explicit-module-boundary-types": "warn",
@@ -1484,10 +1402,13 @@ export const createConfig = (
                 // Keep enabled: Helps with bundle optimization and makes type vs runtime imports clearer.
                 // Can be resolved incrementally as warnings.
                 "@typescript-eslint/no-import-type-side-effects": "warn",
-                "@typescript-eslint/no-invalid-this": "warn",
+                // @see https://typescript-eslint.io/rules/no-invalid-this/
+                // Covered by TypeScript's `noImplicitThis` compiler option,
+                // which provides better coverage and understanding of `this` in various contexts (e.g. class
+                // properties, arrow functions, etc.) without false positives.
+                "@typescript-eslint/no-invalid-this": "off",
                 "@typescript-eslint/no-loop-func": "warn",
                 "@typescript-eslint/no-magic-numbers": "off",
-
                 "@typescript-eslint/no-meaningless-void-operator": "warn",
                 "@typescript-eslint/no-misused-promises": [
                     "error",
@@ -1499,9 +1420,11 @@ export const createConfig = (
                 ],
                 "@typescript-eslint/no-misused-spread": "warn",
                 "@typescript-eslint/no-mixed-enums": "warn",
-                "@typescript-eslint/no-redeclare": "warn",
+                // @see https://typescript-eslint.io/rules/no-redeclare/
+                // Covered by Typescript compiler
+                "@typescript-eslint/no-redeclare": "off",
+
                 "@typescript-eslint/no-redundant-type-constituents": "warn",
-                // Granular selector rules still need to be added manually here.
                 "@typescript-eslint/no-restricted-imports": "warn",
                 "@typescript-eslint/no-restricted-types": [
                     "error",
@@ -1545,12 +1468,24 @@ export const createConfig = (
                 "@typescript-eslint/no-unsafe-type-assertion": "warn",
                 "@typescript-eslint/no-unsafe-unary-minus": "warn",
                 "@typescript-eslint/no-unused-private-class-members": "warn",
-                "@typescript-eslint/no-use-before-define": "warn",
+                "@typescript-eslint/no-use-before-define": [
+                    "warn",
+                    {
+                        allowNamedExports: false,
+                        classes: true,
+                        enums: true,
+                        functions: false,
+                        ignoreTypeReferences: true,
+                        typedefs: true,
+                        variables: true,
+                    },
+                ],
                 "@typescript-eslint/no-useless-empty-export": "warn",
                 "@typescript-eslint/no-wrapper-object-types": "error",
                 "@typescript-eslint/non-nullable-type-assertion-style": "warn",
                 "@typescript-eslint/only-throw-error": "warn",
                 "@typescript-eslint/parameter-properties": "warn",
+                "@typescript-eslint/prefer-destructuring": "off",
                 "@typescript-eslint/prefer-enum-initializers": "warn",
                 "@typescript-eslint/prefer-find": "warn",
                 "@typescript-eslint/prefer-includes": "warn",
@@ -1637,6 +1572,7 @@ export const createConfig = (
                 "@typescript-eslint/unbound-method": "warn",
                 "@typescript-eslint/use-unknown-in-catch-callback-variable":
                     "warn",
+                camelcase: "off",
                 "canonical/destructuring-property-newline": "off",
                 "canonical/export-specifier-newline": "off",
                 "canonical/filename-match-exported": "off",
@@ -1828,7 +1764,9 @@ export const createConfig = (
                         tabSize: 4,
                     },
                 ],
+                "consistent-return": "off", // Use Typescript version
                 curly: "off",
+                "default-param-last": "off", // Use TypeScript version instead for better type awareness
                 "dot-notation": "off", // Use the TypeScript version instead
                 eqeqeq: "off", // Use the TypeScript version instead
                 "eslint-plugin/consistent-output": "error",
@@ -1890,7 +1828,16 @@ export const createConfig = (
                 "import-x/extensions": "warn",
                 "import-x/first": "warn",
                 "import-x/group-exports": "off",
-                "import-x/named": "warn",
+                "import-x/max-dependencies": [
+                    "error",
+                    {
+                        ignoreTypeImports: true,
+                        max: 10,
+                    },
+                ],
+                // @see https://github.com/un-ts/eslint-plugin-import-x/blob/v4.16.2/docs/rules/named.md
+                // Shouldn't be used with typescript
+                "import-x/named": "off",
                 "import-x/namespace": "warn",
                 "import-x/newline-after-import": "warn",
                 "import-x/no-absolute-path": "warn",
@@ -1938,6 +1885,7 @@ export const createConfig = (
                 "import-x/prefer-default-export": "off",
                 "import-x/prefer-namespace-import": "off",
                 "import-x/unambiguous": "warn",
+                "init-declarations": "off", // Use Typescript Version
                 "math/abs": "warn",
                 "math/prefer-exponentiation-operator": "warn",
                 "math/prefer-math-sum-precise": "warn",
@@ -1951,7 +1899,7 @@ export const createConfig = (
                         skipComments: true,
                     },
                 ],
-                "max-params": "off",
+                "max-params": "off", // Use TypeScript version which can be configured to ignore `this` parameters and is more aware of function overloads.
                 "max-statements": "off",
                 "module-interop/no-import-cjs": "off",
                 "module-interop/no-require-esm": "warn",
@@ -1965,14 +1913,25 @@ export const createConfig = (
                 // Deprecated Rule: Old alias for hashbang
                 // @see https://github.com/eslint-community/eslint-plugin-n/issues/529
                 "n/shebang": "off",
+                "no-array-constructor": "off", // Use typescript version instead
+                "no-dupe-class-members": "off", // Use typescript version instead
                 "no-empty-character-class": "error",
+                "no-implied-eval": "off", // Use TypeScript version which can catch more cases with type information
                 "no-inline-comments": "off", // Allow inline comments for complex logic explanations
                 "no-invalid-regexp": "error",
-                "no-magic-numbers": "off",
+                "no-invalid-this": "off", // Use TypeScript version which understands class properties and arrow functions
+                "no-loop-func": "off", // Use typescript version instead
+                "no-magic-numbers": "off", // Use Typescript Version instead
+                "no-redeclare": "off", // Use typescript version instead
+                "no-restricted-imports": "off", // Use the TypeScript-specific version for better type-aware handling
+                "no-shadow": "off", // Use the TypeScript-specific version for better type-aware handling
                 "no-ternary": "off",
                 "no-undefined": "off", // Use explicit `undefined` for clarity and type safety
                 "no-unexpected-multiline": "off",
+                "no-unused-private-class-members": "off", // Use typescript version instead
+                "no-use-before-define": "off", // Use typescript version instead
                 "no-useless-backreference": "error",
+                "no-useless-constructor": "off", // Use typescript version instead
                 "no-void": "off",
                 "object-shorthand": "off",
                 "one-var": "off",
@@ -2000,6 +1959,7 @@ export const createConfig = (
                     { allowNamedFunctions: true, allowUnboundThis: true },
                 ],
                 "prefer-destructuring": "off",
+                "prefer-promise-reject-errors": "off", // Disable base rule in favor of TypeScript-specific version
                 "promise/no-multiple-resolved": "warn",
                 "promise/prefer-await-to-callbacks": "off",
                 "promise/prefer-await-to-then": "warn",
@@ -2097,13 +2057,26 @@ export const createConfig = (
             },
         },
         {
-            files: ["src/shared-config.ts"],
+            files: ["src/shared-config.ts", "eslint.config.mjs"],
             name: "🧩 Repo Internal: shared-config.ts compatibility overrides",
             rules: {
                 "@typescript-eslint/no-unsafe-assignment": "off",
                 "@typescript-eslint/no-unsafe-member-access": "off",
                 "@typescript-eslint/no-unsafe-type-assertion": "off",
+                "@typescript-eslint/strict-boolean-expressions": "off",
+                "import-x/max-dependencies": "off",
                 "import-x/no-rename-default": "off",
+                "max-lines-per-function": "off",
+                "n/no-top-level-await": "off",
+                "no-console": "off",
+                "tsdoc-require-2/require": "off",
+                "tsdoc/syntax": "off",
+                "typedoc/require-exported-doc-comment": "off",
+                "typefest/prefer-ts-extras-array-first": "off",
+                "typefest/prefer-ts-extras-array-join": "off",
+                "typefest/prefer-ts-extras-object-entries": "off",
+                "typefest/prefer-ts-extras-object-from-entries": "off",
+                "typefest/prefer-ts-extras-set-has": "off",
             },
         },
         // #endregion
@@ -2190,28 +2163,23 @@ export const createConfig = (
                 "default-case": "off",
                 "func-name-matching": "off", // Allow function names to not match variable names
                 "func-names": "off",
-                "init-declarations": "off",
+                "import-x/max-dependencies": "off",
                 "max-classes-per-file": "off",
                 "max-depth": "off",
                 "new-cap": "off", // Allow new-cap for class constructors
                 "no-await-in-loop": "off", // Allow await in loops for sequential operations
                 "no-barrel-files/no-barrel-files": "off", // Allow barrel files in tests for convenience
                 "no-console": "off",
-                "no-loop-func": "off", // Allow functions in loops for test setups
                 "no-new": "off", // Allow new for class constructors
                 // No Only Tests
                 "no-only-tests/no-only-tests": "error",
                 "no-plusplus": "off",
                 "no-promise-executor-return": "off", // Allow returning values from promise executors
-                "no-redeclare": "off", // Allow redeclaring variables in tests
-                "no-shadow": "off",
                 "no-throw-literal": "off",
                 "no-undef-init": "off",
                 "no-underscore-dangle": "off",
-                "no-use-before-define": "off", // Allow use before define in tests
                 "no-useless-assignment": "off",
                 "security/detect-non-literal-fs-filename": "off",
-                "sonarjs/no-duplicate-string": "off",
                 "testing-library/await-async-queries": "error",
                 "testing-library/consistent-data-testid": [
                     "warn",
@@ -2231,6 +2199,7 @@ export const createConfig = (
                 "testing-library/prefer-screen-queries": "warn",
                 "testing-library/prefer-user-event": "warn",
                 "testing-library/prefer-user-event-setup": "warn",
+                "typedoc/require-exported-doc-comment": "off", // Allow non-exported functions in tests without doc comments
                 "unicorn/consistent-function-scoping": "off", // Tests often use different scoping
                 "unicorn/filename-case": "off", // Allow test files to have any case
 
@@ -2342,6 +2311,7 @@ export const createConfig = (
                 ...json.configs.recommended.rules,
 
                 "depend/ban-dependencies": "error",
+                "json/sort-keys": "off",
                 // NOTE: Keeping node-dependencies scoped to package.json avoids perf + parser issues.
                 "node-dependencies/absolute-version": [
                     "error",
@@ -2956,7 +2926,7 @@ export const createConfig = (
         // SECTION: JS JsDoc
         // ═══════════════════════════════════════════════════════════════════════════════
         {
-            files: ["**/*.{js,cjs,mjs,jsx}"],
+            files: ["src/*.{JS,CJS,MJS,JSX}"],
             languageOptions: {
                 globals: {
                     ...globals.builtin,
@@ -3056,7 +3026,7 @@ export const createConfig = (
                         objectFieldIndent: "  ",
                     },
                 ],
-                "jsdoc/valid-types": "off", // Tooling scripts frequently use TS-style imports/types
+                "jsdoc/valid-types": "warn",
                 // "jsdoc/check-examples": "warn", // Deprecated and not for ESLint >= 8
                 // "jsdoc/rejct-any-type": "warn", // broken
             },
@@ -3095,7 +3065,6 @@ export const createConfig = (
                 "no-console": "off",
                 "no-undef-init": "off",
                 "perfectionist/sort-arrays": "off", // Configs often have intentionally unsorted arrays
-                "sonarjs/no-duplicate-string": "off",
                 "unicorn/consistent-function-scoping": "off", // Configs often use different scoping
                 "unicorn/filename-case": "off", // Allow config files to have any case
                 "unicorn/no-await-expression-member": "off", // Allow await in config expressions
@@ -3670,13 +3639,6 @@ export const createConfig = (
         // SECTION: ⛔ Overrides
         // ═══════════════════════════════════════════════════════════════════════════════
         {
-            files: ["**/package.json", "**/package-lock.json"],
-            name: "🧾 Package.JSON: Files - ⛔ Overrides",
-            rules: {
-                "json/sort-keys": "off",
-            },
-        },
-        {
             files: ["**/.vscode/**"],
             name: "🛠️ VS Code Files: ⛔ Overrides",
             rules: {
@@ -3729,11 +3691,7 @@ export const createConfig = (
                 "no-unsanitized": noUnsanitized,
             },
             rules: {
-                "@typescript-eslint/prefer-destructuring": "off",
-                "callback-return": "off",
-                camelcase: "off",
                 "github-actions/no-top-level-permissions": "off",
-                "import-x/max-dependencies": "off",
                 "no-secrets/no-pattern-match": "off",
                 "no-secrets/no-secrets": [
                     "error",
@@ -3748,43 +3706,6 @@ export const createConfig = (
             },
         },
         {
-            files: [
-                "**/*.test.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
-                "**/*.spec.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
-                "src/test/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
-                "test/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
-                "tests/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
-                "benchmarks/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
-                "scripts/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
-            ],
-            name: "📃 Typedoc: ⛔ Disable Require Exported Doc Comment in Test/Script/Benchmark Files",
-            rules: {
-                // This rule is extremely noisy in tests (especially property-based
-                // tests) where callback return values are often incidental.
-                "typedoc/require-exported-doc-comment": "off", // Tests often have non-exported members where doc comments would be low-value and high-effort.
-            },
-        },
-        {
-            files: ["docs/docusaurus/typedoc-plugins/**/*.mjs"],
-            name: "📡 SonarJS: ⛔ Overrides for Typedoc Plugin Docs",
-            rules: {
-                "sonarjs/elseif-without-else": "off",
-            },
-        },
-        {
-            files: [
-                "scripts/**/*.{ts,tsx,mts,cts,js,mjs,cjs}",
-                "script/**/*.{ts,tsx,mts,cts,js,mjs,cjs}",
-            ],
-            name: "📡 SonarJS: ⛔ Overrides for Maintenance Scripts",
-            rules: {
-                "sonarjs/cognitive-complexity": "off",
-                "sonarjs/cyclomatic-complexity": "off",
-                "sonarjs/no-undefined-assignment": "off",
-                "sonarjs/too-many-break-or-continue-in-loop": "off",
-            },
-        },
-        {
             files: ["plugin.mjs", "src/**/*.{ts,tsx,mts,cts,js,mjs,cjs}"],
             name: "📢 Source runtime logging policy: ⛔ Overrides",
             rules: {
@@ -3796,40 +3717,19 @@ export const createConfig = (
             },
         },
         {
-            files: ["eslint.config.mjs", "src/shared-config.ts"],
-            name: "📦 Shared Config Implementation: ⛔ Overrides",
-            rules: {
-                "@typescript-eslint/strict-boolean-expressions": "off",
-                "max-lines-per-function": "off",
-                "n/no-top-level-await": "off",
-                "no-console": "off",
-                "tsdoc-require-2/require": "off",
-                "tsdoc/syntax": "off",
-                "typedoc/require-exported-doc-comment": "off",
-                "typefest/prefer-ts-extras-array-first": "off",
-                "typefest/prefer-ts-extras-array-join": "off",
-                "typefest/prefer-ts-extras-object-entries": "off",
-                "typefest/prefer-ts-extras-object-from-entries": "off",
-                "typefest/prefer-ts-extras-set-has": "off",
+            files: ["**/*.d.{ts,tsx,mts,cts}"],
+            languageOptions: {
+                parser: tseslintParser,
+                parserOptions: {
+                    ecmaVersion: "latest",
+                    jsDocParsingMode: "all",
+                    sourceType: "module",
+                    warnOnUnsupportedTypeScriptVersion: true,
+                },
             },
-        },
-        {
-            files: [
-                "**/*.secretlintrc.cjs",
-                "**/*.secretlintrc.mjs",
-                "**/*.secretlintrc.js",
-                "**/secretlint.config.{js,cjs,mjs}",
-                "**/secretlint.{js,cjs,mjs}",
-            ],
-            name: "🔒 Secretlint Configs: ⛔ Overrides",
-            // Secretlint configs often use CommonJS, and the import-x rule is too noisy to justify forcing all
-            // configs to ESM.
+            name: "🗄️ Type Declarations: TypeScript Parser",
             rules: {
-                "@typescript-eslint/no-require-imports": "off",
-                "import-x/no-commonjs": "off",
                 "import-x/unambiguous": "off",
-                "n/no-mixed-requires": "off",
-                "sonarjs/no-require-or-define": "off",
             },
         },
         // #endregion
