@@ -1,4 +1,3 @@
-/* eslint-disable import-x/unambiguous -- Ambient declaration file with no runtime imports. */
 /* eslint-disable @typescript-eslint/no-explicit-any -- ambient shims for untyped plugins */
 
 declare module "eslint-plugin-array-func" {
@@ -47,4 +46,3 @@ declare module "eslint-plugin-undefined-css-classes" {
 }
 
 /* eslint-enable @typescript-eslint/no-explicit-any -- end ambient shim exception */
-/* eslint-enable import-x/unambiguous -- Re-enable after ambient declaration shim. */

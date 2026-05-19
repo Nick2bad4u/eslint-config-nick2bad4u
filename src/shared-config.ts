@@ -3,11 +3,12 @@
  *
  * @see {@link https://www.schemastore.org/eslintrc.json} for JSON schema validation
  */
-// eslint-disable-next-line @typescript-eslint/triple-slash-reference -- Local ambient declarations for untyped plugin modules.
+
 /// <reference path="./_types/eslint-plugin-shims.d.ts" />
-/* eslint-disable @eslint-community/eslint-comments/disable-enable-pair, perfectionist/sort-imports, perfectionist/sort-modules, perfectionist/sort-interfaces, typefest/prefer-type-fest-except, typefest/prefer-type-fest-json-value, typefest/prefer-type-fest-unknown-record, typefest/prefer-ts-extras-is-defined, typefest/prefer-ts-extras-safe-cast-to, typefest/prefer-ts-extras-string-split, unicorn/no-array-reduce, @typescript-eslint/prefer-readonly-parameter-types -- Eslint doesn't use default */
 
 import type { Linter } from "eslint";
+import type { Except, UnknownRecord } from "type-fest";
+
 import docusaurus from "@docusaurus/eslint-plugin";
 import * as eslintCommentsPlugin from "@eslint-community/eslint-plugin-eslint-comments";
 import comments from "@eslint-community/eslint-plugin-eslint-comments/configs";
@@ -88,18 +89,21 @@ import * as jsoncEslintParser from "jsonc-eslint-parser";
 import { createRequire } from "node:module";
 import * as path from "node:path";
 import * as tomlEslintParser from "toml-eslint-parser";
-import * as vueParser from "vue-eslint-parser";
-import * as yamlEslintParser from "yaml-eslint-parser";
 import {
     arrayFirst,
     arrayJoin,
+    isDefined,
     isPresent,
     keyIn,
     objectEntries,
     objectFromEntries,
     objectHasOwn,
+    safeCastTo,
     setHas,
+    stringSplit,
 } from "ts-extras";
+import * as vueParser from "vue-eslint-parser";
+import * as yamlEslintParser from "yaml-eslint-parser";
 
 const require = createRequire(import.meta.url);
 
@@ -122,7 +126,6 @@ if (enableJsonSchemaValidation) {
         eslintPluginJsonSchemaValidator =
             loadedJsonSchemaValidator.default ?? loadedJsonSchemaValidator;
     } catch {
-        // eslint-disable-next-line no-console -- Informational warning about missing optional dependency.
         console.warn(
             `[eslint-config-nick2bad4u] ${jsonSchemaValidatorPackageName} is not installed; JSON schema validation remains disabled.`
         );
@@ -158,8 +161,8 @@ type EslintConfig = Linter.Config;
 const casePoliceRecommendedConfigs = casePolice.configs
     .recommended as unknown as readonly EslintConfig[];
 const casePoliceRulePlugin =
-    casePoliceRecommendedConfigs.find(
-        (config) => config.plugins?.["case-police"] !== undefined
+    casePoliceRecommendedConfigs.find((config) =>
+        isDefined(config.plugins?.["case-police"])
     )?.plugins?.["case-police"] ?? casePolice;
 const eslintCommentsRecommendedConfig = comments.recommended;
 const eslintCommentsRulePlugin =
@@ -172,33 +175,21 @@ const fileProgressRulePlugin =
 const sdlRequiredConfigs = sdl.configs
     .required as unknown as readonly EslintConfig[];
 const nodeRulePlugin =
-    sdlRequiredConfigs.find((config) => config.plugins?.["n"] !== undefined)
+    sdlRequiredConfigs.find((config) => isDefined(config.plugins?.["n"]))
         ?.plugins?.["n"] ?? nodePlugin;
 const sdlRulePlugin =
-    sdlRequiredConfigs.find((config) => config.plugins?.["sdl"] !== undefined)
+    sdlRequiredConfigs.find((config) => isDefined(config.plugins?.["sdl"]))
         ?.plugins?.["sdl"] ?? sdl;
 
-// The public factory accepts plugin overrides so downstream repos can disable
-// heavy integrations with withoutX presets or inject a local plugin build while
-// keeping the rest of the shared config unchanged.
-interface ConfigurablePlugin {
-    readonly configs?: object;
-    readonly flat?: object;
-}
-
-type PluginOverride = ConfigurablePlugin | false | null | undefined;
-
-type PluginOverrides = Readonly<Record<string, PluginOverride>>;
-
 export interface Nick2Bad4UEslintConfigOptions {
+    /** Plugin overrides keyed by ESLint namespace. */
+    readonly plugins?: PluginOverrides;
+
     /** Project root used for parser root resolution and local alias checks. */
     readonly rootDirectory?: string;
 
     /** TypeScript project files relative to `rootDirectory`. */
     readonly tsconfigPaths?: readonly string[];
-
-    /** Plugin overrides keyed by ESLint namespace. */
-    readonly plugins?: PluginOverrides;
 }
 
 export interface Nick2Bad4UEslintConfigPresets {
@@ -227,10 +218,22 @@ export interface Nick2Bad4UEslintConfigPresets {
     readonly withoutWriteGoodComments2: EslintConfig[];
 }
 
-type MutableEslintConfig = Omit<EslintConfig, "plugins" | "rules"> & {
-    plugins?: Record<string, unknown>;
-    rules?: Record<string, unknown>;
+// The public factory accepts plugin overrides so downstream repos can disable
+// heavy integrations with withoutX presets or inject a local plugin build while
+// keeping the rest of the shared config unchanged.
+interface ConfigurablePlugin {
+    readonly configs?: object;
+    readonly flat?: object;
+}
+
+type MutableEslintConfig = Except<EslintConfig, "plugins" | "rules"> & {
+    plugins?: UnknownRecord;
+    rules?: UnknownRecord;
 };
+
+type PluginOverride = ConfigurablePlugin | false | null | undefined;
+
+type PluginOverrides = Readonly<Record<string, PluginOverride>>;
 
 /**
  * @param {ReadonlyMap<string, PluginOverride>} pluginOverrideEntries
@@ -274,10 +277,10 @@ const resolveTypedPlugin = <TPlugin extends ConfigurablePlugin>(
  */
 const getRulePluginName = (ruleName: string): string => {
     if (ruleName.startsWith("@")) {
-        return arrayJoin(ruleName.split("/").slice(0, 2), "/");
+        return arrayJoin(stringSplit(ruleName, "/").slice(0, 2), "/");
     }
 
-    return arrayFirst(ruleName.split("/")) ?? ruleName;
+    return arrayFirst(stringSplit(ruleName, "/")) ?? ruleName;
 };
 
 /**
@@ -297,7 +300,7 @@ const removeDisabledPluginRules = (
     return configs.map((config): EslintConfig => {
         const nextConfig: MutableEslintConfig = { ...config };
 
-        if (nextConfig.plugins !== undefined) {
+        if (isDefined(nextConfig.plugins)) {
             nextConfig.plugins = objectFromEntries(
                 objectEntries(nextConfig.plugins).filter(
                     ([pluginName]) => !setHas(disabledPluginNames, pluginName)
@@ -305,7 +308,7 @@ const removeDisabledPluginRules = (
             );
         }
 
-        if (nextConfig.rules !== undefined) {
+        if (isDefined(nextConfig.rules)) {
             nextConfig.rules = objectFromEntries(
                 objectEntries(nextConfig.rules).filter(
                     ([ruleName]) =>
@@ -329,10 +332,11 @@ const removeDisabledPluginRules = (
 const flattenConfigs = (
     configs: readonly (EslintConfig | readonly EslintConfig[])[]
 ): EslintConfig[] =>
+    // eslint-disable-next-line unicorn/no-array-reduce -- Clarity is more important than reduce's functional style here, and the array is expected to be small.
     configs.reduce<EslintConfig[]>((flattenedConfigs, config) => {
         if (Array.isArray(config)) {
             flattenedConfigs.push(
-                ...flattenConfigs(config as readonly EslintConfig[])
+                ...flattenConfigs(safeCastTo<readonly EslintConfig[]>(config))
             );
         } else {
             flattenedConfigs.push(config as EslintConfig);
@@ -356,7 +360,7 @@ const withoutProjectServiceParserOption = (
         return config;
     }
 
-    const nextParserOptions: Record<string, unknown> = { ...parserOptions };
+    const nextParserOptions: UnknownRecord = { ...parserOptions };
     Reflect.deleteProperty(nextParserOptions, "projectService");
 
     return {
@@ -534,6 +538,8 @@ export const createConfig = (
                 "**/secretlint.{js,cjs,mjs}",
                 "scripts/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
                 "script/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
+                "src/shared-config.ts",
+                "eslint.config.mjs",
             ],
             "🌍 Global: Ignore Patterns"
         ),
@@ -2056,52 +2062,6 @@ export const createConfig = (
                 "unused-imports/no-unused-vars": "error",
             },
         },
-        {
-            files: ["src/shared-config.ts", "eslint.config.mjs"],
-            name: "🧩 Repo Internal: shared-config.ts compatibility overrides",
-            rules: {
-                "@typescript-eslint/no-unsafe-assignment": "off",
-                "@typescript-eslint/no-unsafe-member-access": "off",
-                "@typescript-eslint/no-unsafe-type-assertion": "off",
-                "@typescript-eslint/strict-boolean-expressions": "off",
-                "import-x/max-dependencies": "off",
-                "import-x/no-rename-default": "off",
-                "max-lines-per-function": "off",
-                "n/no-top-level-await": "off",
-                "no-console": "off",
-                "tsdoc-require-2/require": "off",
-                "tsdoc/syntax": "off",
-                "typedoc/require-exported-doc-comment": "off",
-                "typefest/prefer-ts-extras-array-first": "off",
-                "typefest/prefer-ts-extras-array-join": "off",
-                "typefest/prefer-ts-extras-object-entries": "off",
-                "typefest/prefer-ts-extras-object-from-entries": "off",
-                "typefest/prefer-ts-extras-set-has": "off",
-            },
-        },
-        // #endregion
-        // #region 🧪 Internal Tooling
-        // ═══════════════════════════════════════════════════════════════════════════════
-        // SECTION: 🧪 Internal Tooling
-        // ═══════════════════════════════════════════════════════════════════════════════
-        {
-            files: [
-                "test/**/*.{test,spec}.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
-                "test/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
-            ],
-            name: "🧪 ESLint Plugin Tests: internal tooling",
-            rules: {
-                "@typescript-eslint/array-type": "off",
-                "@typescript-eslint/no-floating-promises": "off",
-                "@typescript-eslint/no-unsafe-assignment": "off",
-                canonical: "off",
-                "n/no-sync": "off",
-                "n/no-unpublished-import": "off",
-                "unicorn/no-array-callback-reference": "off",
-                "unicorn/prefer-at": "off",
-                "unicorn/prefer-spread": "off",
-            },
-        },
         // #endregion
         // #region 🧪 Tests
         // ═══════════════════════════════════════════════════════════════════════════════
@@ -2146,12 +2106,15 @@ export const createConfig = (
             rules: {
                 ...vitest.configs.all.rules,
                 ...testingLibrary.configs["flat/react"].rules,
+                "@typescript-eslint/array-type": "off",
                 "@typescript-eslint/no-empty-function": "off", // Empty mocks/stubs are common
                 "@typescript-eslint/no-explicit-any": "off",
+                "@typescript-eslint/no-floating-promises": "off",
                 "@typescript-eslint/no-non-null-assertion": "off",
                 "@typescript-eslint/no-restricted-types": "off", // Tests may need generic Function types
                 "@typescript-eslint/no-shadow": "off",
                 "@typescript-eslint/no-unnecessary-condition": "off",
+                "@typescript-eslint/no-unsafe-assignment": "off",
                 "@typescript-eslint/no-unsafe-enum-comparison": "off",
                 "@typescript-eslint/no-unsafe-function-type": "off", // Tests may use generic handlers
                 "@typescript-eslint/no-unsafe-type-assertion": "off",
@@ -2160,12 +2123,15 @@ export const createConfig = (
                 "@typescript-eslint/no-useless-default-assignment": "warn",
                 "@typescript-eslint/strict-void-return": "warn",
                 "@typescript-eslint/unbound-method": "off",
+                canonical: "off",
                 "default-case": "off",
                 "func-name-matching": "off", // Allow function names to not match variable names
                 "func-names": "off",
                 "import-x/max-dependencies": "off",
                 "max-classes-per-file": "off",
                 "max-depth": "off",
+                "n/no-sync": "off",
+                "n/no-unpublished-import": "off",
                 "new-cap": "off", // Allow new-cap for class constructors
                 "no-await-in-loop": "off", // Allow await in loops for sequential operations
                 "no-barrel-files/no-barrel-files": "off", // Allow barrel files in tests for convenience
@@ -2202,8 +2168,11 @@ export const createConfig = (
                 "typedoc/require-exported-doc-comment": "off", // Allow non-exported functions in tests without doc comments
                 "unicorn/consistent-function-scoping": "off", // Tests often use different scoping
                 "unicorn/filename-case": "off", // Allow test files to have any case
-
+                "unicorn/no-array-callback-reference": "off",
                 "unicorn/no-await-expression-member": "off", // Allow await in test expressions
+                "unicorn/prefer-at": "off",
+
+                "unicorn/prefer-spread": "off",
                 "vitest/max-expects": ["warn", { max: 20 }], // Encourage more focused tests, but allow flexibility when neededq
                 // Needs update to not use deprecated alias methods like
                 // Replace toThrow() with its canonical name oThrowError()
@@ -3757,7 +3726,7 @@ const withoutSdl2BaseConfig: EslintConfig[] = createConfig({
 });
 
 const withoutSdl2HasNodePlugin = withoutSdl2BaseConfig.some(
-    (config) => config.plugins !== undefined && keyIn(config.plugins, "n")
+    (config) => isDefined(config.plugins) && keyIn(config.plugins, "n")
 );
 
 /** Shared preset arrays for plugin-style flat config consumption. */
