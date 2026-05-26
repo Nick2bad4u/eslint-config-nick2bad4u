@@ -32,6 +32,24 @@ const getRuleNamesForPlugin = (
         ruleName.startsWith(`${pluginName}/`)
     );
 
+const getPresetNamespaces = (
+    configEntries: readonly Linter.Config[],
+    pluginNames: readonly string[]
+): Set<string> => {
+    const registeredPluginNames = getRegisteredPluginNames(configEntries);
+    const ruleNames = getRuleNames(configEntries);
+
+    return new Set(
+        pluginNames.filter(
+            (pluginName) =>
+                registeredPluginNames.has(pluginName) ||
+                [...ruleNames].some((ruleName) =>
+                    ruleName.startsWith(`${pluginName}/`)
+                )
+        )
+    );
+};
+
 const isRuleEnabled = (ruleConfig: unknown): boolean => {
     const severity = Array.isArray(ruleConfig) ? ruleConfig[0] : ruleConfig;
 
@@ -65,41 +83,57 @@ const getMissingEnabledRulePluginRegistrations = (
     readonly configName: string;
     readonly pluginName: string;
     readonly ruleName: string;
-}> =>
-    configEntries.flatMap((configEntry, configIndex) => {
-        const localPluginNames = new Set(
-            Object.keys(configEntry.plugins ?? {})
-        );
+}> => {
+    const availablePluginNames = new Set<string>();
+    const missingRegistrations: Array<{
+        readonly configIndex: number;
+        readonly configName: string;
+        readonly pluginName: string;
+        readonly ruleName: string;
+    }> = [];
 
-        return Object.entries(configEntry.rules ?? {}).flatMap(
-            ([ruleName, ruleConfig]) => {
-                if (!isRuleEnabled(ruleConfig)) {
-                    return [];
-                }
+    for (const [configIndex, configEntry] of configEntries.entries()) {
+        for (const pluginName of Object.keys(configEntry.plugins ?? {})) {
+            availablePluginNames.add(pluginName);
+        }
 
-                const pluginName = getPluginNameForRule(ruleName, pluginNames);
+        missingRegistrations.push(
+            ...Object.entries(configEntry.rules ?? {}).flatMap(
+                ([ruleName, ruleConfig]) => {
+                    if (!isRuleEnabled(ruleConfig)) {
+                        return [];
+                    }
 
-                if (
-                    pluginName === undefined ||
-                    localPluginNames.has(pluginName)
-                ) {
-                    return [];
-                }
-
-                return [
-                    {
-                        configIndex,
-                        configName:
-                            typeof configEntry.name === "string"
-                                ? configEntry.name
-                                : "(unnamed config)",
-                        pluginName,
+                    const pluginName = getPluginNameForRule(
                         ruleName,
-                    },
-                ];
-            }
+                        pluginNames
+                    );
+
+                    if (
+                        pluginName === undefined ||
+                        availablePluginNames.has(pluginName)
+                    ) {
+                        return [];
+                    }
+
+                    return [
+                        {
+                            configIndex,
+                            configName:
+                                typeof configEntry.name === "string"
+                                    ? configEntry.name
+                                    : "(unnamed config)",
+                            pluginName,
+                            ruleName,
+                        },
+                    ];
+                }
+            )
         );
-    });
+    }
+
+    return missingRegistrations;
+};
 
 const isNonArrayObject = (
     value: unknown
@@ -134,7 +168,6 @@ const getParserOptionsGlobalsEntries = (
     });
 
 const presetByName: Readonly<Record<string, readonly Linter.Config[]>> = {
-    withoutChunkyLint: presets.withoutChunkyLint,
     withoutCopilot: presets.withoutCopilot,
     withoutDocusaurus2: presets.withoutDocusaurus2,
     withoutEtcMisc: presets.withoutEtcMisc,
@@ -151,7 +184,6 @@ const presetByName: Readonly<Record<string, readonly Linter.Config[]>> = {
     withoutTsdocRequire2: presets.withoutTsdocRequire2,
     withoutTypedoc: presets.withoutTypedoc,
     withoutTypefest: presets.withoutTypefest,
-    withoutUptimeWatcher: presets.withoutUptimeWatcher,
     withoutVite: presets.withoutVite,
     withoutWriteGoodComments2: presets.withoutWriteGoodComments2,
 };
@@ -189,36 +221,51 @@ describe("eslint-config-nick2bad4u presets", () => {
     });
 
     it.each([
-        ["withoutChunkyLint", "chunkylint"],
-        ["withoutCopilot", "copilot"],
-        ["withoutDocusaurus2", "docusaurus-2"],
-        ["withoutEtcMisc", "etc-misc"],
-        ["withoutFileProgress2", "file-progress-2"],
-        ["withoutGithubActions2", "github-actions-2"],
-        ["withoutImmutable2", "immutable-2"],
-        ["withoutRemark", "remark"],
-        ["withoutRepo", "repo"],
-        ["withoutRuntimeCleanup", "runtime-cleanup"],
-        ["withoutSdl2", "sdl-2"],
-        ["withoutStylelint2", "stylelint-2"],
-        ["withoutTestSignal", "test-signal"],
-        ["withoutTsconfig", "tsconfig"],
-        ["withoutTsdocRequire2", "tsdoc-require-2"],
-        ["withoutTypedoc", "typedoc"],
-        ["withoutTypefest", "typefest"],
-        ["withoutUptimeWatcher", "uptime-watcher"],
-        ["withoutVite", "vite"],
-        ["withoutWriteGoodComments2", "write-good-comments-2"],
+        ["withoutCopilot", ["copilot"]],
+        ["withoutDocusaurus2", ["docusaurus-2"]],
+        ["withoutEtcMisc", ["etc-misc"]],
+        ["withoutFileProgress2", ["file-progress", "file-progress-2"]],
+        ["withoutGithubActions2", ["github-actions", "github-actions-2"]],
+        ["withoutImmutable2", ["immutable", "immutable-2"]],
+        ["withoutRemark", ["remark"]],
+        ["withoutRepo", ["repo", "repo-compliance"]],
+        ["withoutRuntimeCleanup", ["runtime-cleanup"]],
+        ["withoutSdl2", ["sdl", "sdl-2"]],
+        ["withoutStylelint2", ["stylelint-2"]],
+        ["withoutTestSignal", ["test-signal"]],
+        ["withoutTsconfig", ["tsconfig"]],
+        ["withoutTsdocRequire2", ["tsdoc-require-2"]],
+        ["withoutTypedoc", ["typedoc"]],
+        ["withoutTypefest", ["typefest"]],
+        ["withoutVite", ["vite"]],
+        [
+            "withoutWriteGoodComments2",
+            ["write-good-comments", "write-good-comments-2"],
+        ],
     ] as const)(
         "removes %s plugin rules from the preset",
-        (presetName, pluginName) => {
-            expect.assertions(2);
+        (presetName, pluginNames) => {
+            expect.assertions(3);
 
             const preset = getPresetByName(presetName);
-            const registeredPluginNames = getRegisteredPluginNames(preset);
+            const presentNamespacesInAll = getPresetNamespaces(
+                presets.all,
+                pluginNames
+            );
+            const presentNamespacesInPreset = getPresetNamespaces(
+                preset,
+                pluginNames
+            );
 
-            expect(getRuleNamesForPlugin(preset, pluginName)).toHaveLength(0);
-            expect([...registeredPluginNames]).not.toContain(pluginName);
+            expect([...presentNamespacesInAll]).not.toHaveLength(0);
+            expect([...presentNamespacesInPreset]).toStrictEqual([]);
+            expect(
+                [...getRuleNames(preset)].filter((ruleName) =>
+                    pluginNames.some((pluginName) =>
+                        ruleName.startsWith(`${pluginName}/`)
+                    )
+                )
+            ).toStrictEqual([]);
         }
     );
 

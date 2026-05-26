@@ -41,9 +41,6 @@ export interface Nick2Bad4UEslintConfigPresets {
     /** Alias for `all`; kept for familiar preset naming. */
     readonly recommended: Linter.Config[];
 
-    /** Full shared config without ChunkyLint rules. */
-    readonly withoutChunkyLint: Linter.Config[];
-
     /** Full shared config without the Copilot rules. */
     readonly withoutCopilot: Linter.Config[];
 
@@ -91,9 +88,6 @@ export interface Nick2Bad4UEslintConfigPresets {
 
     /** Full shared config without the Typefest source-rule section. */
     readonly withoutTypefest: Linter.Config[];
-
-    /** Full shared config without Uptime Watcher plugin rules. */
-    readonly withoutUptimeWatcher: Linter.Config[];
 
     /** Full shared config without Vite plugin rules. */
     readonly withoutVite: Linter.Config[];

@@ -1,0 +1,7 @@
+:root {
+    --config-fixture-display: block;
+}
+
+.config-fixture {
+    display: var(--config-fixture-display);
+}

@@ -3,7 +3,7 @@ import { relative, resolve } from "node:path";
 
 import { ESLint } from "eslint";
 
-const DEFAULT_TARGETS = ["src/shared-config.ts"];
+const DEFAULT_TARGETS = ["src/preset.ts"];
 const HELP_TEXT = `Usage: npm run lint:config-effective -- [options] [file...]
 
 Print a compact summary of ESLint's effective flat config for one or more files.

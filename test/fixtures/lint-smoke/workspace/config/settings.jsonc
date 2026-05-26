@@ -1,0 +1,5 @@
+{
+    // JSONC fixture keeps comments enabled.
+    "enabled": true,
+    "name": "fixture",
+}

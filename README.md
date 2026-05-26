@@ -2,7 +2,25 @@
 
 [![npm license.](https://flat.badgen.net/npm/license/eslint-config-nick2bad4u?color=purple)](https://github.com/Nick2bad4u/eslint-config-nick2bad4u/blob/main/LICENSE) [![npm total downloads.](https://flat.badgen.net/npm/dt/eslint-config-nick2bad4u?color=pink)](https://www.npmjs.com/package/eslint-config-nick2bad4u) [![latest GitHub release.](https://flat.badgen.net/github/release/Nick2bad4u/eslint-config-nick2bad4u?color=cyan)](https://github.com/Nick2bad4u/eslint-config-nick2bad4u/releases) [![GitHub stars.](https://flat.badgen.net/github/stars/Nick2bad4u/eslint-config-nick2bad4u?color=yellow)](https://github.com/Nick2bad4u/eslint-config-nick2bad4u/stargazers) [![GitHub forks.](https://flat.badgen.net/github/forks/Nick2bad4u/eslint-config-nick2bad4u?color=green)](https://github.com/Nick2bad4u/eslint-config-nick2bad4u/forks) [![GitHub open issues.](https://flat.badgen.net/github/open-issues/Nick2bad4u/eslint-config-nick2bad4u?color=red)](https://github.com/Nick2bad4u/eslint-config-nick2bad4u/issues) [![codecov.](https://codecov.io/gh/Nick2bad4u/eslint-config-nick2bad4u/branch/main/graph/badge.svg)](https://codecov.io/gh/Nick2bad4u/eslint-config-nick2bad4u)
 
-Shared flat ESLint config for Nick2bad4u ESLint plugin projects.
+Shared ESM-only [ESLint flat config](https://eslint.org/docs/latest/use/configure/configuration-files)
+for Nick2bad4u ESLint plugin projects.
+
+This package centralizes the lint stack used across those repositories: TypeScript-aware
+ESLint configuration, Markdown/JSON/YAML/CSS-adjacent linting, package checks,
+prose checks, and project-specific plugin presets. Consumers bring `eslint` and
+`typescript` as peer dependencies; this package brings the ESLint plugins and
+parsers that the shared config enables.
+
+## Requirements
+
+| Tool | Supported range | Why it is required |
+| --- | --- | --- |
+| Node.js | `>=22.0.0` | Runtime for ESLint, the config package, and repository scripts. |
+| ESLint | `^10.4.0` | Peer dependency supplied by each consuming project. |
+| TypeScript | `^5.0.0 \|\| ^6.0.3` | Peer dependency used by TypeScript-aware lint rules. |
+
+Repository development also expects npm `>=11.0.0`; consumers can use the package
+with whatever package manager their project supports.
 
 ## Install
 
@@ -10,11 +28,12 @@ Shared flat ESLint config for Nick2bad4u ESLint plugin projects.
 npm install --save-dev eslint-config-nick2bad4u eslint typescript
 ```
 
-The config package ships the ESLint plugins/parsers/configs it enables. `eslint` and `typescript` stay as peer dependencies so each consuming repo controls those versions.
+Keep `eslint` and `typescript` installed in the consuming project so peer
+dependency resolution stays explicit and predictable.
 
-## Basic usage
+## Quick start
 
-Create `eslint.config.mjs` in a consuming project:
+Create `eslint.config.mjs` in the consuming project:
 
 ```js
 import nick2bad4u from "eslint-config-nick2bad4u";
@@ -22,7 +41,8 @@ import nick2bad4u from "eslint-config-nick2bad4u";
 export default [...nick2bad4u.configs.all];
 ```
 
-That shape is intentional: the package behaves like an ESLint plugin preset, so you can compose it with local config entries instead of letting it take over the entire file:
+The spread is intentional. Every preset is an ESLint flat-config array, so
+spreading it lets you append local overrides without replacing the shared config:
 
 ```js
 import nick2bad4u from "eslint-config-nick2bad4u";
@@ -38,7 +58,7 @@ export default [
 ];
 ```
 
-If you prefer named imports, use `presets` (not `configs`):
+If you prefer named imports, use `presets`:
 
 ```js
 import { presets } from "eslint-config-nick2bad4u";
@@ -46,10 +66,28 @@ import { presets } from "eslint-config-nick2bad4u";
 export default [...presets.all];
 ```
 
-### Alternative: `createConfig()`
+For migration steps from an existing hand-written config, see the
+[migration guide](./docs/migration.md).
 
-If you want to keep the shared config but customize root resolution,
-`tsconfigPaths`, or plugin replacements, use `createConfig()` instead:
+## Documentation
+
+Long-form project documentation lives in [`docs/`](./docs/index.md).
+
+| Guide | Use it for |
+| --- | --- |
+| [Configuration](./docs/configuration.md) | `createConfig()`, presets, plugin replacement, and environment variables. |
+| [Migration](./docs/migration.md) | Moving a project from a hand-written flat config to this package. |
+| [Contributing](./CONTRIBUTING.md) | Local development workflow and pull request expectations. |
+| [Maintainer guide](./docs/maintainer-guide.md) | Rule, preset, dependency, and release maintenance. |
+| [Support](./SUPPORT.md) | Issue triage and reproduction details. |
+| [Security](./SECURITY.md) | Private vulnerability reporting. |
+| [Code of conduct](./CODE_OF_CONDUCT.md) | Participation standards for the project. |
+
+## `createConfig()`
+
+Use `createConfig()` when a project needs to customize root resolution,
+TypeScript project files, or plugin replacement/disabling while keeping the
+shared defaults:
 
 ```js
 import { createConfig } from "eslint-config-nick2bad4u";
@@ -60,75 +98,81 @@ export default createConfig({
 });
 ```
 
-An example copy-paste file is available at
+| Option | Type | Default | Use it when |
+| --- | --- | --- | --- |
+| `rootDirectory` | `string` | `process.cwd()` | ESLint runs outside the project root or a monorepo package needs its own root. |
+| `tsconfigPaths` | `readonly string[]` | `["./tsconfig.eslint.json"]` | The project uses a differently named lint tsconfig or a truly separate TypeScript project. |
+| `plugins` | `Readonly<Record<string, unknown>>` | `{}` | You need to dogfood a local plugin build or disable packaged plugin rules by namespace. |
+
+An example copy-paste config is available at
 [`examples/eslint.config.create.mjs`](./examples/eslint.config.create.mjs).
+Detailed configuration examples live in the
+[configuration guide](./docs/configuration.md).
 
-Available presets:
+## Available presets
 
-- `nick2bad4u.configs.all` - full shared config, including packaged Typefest and Etc-Misc source rules.
-- `nick2bad4u.configs.recommended` - alias for `all`.
-- `nick2bad4u.configs.base` - shared config without the explicit source-rule plugin sections.
-- `nick2bad4u.configs.withoutChunkyLint` - disable `chunkylint` namespace rules.
-- `nick2bad4u.configs.withoutCopilot` - full shared config without Copilot rules.
-- `nick2bad4u.configs.withoutDocusaurus2` - disable `docusaurus-2` namespace rules.
-- `nick2bad4u.configs.withoutTypefest` - full shared config without the Typefest source-rule section.
-- `nick2bad4u.configs.withoutEtcMisc` - full shared config without the Etc-Misc source-rule section.
-- `nick2bad4u.configs.withoutFileProgress2` - disable `file-progress-2` namespace rules.
-- `nick2bad4u.configs.withoutGithubActions2` - disable `github-actions-2` namespace rules.
-- `nick2bad4u.configs.withoutImmutable2` - disable `immutable-2` namespace rules.
-- `nick2bad4u.configs.withoutRemark` - disable `remark` namespace rules.
-- `nick2bad4u.configs.withoutRepo` - disable `repo` namespace rules.
-- `nick2bad4u.configs.withoutRuntimeCleanup` - disable `runtime-cleanup` namespace rules.
-- `nick2bad4u.configs.withoutSdl2` - disable `sdl-2` namespace rules.
-- `nick2bad4u.configs.withoutStylelint2` - disable `stylelint-2` namespace rules.
-- `nick2bad4u.configs.withoutTestSignal` - disable `test-signal` namespace rules.
-- `nick2bad4u.configs.withoutTsconfig` - disable `tsconfig` namespace rules.
-- `nick2bad4u.configs.withoutTsdocRequire2` - disable `tsdoc-require-2` namespace rules.
-- `nick2bad4u.configs.withoutTypedoc` - disable `typedoc` namespace rules.
-- `nick2bad4u.configs.withoutUptimeWatcher` - disable `uptime-watcher` namespace rules.
-- `nick2bad4u.configs.withoutVite` - disable `vite` namespace rules.
-- `nick2bad4u.configs.withoutWriteGoodComments2` - disable `write-good-comments-2` namespace rules.
+All presets are available from the default export as `nick2bad4u.configs.*` and
+from the named `presets` export.
 
-## Configure project roots / TypeScript projects
+| Preset | Purpose |
+| --- | --- |
+| `all` | Full shared config, including packaged Typefest and Etc-Misc source-rule sections. |
+| `recommended` | Alias for `all`; provided for familiar preset naming. |
+| `base` | Shared config without explicit source-rule plugin sections. |
+| `withoutCopilot` | Full shared config without Copilot rules. |
+| `withoutDocusaurus2` | Full shared config without Docusaurus 2 plugin rules. |
+| `withoutEtcMisc` | Full shared config without the Etc-Misc source-rule section. |
+| `withoutFileProgress2` | Full shared config without File Progress 2 rules. |
+| `withoutGithubActions2` | Full shared config without GitHub Actions 2 rules. |
+| `withoutImmutable2` | Full shared config without Immutable 2 rules. |
+| `withoutRemark` | Full shared config without Remark plugin rules. |
+| `withoutRepo` | Full shared config without Repo plugin rules. |
+| `withoutRuntimeCleanup` | Full shared config without Runtime Cleanup plugin rules. |
+| `withoutSdl2` | Full shared config without SDL 2 rules. |
+| `withoutStylelint2` | Full shared config without Stylelint 2 rules. |
+| `withoutTestSignal` | Full shared config without Test Signal plugin rules. |
+| `withoutTsconfig` | Full shared config without tsconfig-validation rules. |
+| `withoutTsdocRequire2` | Full shared config without TSDoc Require 2 rules. |
+| `withoutTypedoc` | Full shared config without TypeDoc rules. |
+| `withoutTypefest` | Full shared config without the Typefest source-rule section. |
+| `withoutVite` | Full shared config without Vite plugin rules. |
+| `withoutWriteGoodComments2` | Full shared config without Write Good Comments 2 rules. |
 
-By default, TypeScript-aware rules resolve from `process.cwd()` using a single
-`./tsconfig.eslint.json`. That file should use a catch-all `include` to cover
-every file ESLint touches — source, tests, scripts, dotfiles, and docs tooling:
+Use a `without*` preset when a repository does not use that surface or when it
+needs to provide a local build of that plugin for dogfooding.
+
+## TypeScript project setup
+
+The default TypeScript-aware configuration resolves from `process.cwd()` and
+expects `./tsconfig.eslint.json`. That project should include every file ESLint
+can lint: source, tests, scripts, dotfiles, examples, and docs tooling.
 
 ```json
 {
     "$schema": "https://www.schemastore.org/tsconfig.json",
     "extends": "./tsconfig.json",
-    "compilerOptions": { "allowJs": true, "checkJs": true, "noEmit": true },
+    "compilerOptions": {
+        "allowJs": true,
+        "checkJs": true,
+        "noEmit": true
+    },
     "exclude": ["node_modules/**", "dist/**", "coverage/**", ".cache/**"],
     "include": ["**/*", "**/.*"]
 }
 ```
 
-> One tsconfig avoids multi-project warnings and is simpler to maintain.
-> Dotfiles like `.secretlintrc.cjs` require `"**/.*"` — they are **not** matched
-> by extension globs such as `**/*.cjs`.
+One catch-all lint tsconfig is easier to maintain than multiple narrow projects.
+The `"**/.*"` include matters because dotfiles such as `.secretlintrc.cjs` are
+not matched by extension globs like `**/*.cjs`.
 
-Override `tsconfigPaths` only when a separate project with different compiler
-settings is genuinely needed (e.g. a Docusaurus build or benchmark suite):
+Set `ESLINT_CONFIG_ROOT` only when you need to drive the root directory from the
+environment instead of passing `rootDirectory` to `createConfig()`.
 
-```js
-import { createConfig } from "eslint-config-nick2bad4u";
+## Local plugin dogfooding
 
-export default createConfig({
-    rootDirectory: import.meta.dirname,
-    tsconfigPaths: [
-        "./tsconfig.eslint.json",
-        "./tsconfig.benchmarks.json",
-    ],
-});
-```
-
-You can also set `ESLINT_CONFIG_ROOT` if you need to drive the root from the environment.
-
-## Dogfood a local ESLint plugin
-
-The shared config imports `eslint-plugin-typefest` from npm by default. In the `eslint-plugin-typefest` repo, use the preset without packaged Typefest and then add the local plugin section:
+Use the matching `without*` preset, then append the local plugin registration.
+For example, an `eslint-plugin-typefest` checkout can use its local plugin build
+without also enabling the packaged Typefest rules:
 
 ```js
 import nick2bad4u from "eslint-config-nick2bad4u";
@@ -149,89 +193,76 @@ export default [
 ];
 ```
 
-If your local plugin is built to `dist/plugin.js`, use that instead:
+Use the same shape for other plugin namespaces, such as `withoutCopilot`,
+`withoutEtcMisc`, or `withoutWriteGoodComments2`.
 
-```js
-import nick2bad4u from "eslint-config-nick2bad4u";
-import localTypefest from "./dist/plugin.js";
+## Optional behavior
 
-export default [
-    ...nick2bad4u.configs.withoutTypefest,
-    {
-        files: ["src/**/*.{ts,tsx,mts,cts}"],
-        name: "Local Typefest rules",
-        plugins: {
-            typefest: localTypefest,
-        },
-        rules: {
-            ...localTypefest.configs.experimental.rules,
-        },
-    },
-];
-```
+### JSON schema validation
 
-## Disable a plugin from the shared config
-
-Use a preset that omits the source-rule section you do not want:
-
-```js
-import nick2bad4u from "eslint-config-nick2bad4u";
-
-export default [...nick2bad4u.configs.withoutTypefest];
-```
-
-For advanced cases, `createConfig(options)` is still exported. Use it when you need custom `rootDirectory`, custom `tsconfigPaths`, or dynamic plugin disables/replacements.
-
-The same pattern works for dogfooding any local plugin with a matching `without*` preset. For example, in `eslint-plugin-copilot`:
-
-```js
-import nick2bad4u from "eslint-config-nick2bad4u";
-import localCopilot from "./plugin.mjs";
-
-export default [
-    ...nick2bad4u.configs.withoutCopilot,
-    {
-        files: ["src/**/*.{js,mjs,cjs,ts,mts,cts,tsx,jsx}"],
-        name: "Local Copilot rules",
-        plugins: {
-            copilot: localCopilot,
-        },
-        rules: {
-            ...localCopilot.configs.all.rules,
-        },
-    },
-];
-```
-
-## Optional JSON schema validation
-
-JSON/YAML schema validation is off by default because schema fetching can make lint runs flaky/offline-hostile. To opt in, install `eslint-plugin-json-schema-validator` in the consuming repo and set:
+JSON/YAML schema validation is disabled by default because schema fetching can
+make lint runs flaky in offline or locked-down environments. To opt in, install
+`eslint-plugin-json-schema-validator` in the consuming repo and set the opt-in
+environment variable when running ESLint:
 
 ```sh
 ENABLE_JSON_SCHEMA_VALIDATION=1 eslint .
 ```
 
-## Progress output
+### Progress output
 
-`eslint-plugin-file-progress-2` is enabled. Control it with `ESLINT_PROGRESS`:
+`eslint-plugin-file-progress-2` is enabled by default. Control it with
+`ESLINT_PROGRESS`:
 
-- unset / `on`: show progress and file names
-- `nofile`: show progress without file names
-- `off`, `0`, or `false`: disable progress
+| Value | Behavior |
+| --- | --- |
+| unset or `on` | Show progress and file names. |
+| `nofile` | Show progress without file names. |
+| `off`, `0`, or `false` | Disable progress output. |
 
 ## Development checks
 
-Use the aggregate scripts before publishing or opening a pull request:
+Use the aggregate scripts before opening a pull request or publishing:
 
 ```sh
 npm run lint:all
 npm run release:verify
 ```
 
-The release verification pipeline runs typechecking, Vitest tests, ESLint,
-Prettier, package sorting/linting, `publint`, ATTW in ESM-only mode, YAML lint,
-`actionlint`, and Secretlint. Release notes are generated with `git-cliff` via
-the `changelog:*` scripts.
+`lint:all` builds the runtime, runs ESLint, typechecks, runs Vitest, checks
+Prettier formatting, validates package metadata and published package shape,
+lints YAML, and runs Secretlint. `release:verify` adds the stricter no-cache lint
+path, package checks with `publint` and ATTW, and sync checks for peer ranges and
+Node version files.
 
-For maintainers, see [MAINTAINER_GUIDE.md](./MAINTAINER_GUIDE.md).
-Historical wording diffs are captured in [DIFF_NOTES.md](./DIFF_NOTES.md).
+Release notes are generated with `git-cliff` through the `changelog:*` scripts.
+For contribution and maintenance workflows, see the
+[contributing guide](./CONTRIBUTING.md) and
+[maintainer guide](./docs/maintainer-guide.md). Historical wording diffs are
+captured in [diff notes](./docs/diff-notes.md).
+
+## Contributors
+
+[![All Contributors](https://img.shields.io/github/all-contributors/Nick2bad4u/eslint-config-nick2bad4u?color=ee8449&style=flat-square)](#contributors)
+
+<!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
+<!-- prettier-ignore-start -->
+<!-- markdownlint-disable -->
+<table>
+  <tbody>
+    <tr>
+      <td align="center" valign="top" width="25%"><a href="https://github.com/Nick2bad4u"><img src="https://avatars.githubusercontent.com/u/20943337?v=4?s=80" width="80px;" alt="Nick2bad4u"/><br /><sub><b>Nick2bad4u</b></sub></a><br /><a href="https://github.com/Nick2bad4u/eslint-config-nick2bad4u/issues?q=author%3ANick2bad4u" title="Bug reports">🐛</a> <a href="https://github.com/Nick2bad4u/eslint-config-nick2bad4u/commits?author=Nick2bad4u" title="Code">💻</a> <a href="https://github.com/Nick2bad4u/eslint-config-nick2bad4u/commits?author=Nick2bad4u" title="Documentation">📖</a> <a href="#ideas-Nick2bad4u" title="Ideas, Planning, & Feedback">🤔</a> <a href="#infra-Nick2bad4u" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a> <a href="#maintenance-Nick2bad4u" title="Maintenance">🚧</a> <a href="https://github.com/Nick2bad4u/eslint-config-nick2bad4u/pulls?q=is%3Apr+reviewed-by%3ANick2bad4u" title="Reviewed Pull Requests">👀</a> <a href="https://github.com/Nick2bad4u/eslint-config-nick2bad4u/commits?author=Nick2bad4u" title="Tests">⚠️</a> <a href="#tool-Nick2bad4u" title="Tools">🔧</a></td>
+      <td align="center" valign="top" width="25%"><a href="https://snyk.io/"><img src="https://avatars.githubusercontent.com/u/19733683?v=4?s=80" width="80px;" alt="Snyk bot"/><br /><sub><b>Snyk bot</b></sub></a><br /><a href="#security-snyk-bot" title="Security">🛡️</a> <a href="#infra-snyk-bot" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a> <a href="#maintenance-snyk-bot" title="Maintenance">🚧</a> <a href="https://github.com/Nick2bad4u/eslint-config-nick2bad4u/pulls?q=is%3Apr+reviewed-by%3Asnyk-bot" title="Reviewed Pull Requests">👀</a></td>
+      <td align="center" valign="top" width="25%"><a href="https://www.stepsecurity.io/"><img src="https://avatars.githubusercontent.com/u/89328645?v=4?s=80" width="80px;" alt="StepSecurity Bot"/><br /><sub><b>StepSecurity Bot</b></sub></a><br /><a href="#security-step-security-bot" title="Security">🛡️</a> <a href="#infra-step-security-bot" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a> <a href="#maintenance-step-security-bot" title="Maintenance">🚧</a></td>
+      <td align="center" valign="top" width="25%"><a href="https://github.com/apps/dependabot"><img src="https://avatars.githubusercontent.com/in/29110?v=4?s=80" width="80px;" alt="dependabot[bot]"/><br /><sub><b>dependabot[bot]</b></sub></a><br /><a href="#infra-dependabot[bot]" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a> <a href="#security-dependabot[bot]" title="Security">🛡️</a></td>
+    </tr>
+    <tr>
+      <td align="center" valign="top" width="25%"><a href="https://github.com/apps/github-actions"><img src="https://avatars.githubusercontent.com/in/15368?v=4?s=80" width="80px;" alt="github-actions[bot]"/><br /><sub><b>github-actions[bot]</b></sub></a><br /><a href="https://github.com/Nick2bad4u/eslint-config-nick2bad4u/commits?author=github-actions[bot]" title="Code">💻</a> <a href="#infra-github-actions[bot]" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a></td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- markdownlint-restore -->
+<!-- prettier-ignore-end -->
+
+<!-- ALL-CONTRIBUTORS-LIST:END -->

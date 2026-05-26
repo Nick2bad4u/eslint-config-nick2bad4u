@@ -1,0 +1,5 @@
+matrix:
+    - name: fixture
+      sources:
+          - docs/**/*.md
+version: "0.1"

@@ -1,0 +1,7 @@
+description: Fixture composite action.
+name: Fixture Cache
+runs:
+    steps:
+        - run: echo "cache ready"
+          shell: bash
+    using: composite

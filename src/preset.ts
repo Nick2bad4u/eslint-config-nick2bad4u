@@ -10,7 +10,6 @@ export const presets: Nick2Bad4UEslintConfigPresets = Object.freeze({
     all: sharedConfigs.all,
     base: sharedConfigs.base,
     recommended: sharedConfigs.recommended,
-    withoutChunkyLint: sharedConfigs.withoutChunkyLint,
     withoutCopilot: sharedConfigs.withoutCopilot,
     withoutDocusaurus2: sharedConfigs.withoutDocusaurus2,
     withoutEtcMisc: sharedConfigs.withoutEtcMisc,
@@ -27,7 +26,6 @@ export const presets: Nick2Bad4UEslintConfigPresets = Object.freeze({
     withoutTsdocRequire2: sharedConfigs.withoutTsdocRequire2,
     withoutTypedoc: sharedConfigs.withoutTypedoc,
     withoutTypefest: sharedConfigs.withoutTypefest,
-    withoutUptimeWatcher: sharedConfigs.withoutUptimeWatcher,
     withoutVite: sharedConfigs.withoutVite,
     withoutWriteGoodComments2: sharedConfigs.withoutWriteGoodComments2,
 });

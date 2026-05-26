@@ -1,0 +1,21 @@
+{
+    "$schema": "https://www.schemastore.org/tsconfig.json",
+    "compilerOptions": {
+        "allowJs": true,
+        "checkJs": true,
+        "jsx": "preserve",
+        "lib": ["ES2024", "DOM"],
+        "module": "NodeNext",
+        "moduleResolution": "NodeNext",
+        "noEmit": true,
+        "strict": true,
+        "target": "ES2024",
+        "types": []
+    },
+    "exclude": ["node_modules/**"],
+    "include": [
+        ".storybook/**/*.ts",
+        "**/*",
+        "**/.*"
+    ]
+}

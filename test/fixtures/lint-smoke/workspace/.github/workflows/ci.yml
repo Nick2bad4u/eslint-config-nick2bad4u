@@ -1,0 +1,12 @@
+jobs:
+    lint:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+            - name: Run fixture lint
+              run: npm test
+name: Fixture CI
+on:
+    push:
+        branches:
+            - main

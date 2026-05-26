@@ -1,0 +1,9 @@
+.layout {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: minmax(0, 1fr);
+}
+
+.layout__item {
+    color: rebeccapurple;
+}
