@@ -915,26 +915,26 @@ export const createConfig = (
         },
         {
             ...docusaurus2.configs.all,
-            name: "📦 Docusaurus 2: All setup",
+            name: "🦖 Docusaurus 2: All setup",
             // Keep the setup portion separate from rule presets so inspector shows
             // the experimental/content/MDX rule groups individually.
             rules: {},
         },
         {
             ...docusaurus2.configs.experimental,
-            name: "📦 Docusaurus 2: Experimental",
+            name: "🦖 Docusaurus 2: Experimental",
         },
         {
             ...docusaurus2.configs["strict-mdx-upgrade"],
-            name: "📦 Docusaurus 2: Strict MDX Upgrade",
+            name: "🦖 Docusaurus 2: Strict MDX Upgrade",
         },
         {
             ...docusaurus2.configs.content,
-            name: "📦 Docusaurus 2: Content",
+            name: "🦖 Docusaurus 2: Content",
         },
         {
             files: ["**/*.{md,mdx}"],
-            name: "📦 Docusaurus 2: Local overrides",
+            name: "🦖 Docusaurus 2: Local overrides",
             rules: {
                 "docusaurus-2/local-search-will-not-work-in-dev": "off",
             },
@@ -3148,11 +3148,7 @@ export const createConfig = (
         {
             ...arrayFirst(astro.configs.base),
             ...astro.configs.base[1],
-            files: [
-                "**/*.astro",
-                "**/*.astro/*.js",
-                "**/*.astro/*.ts",
-            ],
+            files: ["*.astro", "**/*.astro"],
             name: "🚀 Astro Components: **/*.astro",
             rules: {
                 "astro/jsx-a11y/alt-text": "warn",
