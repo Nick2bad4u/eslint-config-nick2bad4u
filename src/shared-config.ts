@@ -99,7 +99,6 @@ import {
 } from "ts-extras";
 import tseslint from "typescript-eslint";
 import * as yamlEslintParser from "yaml-eslint-parser";
-import nuxt from "@nuxt/eslint-config/flat";
 
 const require = createRequire(import.meta.url);
 
@@ -3217,7 +3216,6 @@ export const createConfig = (
         },
         // #endregion 🚀 Astro Files
         // #region ⚛️ Next.js Files
-        nuxt.configs.recommended,
         // ═══════════════════════════════════════════════════════════════════════════════
         // SECTION: ⚛️ Next.js Files
         // ═══════════════════════════════════════════════════════════════════════════════
