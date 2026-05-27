@@ -253,7 +253,8 @@ All presets are exposed on the default export as `.configs` and as the named
 | `withoutDocusaurus2` | Full shared config without Docusaurus 2 plugin rules. |
 | `withoutEtcMisc` | Full shared config without the Etc-Misc source-rule section. |
 | `withoutFileProgress2` | Full shared config without File Progress 2 rules. |
-| `withoutGithubActions2` | Full shared config without GitHub Actions 2 rules. |
+| `withoutGitHubActions2` | Full shared config without GitHub Actions 2 rules. |
+| `withoutGithubActions2` | Deprecated alias for `withoutGitHubActions2`. |
 | `withoutImmutable2` | Full shared config without Immutable 2 rules. |
 | `withoutRemark` | Full shared config without Remark plugin rules. |
 | `withoutRepo` | Full shared config without Repo plugin rules. |

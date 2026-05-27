@@ -93,7 +93,6 @@ import {
     objectFromEntries,
     objectHasOwn,
     objectKeys,
-    safeCastTo,
     setHas,
     stringSplit,
 } from "ts-extras";
@@ -101,19 +100,18 @@ import tseslint from "typescript-eslint";
 import * as yamlEslintParser from "yaml-eslint-parser";
 
 const require = createRequire(import.meta.url);
+const processEnvironment = globalThis.process.env;
 
 // #region ✅ JSON Schema Validator
 // ═══════════════════════════════════════════════════════════════════════════════
-// SECTION: ✅ JSON Schema Validator
-// ═══════════════════════════════════════════════════════════════════════════════
-
 // NOTE: eslint-plugin-json-schema-validator may attempt to fetch remote schemas
 // at lint time. That makes linting flaky/offline-hostile.
 // Keep it opt-in via ENABLE_JSON_SCHEMA_VALIDATION=1.
 const enableJsonSchemaValidation =
-    globalThis.process.env["ENABLE_JSON_SCHEMA_VALIDATION"] === "1";
-
+    processEnvironment["ENABLE_JSON_SCHEMA_VALIDATION"] === "1";
 const jsonSchemaValidatorPackageName = "eslint-plugin-json-schema-validator";
+const jsonSchemaValidatorRuleName = "no-invalid";
+
 let eslintPluginJsonSchemaValidator: ConfigurablePlugin | null = null;
 
 if (enableJsonSchemaValidation) {
@@ -128,15 +126,16 @@ if (enableJsonSchemaValidation) {
         )
             ? loadedJsonSchemaValidator.default
             : loadedJsonSchemaValidator;
-
         if (
-            typeof jsonSchemaValidatorCandidate === "object" &&
-            isPresent(jsonSchemaValidatorCandidate)
+            hasPluginRule(
+                jsonSchemaValidatorCandidate,
+                jsonSchemaValidatorRuleName
+            )
         ) {
             eslintPluginJsonSchemaValidator = jsonSchemaValidatorCandidate;
         } else {
             console.warn(
-                `[eslint-config-nick2bad4u] ${jsonSchemaValidatorPackageName} did not export an ESLint plugin object; JSON schema validation remains disabled.`
+                `[eslint-config-nick2bad4u] ${jsonSchemaValidatorPackageName} did not export a plugin with the ${jsonSchemaValidatorRuleName} rule; JSON schema validation remains disabled.`
             );
         }
     } catch {
@@ -150,20 +149,14 @@ const jsonSchemaValidatorPlugins =
     eslintPluginJsonSchemaValidator === null
         ? {}
         : { "json-schema-validator": eslintPluginJsonSchemaValidator };
-
 const jsonSchemaValidatorRules =
     eslintPluginJsonSchemaValidator === null
         ? {}
         : { "json-schema-validator/no-invalid": "error" };
 
-const processEnvironment = globalThis.process.env;
-
 // #endregion ✅ JSON Schema Validator
 // #region 🏗️ Setup and Public Types
 // ═══════════════════════════════════════════════════════════════════════════════
-// SECTION: 🏗️ Setup and Public Types
-// ═══════════════════════════════════════════════════════════════════════════════
-
 // Parser project defaults intentionally live in this package instead of each
 // plugin preset. Consumers get type-aware rules out of the box, but can point
 // the shared config at a repo-specific ESLint project when needed.
@@ -171,8 +164,11 @@ const processEnvironment = globalThis.process.env;
 // extends tsconfig.json, allowJs:true) is the only project ESLint needs.
 // Consumer repos can override via createConfig({ tsconfigPaths: [...] }).
 const DEFAULT_TSCONFIG_PATHS = Object.freeze(["./tsconfig.eslint.json"]);
-const CODE_FILE_PATTERNS = Object.freeze([
+const GLOBAL_FILE_PATTERNS = Object.freeze([
     "**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
+]);
+const SOURCE_FILE_PATTERNS = Object.freeze([
+    "src/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
 ]);
 
 /**
@@ -185,10 +181,8 @@ const CODE_FILE_PATTERNS = Object.freeze([
 export interface Nick2Bad4UEslintConfigOptions {
     /** Plugin overrides keyed by ESLint namespace. */
     readonly plugins?: PluginOverrides;
-
     /** Project root used for parser root resolution and local alias checks. */
     readonly rootDirectory?: string;
-
     /** TypeScript project files relative to `rootDirectory`. */
     readonly tsconfigPaths?: readonly string[];
 }
@@ -208,6 +202,8 @@ export interface Nick2Bad4UEslintConfigPresets {
     readonly withoutDocusaurus2: EslintConfig[];
     readonly withoutEtcMisc: EslintConfig[];
     readonly withoutFileProgress2: EslintConfig[];
+    readonly withoutGitHubActions2: EslintConfig[];
+    /** @deprecated Use `withoutGitHubActions2`. */
     readonly withoutGithubActions2: EslintConfig[];
     readonly withoutImmutable2: EslintConfig[];
     readonly withoutRemark: EslintConfig[];
@@ -230,14 +226,12 @@ export interface Nick2Bad4UEslintConfigPresets {
 interface ConfigurablePlugin {
     readonly configs?: object;
     readonly flat?: object;
+    readonly rules?: UnknownRecord;
 }
 
 type EslintConfig = Linter.Config;
-
 type EslintConfigInput = EslintConfig | readonly EslintConfig[];
-
 type PluginOverride = ConfigurablePlugin | false | null | undefined;
-
 type PluginOverrides = Readonly<Record<string, PluginOverride>>;
 
 /**
@@ -257,22 +251,35 @@ const ESLINT_PROGRESS_MODE = (
     processEnvironment["ESLINT_PROGRESS"] ?? "on"
 ).toLowerCase();
 
-const IS_CI = (processEnvironment["CI"] ?? "").toLowerCase() === "true";
+const CI_ENVIRONMENT_VALUE = (processEnvironment["CI"] ?? "").toLowerCase();
+const IS_CI =
+    CI_ENVIRONMENT_VALUE !== "" &&
+    CI_ENVIRONMENT_VALUE !== "0" &&
+    CI_ENVIRONMENT_VALUE !== "false";
 const DISABLE_PROGRESS =
     ESLINT_PROGRESS_MODE === "off" ||
     ESLINT_PROGRESS_MODE === "0" ||
     ESLINT_PROGRESS_MODE === "false";
 const HIDE_PROGRESS_FILENAMES = ESLINT_PROGRESS_MODE === "nofile";
 
+// Storybook helper
+const storybookRecommendedConfigs = storybook.configs["flat/recommended"];
+const storybookRecommendedSetupConfig =
+    arrayFirst(storybookRecommendedConfigs) ?? {};
+const storybookRecommendedStoriesRules =
+    storybookRecommendedConfigs.find(
+        (config) => config.name === "storybook:recommended:stories-rules"
+    )?.rules ??
+    storybookRecommendedConfigs.find((config) => isDefined(config.rules))
+        ?.rules ??
+    {};
+
 // #endregion 🏗️ Setup and Public Types
 // #region 🛠️ Config
 // ═══════════════════════════════════════════════════════════════════════════════
-// SECTION: 🛠️ Config
-// ═══════════════════════════════════════════════════════════════════════════════
-
 /* eslint-disable max-lines-per-function -- This exported factory intentionally keeps shared flat-config composition in one place. */
 /**
- * Create the shared Nick2bad4u ESLint flat config.
+ * Create the shared Nick2Bad4U ESLint flat config.
  *
  * @param options - Shared config factory options.
  *
@@ -316,24 +323,28 @@ export const createConfig = (
         testSignal
     );
 
-    // NOTE: In ESLint flat config, ignore-only entries are safest when
-    // placed near the start of the config array.
+    // #region ⚙️ Global Settings
+    // ═══════════════════════════════════════════════════════════════════════════════
     // #region 🧹 Global Ignore Patterns
     // ═══════════════════════════════════════════════════════════════════════════════
-    // SECTION: 🧹 Global Ignore Patterns
-    // ═══════════════════════════════════════════════════════════════════════════════
+    // NOTE: In ESLint flat config, ignore-only entries are safest when
+    // placed near the start of the config array.
     // Add patterns here to ignore files and directories globally
     const configs = [
         globalIgnores(
             [
-                "**/AGENTS.md",
-                "**/CHANGELOG.md",
-                "test/fixtures/**",
                 "**/**-instructions.md",
                 "**/**.instructions.md",
                 "**/**dist**/**",
+                "**/*.css.d.ts",
+                "**/*.module.css.d.ts",
+                "**/*.secretlintrc.cjs",
+                "**/*.secretlintrc.js",
+                "**/*.secretlintrc.mjs",
                 "**/.agentic-tools*",
                 "**/.cache/**",
+                "**/AGENTS.md",
+                "**/CHANGELOG.md",
                 "**/Coverage/**",
                 "**/_ZENTASKS*",
                 "**/chatproject.md",
@@ -341,13 +352,12 @@ export const createConfig = (
                 "**/coverage/**",
                 "**/dist-scripts/**",
                 "**/dist/**",
-                "**/*.css.d.ts",
-                "**/*.module.css.d.ts",
                 "**/html/**",
-                "examples/**",
                 "**/node_modules/**",
                 "**/package-lock.json",
                 "**/release/**",
+                "**/secretlint.config.{js,cjs,mjs}",
+                "**/secretlint.{js,cjs,mjs}",
                 ".devskim.json",
                 ".github/ISSUE_TEMPLATE/**",
                 ".github/PULL_REQUEST_TEMPLATE/**",
@@ -355,9 +365,9 @@ export const createConfig = (
                 ".github/instructions/**",
                 ".github/prompts/**",
                 ".stryker-tmp/**",
-                "**/CHANGELOG.md",
-                "coverage-report.json",
+                ".temp/**",
                 "config/testing/types/**/*.d.ts",
+                "coverage-report.json",
                 "docs/Archive/**",
                 "docs/Logger-Error-report.md",
                 "docs/Packages/**",
@@ -365,24 +375,20 @@ export const createConfig = (
                 "docs/docusaurus/.docusaurus/**",
                 "docs/docusaurus/build/**",
                 "docs/docusaurus/docs/**",
+                "docs/docusaurus/static/*-inspector/**",
                 "docs/docusaurus/static/eslint-inspector/**",
                 "docs/docusaurus/static/stylelint-inspector/**",
-                "docs/docusaurus/static/*-inspector/**",
-                "report/**",
-                "reports/**",
-                "scripts/devtools-snippets/**",
+                "examples/**",
                 "playwright/reports/**",
                 "playwright/test-results/**",
                 "public/mockServiceWorker.js",
-                "temp/**",
-                ".temp/**",
-                "**/*.secretlintrc.cjs",
-                "**/*.secretlintrc.mjs",
-                "**/*.secretlintrc.js",
-                "**/secretlint.config.{js,cjs,mjs}",
-                "**/secretlint.{js,cjs,mjs}",
-                "scripts/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
+                "report/**",
+                "reports/**",
                 "script/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
+                "scripts/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
+                "scripts/devtools-snippets/**",
+                "temp/**",
+                "test/fixtures/**",
             ],
             "🌍 Global: Ignore Patterns"
         ),
@@ -411,11 +417,8 @@ export const createConfig = (
         //     severity: "warn",
         //     // ...
         //   }),
-
         // #endregion 🧹 Global Ignore Patterns
         // #region 🧭 Custom Global Rules
-        // ═══════════════════════════════════════════════════════════════════════════════
-        // SECTION: 🧭 Custom Global Rules
         // ═══════════════════════════════════════════════════════════════════════════════
         // Add any global rules here that don't fit within specific plugin configs or that require custom options
         // {
@@ -432,13 +435,8 @@ export const createConfig = (
         // #endregion 🧭 Custom Global Rules
         // #region 🗣️ Global Language Options
         // ═══════════════════════════════════════════════════════════════════════════════
-        // SECTION: 🗣️ Global Language Options
-        // ═══════════════════════════════════════════════════════════════════════════════
         // Intentionally left empty.
         // #endregion 🗣️ Global Language Options
-        // #region ⚙️ Global Settings
-        // ═══════════════════════════════════════════════════════════════════════════════
-        // SECTION: ⚙️ Global Settings
         // ═══════════════════════════════════════════════════════════════════════════════
         {
             name: "🌍 Global: Settings",
@@ -451,16 +449,16 @@ export const createConfig = (
                         alwaysTryTypes: true, // Always try to resolve types under `<root>@types` directory even if it doesn't contain any source code, like `@types/unist`
                         bun: true, // Resolve Bun modules (https://github.com/import-js/eslint-import-resolver-typescript#bun) // Don't warn about multiple projects
                         extensions: [
+                            ".cjs",
+                            ".cts",
                             ".js",
+                            ".json",
                             ".jsx",
+                            ".mjs",
+                            ".mts",
+                            ".node",
                             ".ts",
                             ".tsx",
-                            ".mts",
-                            ".cts",
-                            ".mjs",
-                            ".cjs",
-                            ".json",
-                            ".node",
                         ],
                         // Use an array.
                         project: [...tsconfigPaths],
@@ -471,16 +469,14 @@ export const createConfig = (
         // #endregion ⚙️ Global Settings
         // #region 🧱 Base Flat Configs
         // ═══════════════════════════════════════════════════════════════════════════════
-        // SECTION: 🧱 Base Flat Configs
-        // ═══════════════════════════════════════════════════════════════════════════════
         {
+            // MARK: 🚚 Import-X
             ...importX.flatConfigs.recommended,
-            files: [...CODE_FILE_PATTERNS],
-            name: "📦 Import-X: (code files only)",
+            files: [...GLOBAL_FILE_PATTERNS],
+            name: "🚚 Import-X: Recommended + TypeScript",
             rules: {
                 ...importX.flatConfigs.recommended.rules,
                 ...importX.flatConfigs.typescript.rules,
-
                 "import-x/consistent-type-specifier-style": "off",
                 "import-x/dynamic-import-chunkname": "off",
                 "import-x/exports-last": "off",
@@ -539,14 +535,16 @@ export const createConfig = (
             },
         },
         {
+            // MARK: ☕ JS
             ...js.configs.all,
-            files: [...CODE_FILE_PATTERNS],
-            name: "📦 ESLint JS: All (code files only)",
+            files: [...GLOBAL_FILE_PATTERNS],
+            name: "☕ ESLint JS: All",
         },
         {
+            // MARK: 🦄 Unicorn
             ...unicorn.configs.all,
-            files: [...CODE_FILE_PATTERNS],
-            name: "📦 Unicorn: All (code files only)",
+            files: [...GLOBAL_FILE_PATTERNS],
+            name: "🦄 Unicorn: All",
             rules: {
                 ...unicorn.configs.all.rules,
                 "unicorn/consistent-destructuring": "off",
@@ -625,9 +623,10 @@ export const createConfig = (
             },
         },
         {
+            // MARK: 🍹 Node
             ...nodePlugin.configs["flat/all"],
-            files: [...CODE_FILE_PATTERNS],
-            name: "📦 Node: All (code files only)",
+            files: [...GLOBAL_FILE_PATTERNS],
+            name: "🍹 Node: All",
             rules: {
                 ...nodePlugin.configs["flat/all"].rules,
                 "n/file-extension-in-import": "off",
@@ -642,9 +641,10 @@ export const createConfig = (
             },
         },
         {
+            // MARK: 🧮 Math
             ...math.configs.recommended,
-            files: [...CODE_FILE_PATTERNS],
-            name: "📦 Math: Recommended (code files only)",
+            files: [...GLOBAL_FILE_PATTERNS],
+            name: "🧮 Math: Recommended",
             rules: {
                 ...math.configs.recommended.rules,
                 "math/abs": "warn",
@@ -653,10 +653,11 @@ export const createConfig = (
             },
         },
         {
+            // MARK: ⚜️ Canonical
             // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- Canonical upstream types as an any
             ...canonical.configs["flat/recommended"],
-            files: [...CODE_FILE_PATTERNS],
-            name: "📦 Canonical: Recommended (code files only)",
+            files: [...GLOBAL_FILE_PATTERNS],
+            name: "⚜️ Canonical: Recommended",
             // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- Canonical upstream types as an any
             rules: {
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access  -- Canonical upstream types as an any
@@ -694,8 +695,9 @@ export const createConfig = (
         ...(isDefined(listeners.configs["strict"])
             ? [
                   {
-                      files: [...CODE_FILE_PATTERNS],
-                      name: "📦 Listeners: Strict (code files only)",
+                      // MARK: 🎧 Listeners
+                      files: [...GLOBAL_FILE_PATTERNS],
+                      name: "🎧 Listeners: Strict",
                       plugins: {
                           listeners,
                       },
@@ -706,18 +708,22 @@ export const createConfig = (
               ]
             : []),
         {
-            files: [...CODE_FILE_PATTERNS],
-            name: "📦 Module Interop: Recommended (code files only)",
+            // MARK: 🐝 Module Interop
+            files: [...GLOBAL_FILE_PATTERNS],
+            name: "🐝 Module Interop: Recommended",
             plugins: {
                 "module-interop": moduleInterop,
             },
             rules: {
                 ...moduleInterop.configs.recommended.rules,
+                "module-interop/no-import-cjs": "off",
+                "module-interop/no-require-esm": "warn",
             },
         },
         {
-            files: [...CODE_FILE_PATTERNS],
-            name: "📦 Comment Length: Recommended (code files only)",
+            // MARK: 🍂 Comment Length
+            files: [...GLOBAL_FILE_PATTERNS],
+            name: "🍂 Comment Length: Recommended",
             plugins: {
                 "comment-length": commentLength,
             },
@@ -876,8 +882,9 @@ export const createConfig = (
             },
         },
         {
-            files: [...CODE_FILE_PATTERNS],
-            name: "📦 ESLint Plugin: Recommended (code files only)",
+            // MARK: 🍭 ESLint Plugin
+            files: [...GLOBAL_FILE_PATTERNS],
+            name: "🍭 ESLint Plugin: Recommended",
             plugins: {
                 "eslint-plugin": eslintPluginEslintPlugin,
             },
@@ -913,43 +920,37 @@ export const createConfig = (
                 "eslint-plugin/unique-test-case-names": "warn",
             },
         },
-        {
-            ...docusaurus2.configs.all,
-            name: "🦖 Docusaurus 2: All setup",
-            // Keep the setup portion separate from rule presets so inspector shows
-            // the experimental/content/MDX rule groups individually.
-            rules: {},
-        },
+        // #region 🦖 Docusaurus 2 Configs
+        // ═══════════════════════════════════════════════════════════════════════════════
         {
             ...docusaurus2.configs.experimental,
-            name: "🦖 Docusaurus 2: Experimental",
-        },
-        {
-            ...docusaurus2.configs["strict-mdx-upgrade"],
-            name: "🦖 Docusaurus 2: Strict MDX Upgrade",
+            name: "🦖 Docusaurus 2: Experimental: Includes All + Extra Rules",
+            rules: {
+                ...docusaurus2.configs.experimental.rules,
+                "docusaurus-2/local-search-will-not-work-in-dev": "off",
+            },
         },
         {
             ...docusaurus2.configs.content,
             name: "🦖 Docusaurus 2: Content",
         },
+        // ═══════════════════════════════════════════════════════════════════════════════
+        // #endregion 🦖 Docusaurus 2 Configs
         {
-            files: ["**/*.{md,mdx}"],
-            name: "🦖 Docusaurus 2: Local overrides",
-            rules: {
-                "docusaurus-2/local-search-will-not-work-in-dev": "off",
-            },
-        },
-        {
+            // MARK: 🗂️ TSConfig
             ...tsconfig.configs.all,
-            name: "📦 TSConfig: All",
+            name: "🗂️ TSConfig: All",
         },
+        // MARK: 📝 Remark
         remark.configs.all,
         {
-            files: [...CODE_FILE_PATTERNS],
-            name: "📦 No Unsanitized: Recommended",
+            // MARK: 🧼 No Unsanitized
+            files: [...GLOBAL_FILE_PATTERNS],
+            name: "🧼 No Unsanitized: Recommended",
             ...noUnsanitized.configs["recommended"],
         },
         {
+            // MARK: ⏱️ File Progress
             ...progress.configs["recommended-ci"],
             name: "⏱️ File Progress: Recommended CI",
             rules: {
@@ -975,28 +976,33 @@ export const createConfig = (
                 },
             },
         },
+        // MARK: 🤖 Copilot
         copilot.configs.all,
+        // MARK: 🛡️ SDL
         sdl.configs.required,
         {
+            // MARK: 🦑 GitHub Actions
             ...githubActions.configs.all,
-            name: "📦 GitHub Actions: All",
+            name: "🦑 GitHub Actions: All",
             rules: {
                 ...githubActions.configs.all.rules,
                 "github-actions/no-top-level-permissions": "off", // Noisy and low value
             },
         },
         {
+            // MARK: 👮 Security
             ...security.configs.recommended,
-            name: "📦 Security: Recommended",
+            name: "👮 Security: Recommended",
             rules: {
                 ...security.configs.recommended.rules,
                 "security/detect-object-injection": "off",
             },
         },
         {
+            // MARK: 🌹 Perfectionist
             ...perfectionist.configs["recommended-natural"],
-            files: [...CODE_FILE_PATTERNS],
-            name: "📦 Perfectionist: Recommended Natural (code files only)",
+            files: [...GLOBAL_FILE_PATTERNS],
+            name: "🌹 Perfectionist: Recommended Natural",
             rules: {
                 ...perfectionist.configs["recommended-natural"].rules,
                 "perfectionist/sort-arrays": [
@@ -1021,14 +1027,16 @@ export const createConfig = (
             },
         },
         {
+            // MARK: 🐌 RegExp
             ...regexp.configs.all,
-            files: [...CODE_FILE_PATTERNS],
-            name: "📦 RegExp: All (code files only)",
+            files: [...GLOBAL_FILE_PATTERNS],
+            name: "🐌 RegExp: All",
         },
         {
+            // MARK: 🐮 Promise
             ...promise.configs["flat/recommended"],
-            files: [...CODE_FILE_PATTERNS],
-            name: "📦 Promise: Flat Recommended (code files only)",
+            files: [...GLOBAL_FILE_PATTERNS],
+            name: "🐮 Promise: Flat Recommended",
             rules: {
                 // Note: These rules are confirmed to work, upstream typing is wrong
                 // @ts-expect-error -- TypeScript ESLint flat config typing issue
@@ -1040,6 +1048,7 @@ export const createConfig = (
                 "promise/spec-only": "warn",
             },
         },
+        // MARK: 🍩 TypeScript ESLint Strict + Stylistic
         tseslint.configs.strictTypeChecked.map((config) =>
             scopeTypeScriptEslintConfigToCodeFiles(config)
         ),
@@ -1051,6 +1060,7 @@ export const createConfig = (
         // removes the upstream preset before the final namespace cleanup pass.
         // runtime-cleanup also ships projectService: true; this config owns TS
         // project resolution, so strip that one parser option before composing.
+        // MARK: 🍧 Runtime Cleanup
         ...(runtimeCleanupPlugin === null
             ? []
             : [
@@ -1058,12 +1068,16 @@ export const createConfig = (
                       runtimeCleanupPlugin.configs.all
                   ),
               ]),
+        // MARK: 🧪 Test Signal
         ...(testSignalPlugin === null ? [] : [testSignalPlugin.configs.all]),
+        // MARK: ⚡ Vite
         vite.configs.all,
+        // MARK: 🎨 Stylelint
         stylelint2.configs.all,
         {
+            // MARK: 🐲 Repo Compliance
             ...repo.configs.recommended,
-            name: "📦 Repo Compliance: Recommended",
+            name: "🐲 Repo Compliance: Recommended",
             plugins: {
                 ...repo.configs.recommended.plugins,
             },
@@ -1188,14 +1202,16 @@ export const createConfig = (
             },
         },
         {
+            // MARK: 🌲 Immutable
             ...immutable.configs.all,
             files: ["functional/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}"],
-            name: "🧩 Immutable: functional (not used in this repo)",
+            name: "🌲 Immutable: functional (not used in this repo)",
         },
         {
+            // MARK: 🍀 Write Good Comments
             ...writeGoodComments.configs.all,
-            files: ["src/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}"],
-            name: "📝 Write Good Comments: (not used in this repo)",
+            files: [...SOURCE_FILE_PATTERNS],
+            name: "🍀 Write Good Comments: (not used in this repo)",
             // Placeholder only: keep the plugin visible without enabling its
             // prose checks for this config package's source.
             rules: {
@@ -1208,19 +1224,22 @@ export const createConfig = (
             },
         },
         {
+            // MARK: 🛢️ No Barrel Files
             ...noBarrelFiles.flat,
-            files: [...CODE_FILE_PATTERNS],
-            name: "🛑 No Barrel Files (code files only)",
+            files: [...GLOBAL_FILE_PATTERNS],
+            name: "🛢️ No Barrel Files",
         },
         {
+            // MARK: 🐓 Nitpick
             ...nitpick.configs.recommended,
-            files: [...CODE_FILE_PATTERNS],
-            name: "📝 Nitpick: recommended (code files only)",
+            files: [...GLOBAL_FILE_PATTERNS],
+            name: "🐓 Nitpick: recommended",
         },
         {
+            // MARK: 💬 ESLint Comments
             ...comments.recommended,
-            files: [...CODE_FILE_PATTERNS],
-            name: "💬 ESLint comments: recommended (code files only)",
+            files: [...GLOBAL_FILE_PATTERNS],
+            name: "💬 ESLint comments: recommended",
             rules: {
                 ...comments.recommended.rules,
                 "@eslint-community/eslint-comments/no-restricted-disable":
@@ -1230,9 +1249,10 @@ export const createConfig = (
             },
         },
         {
+            // MARK: ➿ Array func
             ...arrayFunc.configs["all"],
-            files: [...CODE_FILE_PATTERNS],
-            name: "🧩 Array func: all (code files only)",
+            files: [...GLOBAL_FILE_PATTERNS],
+            name: "➿ Array func: all",
             rules: {
                 // Note: These rules are confirmed to work, upstream typing is wrong
                 // @ts-expect-error -- TypeScript ESLint flat config typing issue
@@ -1242,10 +1262,12 @@ export const createConfig = (
             },
         },
         {
-            files: [...CODE_FILE_PATTERNS],
-            name: "🧩 De Morgan: recommended (code files only)",
+            // MARK: 🫎 De Morgan
+            files: [...GLOBAL_FILE_PATTERNS],
+            name: "🫎 De Morgan: recommended",
             ...deMorgan.configs.recommended,
         },
+        // MARK: 🧑‍⚖️ Case Police
         ...casePolice.configs.recommended.map((config) =>
             config.name === "case-police/rules"
                 ? {
@@ -1261,8 +1283,6 @@ export const createConfig = (
         // #endregion 🧱 Base Flat Configs
         // #region 🐙 GitHub Plugin Notes
         // ═══════════════════════════════════════════════════════════════════════════════
-        // SECTION: 🐙 GitHub Plugin Notes
-        // ═══════════════════════════════════════════════════════════════════════════════
         // NOTE:
         // `eslint-plugin-github` rules are written for JS/TS and assume the ESLint
         // rule context supports scope analysis (e.g. `context.getScope`). When
@@ -1275,7 +1295,7 @@ export const createConfig = (
         // {
         //     ...github.getFlatConfigs().recommended,
         //     files: [...CODE_FILE_PATTERNS],
-        //     name: "GitHub: recommended (code files only)",
+        //     name: "GitHub: recommended",
         // },
         // {
         //     ...github.getFlatConfigs().react,
@@ -1295,13 +1315,11 @@ export const createConfig = (
         //     })
         // ),
         // #endregion 🐙 GitHub Plugin Notes
-        // #region 📃 TSDoc Rules
-        // ═══════════════════════════════════════════════════════════════════════════════
-        // SECTION: 📃 TSDoc Rules
+        // #region 🦬 TSDoc Rules
         // ═══════════════════════════════════════════════════════════════════════════════
         {
             files: ["**/*.{ts,mts,cts,tsx}"],
-            name: "⌨️ TSDoc: rules (TypeScript files)",
+            name: "🦬 TSDoc: syntax (TypeScript files)",
             plugins: {
                 tsdoc: tsdoc,
             },
@@ -1311,7 +1329,7 @@ export const createConfig = (
         },
         {
             files: ["src/**/*.{ts,mts,cts,tsx}"],
-            name: "⌨️ TSDoc: rules (TypeScript files)",
+            name: "⌨️ TSDoc Require 2: source docs",
             plugins: {
                 "tsdoc-require-2": tsdocRequire,
             },
@@ -1376,10 +1394,8 @@ export const createConfig = (
                 "tsdoc-require-2/restrict-tags": "off",
             },
         },
-        // #endregion 📃 TSDoc Rules
+        // #endregion 🦬 TSDoc Rules
         // #region 🎨 CSS Files
-        // ═══════════════════════════════════════════════════════════════════════════════
-        // SECTION: 🎨 CSS Files
         // ═══════════════════════════════════════════════════════════════════════════════
         {
             ...css.configs.recommended,
@@ -1425,26 +1441,20 @@ export const createConfig = (
                     {
                         // Allow dynamic classes with template literals (default: true)
                         allowDynamicClasses: true,
-
                         // Glob patterns for CSS files to scan
                         cssFiles: ["**/*.css"],
-
                         // Patterns to exclude from scanning
                         excludePatterns: [
                             "**/node_modules/**",
                             "**/dist/**",
                             "**/build/**",
                         ],
-
                         // Regex patterns for classes to ignore
                         ignoreClassPatterns: ["^custom-", "^legacy-"],
-
                         // Ignore Tailwind CSS classes (default: true)
                         ignoreTailwind: true,
-
                         // Only ignore Tailwind if config file exists (default: true)
                         requireTailwindConfig: true,
-
                         // Base directory for CSS file resolution
                         // baseDir: rootDirectory,
                     },
@@ -1452,38 +1462,46 @@ export const createConfig = (
             },
         },
         // #endregion 🎨 CSS Files
+        // #region 🕸️ React + Web Files
+        // ═══════════════════════════════════════════════════════════════════════════════
+        {
+            ...react.configs.all,
+            files: [
+                "**/{web,app,frontend,client,components,pages,routes,layouts,views,screens,features,ui,widgets,containers,hooks,context,contexts,providers}/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
+                // Common React entry/root files without applying React rules to all of src/
+                "**/src/*.{jsx,tsx}",
+                "**/src/{App,main,index,router,routes,Root,ErrorBoundary}.{js,jsx,ts,tsx}",
+                "**/docs/docusaurus/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
+                "**/assets/js/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
+            ],
+            ignores: [
+                "**/docs/docusaurus/.docusaurus/**",
+                "**/docs/docusaurus/build/**",
+                "**/docs/docusaurus/static/eslint-inspector/**",
+                "**/docs/docusaurus/static/stylelint-inspector/**",
+                "**/docs/docusaurus/static/remark-inspector/**",
+            ],
+            name: "🕸️ React + Web Files",
+            rules: {
+                ...react.configs.all.rules,
+                ...react.configs["strict-type-checked"].rules,
+                "@eslint-react/no-implicit-children": "warn",
+                "@eslint-react/no-implicit-key": "warn",
+                "@eslint-react/no-implicit-ref": "warn",
+            },
+        },
+        // #endregion 🕸️ React + Web Files
         // #region 🦖 Docusaurus Files
         // ═══════════════════════════════════════════════════════════════════════════════
-        // SECTION: 🦖 Docusaurus Files
-        // ═══════════════════════════════════════════════════════════════════════════════
-        {
-            ...react.configs["strict-type-checked"],
-            files: [
-                "docs/docusaurus/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
-                "**/assets/js/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
-                "**/web/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
-                "**/app/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
-                "**/components/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
-                "**/pages/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
-            ],
-            ignores: [
-                "docs/docusaurus/.docusaurus/**",
-                "docs/docusaurus/build/**",
-                "docs/docusaurus/static/eslint-inspector/**",
-                "docs/docusaurus/static/stylelint-inspector/**",
-                "docs/docusaurus/static/remark-inspector/**",
-            ],
-            name: "🦖 Docusaurus: React strict type checked",
-        },
         {
             ...docusaurus.configs.all,
-            files: ["docs/docusaurus/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}"],
+            files: ["**/docs/docusaurus/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}"],
             ignores: [
-                "docs/docusaurus/.docusaurus/**",
-                "docs/docusaurus/build/**",
-                "docs/docusaurus/static/eslint-inspector/**",
-                "docs/docusaurus/static/stylelint-inspector/**",
-                "docs/docusaurus/static/remark-inspector/**",
+                "**/docs/docusaurus/.docusaurus/**",
+                "**/docs/docusaurus/build/**",
+                "**/docs/docusaurus/static/eslint-inspector/**",
+                "**/docs/docusaurus/static/stylelint-inspector/**",
+                "**/docs/docusaurus/static/remark-inspector/**",
             ],
             languageOptions: {
                 globals: {
@@ -1517,22 +1535,18 @@ export const createConfig = (
         // #endregion 🦖 Docusaurus Files
         // #region 🚢 Dogfood Plugin Overrides
         // ═══════════════════════════════════════════════════════════════════════════════
-        // SECTION: 🚢 Dogfood Plugin Overrides
-        // ═══════════════════════════════════════════════════════════════════════════════
         // Pass `createConfig({ plugins: { typefest: localPlugin } })` from a
         // consuming eslint-plugin repo to lint against its local build/source plugin.
         // Pass `false`/`null` to disable that plugin's packaged rules entirely.
-        // ═══════════════════════════════════════════════════════════════════════════════
         // #endregion 🚢 Dogfood Plugin Overrides
         // #region ⌨️ Typefest Rules
-        // ═══════════════════════════════════════════════════════════════════════════════
-        // SECTION: ⌨️ Typefest Rules
         // ═══════════════════════════════════════════════════════════════════════════════
         ...(typefest === null
             ? []
             : [
                   {
                       ...typefest.configs.experimental,
+                      // We only target source files because they're unnecessary for tests/etc
                       files: [
                           "src/**/*.{ts,tsx,mts,cts}",
                           //    "test/**/*.{ts,tsx,mts,cts}"
@@ -1543,14 +1557,13 @@ export const createConfig = (
         // #endregion ⌨️ Typefest Rules
         // #region 🧰 Etc-Misc Rules
         // ═══════════════════════════════════════════════════════════════════════════════
-        // SECTION: 🧰 Etc-Misc Rules
-        // ═══════════════════════════════════════════════════════════════════════════════
         ...(etcMisc === null
             ? []
             : [
                   {
+                      // We only target source files because they're unnecessary for tests/etc
                       files: [
-                          "src/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
+                          ...SOURCE_FILE_PATTERNS,
                           //    "test/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}"
                       ],
                       name: "⌨️ Etc-Misc: Rules for Source",
@@ -1561,7 +1574,6 @@ export const createConfig = (
                       rules: {
                           // Enable rules as needed or the config:
                           // ...etcMisc.configs.recommended.rules
-
                          "etc-misc/class-match-filename": "off",
                           "etc-misc/comment-spacing": "off",
                           "etc-misc/consistent-empty-lines": "off",
@@ -1672,10 +1684,8 @@ export const createConfig = (
         // #endregion 🧰 Etc-Misc Rules
         // #region 🌍 Global Rules After Plugin Configs
         // ═══════════════════════════════════════════════════════════════════════════════
-        // SECTION: 🌍 Global Rules After Plugin Configs
-        // ═══════════════════════════════════════════════════════════════════════════════
         {
-            files: [...CODE_FILE_PATTERNS],
+            files: [...GLOBAL_FILE_PATTERNS],
             languageOptions: {
                 globals: {
                     ...globals.builtin,
@@ -1697,10 +1707,9 @@ export const createConfig = (
                     warnOnUnsupportedTypeScriptVersion: true,
                 },
             },
-            name: "🌍 Global Rules",
+            name: "🌍 Global: Rules",
             plugins: {
                 "@typescript-eslint": tseslint.plugin,
-                "module-interop": moduleInterop,
             },
             rules: {
                 "@typescript-eslint/class-methods-use-this": "warn",
@@ -1912,8 +1921,6 @@ export const createConfig = (
                 ],
                 "max-params": "off", // Use TypeScript version which can be configured to ignore `this` parameters and is more aware of function overloads.
                 "max-statements": "off",
-                "module-interop/no-import-cjs": "off",
-                "module-interop/no-require-esm": "warn",
                 "no-array-constructor": "off", // Use typescript version instead
                 "no-dupe-class-members": "off", // Use typescript version instead
                 "no-empty-character-class": "error",
@@ -1953,11 +1960,10 @@ export const createConfig = (
             },
         },
         // #endregion 🌍 Global Rules After Plugin Configs
-        // #region 🧪 Test Files
-        // ═══════════════════════════════════════════════════════════════════════════════
-        // SECTION: 🧪 Test Files
+        // #region 🧪 Test & Benchmark Files
         // ═══════════════════════════════════════════════════════════════════════════════
         {
+            // MARK: 🧪 Vitest
             ...vitest.configs.all,
             files: [
                 "test/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
@@ -1978,6 +1984,7 @@ export const createConfig = (
             },
         },
         {
+            // MARK: 👨‍🔬 Testing Library
             ...testingLibrary.configs["flat/dom"],
             files: [
                 "test/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
@@ -1986,7 +1993,7 @@ export const createConfig = (
                 "benchmarks/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
                 "benchmark/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
             ],
-            name: "🧪 Testing Library: DOM",
+            name: "👨‍🔬 Testing Library: DOM",
             rules: {
                 ...testingLibrary.configs["flat/dom"].rules,
                 "testing-library/await-async-queries": "error",
@@ -2016,6 +2023,7 @@ export const createConfig = (
             },
         },
         {
+            // MARK: 🧪 Tests: Tests, Benchmarks ⛔ Overrides
             files: [
                 "test/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
                 "tests/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
@@ -2044,7 +2052,7 @@ export const createConfig = (
                     warnOnUnsupportedTypeScriptVersion: true,
                 },
             },
-            name: "🧪 Tests: Tests, Benchmarks",
+            name: "🧪 Tests: Tests, Benchmarks ⛔ Overrides",
             rules: {
                 "@typescript-eslint/array-type": "off",
                 "@typescript-eslint/no-empty-function": "off", // Empty mocks/stubs are common
@@ -2130,8 +2138,6 @@ export const createConfig = (
         },
         // #endregion 🧪 Test Files
         // #region 📦 Package Metadata
-        // ═══════════════════════════════════════════════════════════════════════════════
-        // SECTION: 📦 Package Metadata
         // ═══════════════════════════════════════════════════════════════════════════════
         {
             files: ["**/package.json"],
@@ -2385,9 +2391,7 @@ export const createConfig = (
             },
         },
         // #endregion 📦 Package Metadata
-        // #region 📝 Markdown Files
-        // ═══════════════════════════════════════════════════════════════════════════════
-        // SECTION: 📝 Markdown Files
+        // #region 📁 Markdown Files
         // ═══════════════════════════════════════════════════════════════════════════════
         {
             files: ["**/*.{md,markup,atom,rss,markdown}"],
@@ -2397,7 +2401,7 @@ export const createConfig = (
                 "**/.github/agents/**",
             ],
             language: "markdown/gfm",
-            name: "📝 Markdown: **/*.{MD,MARKUP,ATOM,RSS,MARKDOWN} (with Remark)",
+            name: "📁 Markdown: **/*.{MD,MARKUP,ATOM,RSS,MARKDOWN}",
             plugins: {
                 markdown: markdown,
             },
@@ -2425,10 +2429,8 @@ export const createConfig = (
                 "markdown/table-column-count": "warn",
             },
         },
-        // #endregion 📝 Markdown Files
-        // #region 🧾 YAML Files
-        // ═══════════════════════════════════════════════════════════════════════════════
-        // SECTION: 🧾 YAML Files
+        // #endregion 📁 Markdown Files
+        // #region 🏝️ YAML Files
         // ═══════════════════════════════════════════════════════════════════════════════
         {
             files: ["**/*.{yaml,yml}"],
@@ -2440,7 +2442,7 @@ export const createConfig = (
                     defaultYAMLVersion: "1.2",
                 },
             },
-            name: "🧾 YAML/YML: **/*.{YAML,YML}",
+            name: "🏝️ YAML/YML: **/*.{YAML,YML}",
             plugins: {
                 ...jsonSchemaValidatorPlugins,
                 yml: yml,
@@ -2479,10 +2481,8 @@ export const createConfig = (
                 "yml/vue-custom-block/no-parsing-error": "warn",
             },
         },
-        // #endregion 🧾 YAML Files
+        // #endregion 🏝️ YAML Files
         // #region 🌐 HTML Files
-        // ═══════════════════════════════════════════════════════════════════════════════
-        // SECTION: 🌐 HTML Files
         // ═══════════════════════════════════════════════════════════════════════════════
         {
             ...html.configs["flat/all"],
@@ -2500,9 +2500,7 @@ export const createConfig = (
             },
         },
         // #endregion 🌐 HTML Files
-        // #region 🧾 JSONC Files
-        // ═══════════════════════════════════════════════════════════════════════════════
-        // SECTION: 🧾 JSONC Files
+        // #region 🐭 JSONC Files
         // ═══════════════════════════════════════════════════════════════════════════════
         {
             files: ["**/*.jsonc"],
@@ -2510,15 +2508,15 @@ export const createConfig = (
                 parser: jsoncEslintParser,
                 parserOptions: { jsonSyntax: "JSONC" },
             },
-            name: "🧾 JSONC: **/*.JSONC",
+            name: "🐭 JSONC: **/*.JSONC",
             plugins: {
                 json: json,
                 jsonc: jsonc,
                 ...jsonSchemaValidatorPlugins,
             },
             rules: {
-                "jsonc/array-bracket-newline": "warn",
-                "jsonc/array-bracket-spacing": "warn",
+                "jsonc/array-bracket-newline": "off", // Handled by Prettier
+                "jsonc/array-bracket-spacing": "off", // Handled by Prettier
                 "jsonc/array-element-newline": "off", // Handled by Prettier
                 // Crashes when combined with @eslint/json language handling in
                 // fixture/downstream flat-config runs.
@@ -2602,10 +2600,8 @@ export const createConfig = (
                 "jsonc/vue-custom-block/no-parsing-error": "warn",
             },
         },
-        // #endregion 🧾 JSONC Files
-        // #region 🧾 JSON Files
-        // ═══════════════════════════════════════════════════════════════════════════════
-        // SECTION: 🧾 JSON Files
+        // #endregion 🐭 JSONC Files
+        // #region 🐀 JSON Files
         // ═══════════════════════════════════════════════════════════════════════════════
         {
             files: ["**/*.json"],
@@ -2613,7 +2609,7 @@ export const createConfig = (
             // (needed for some package.json-specific tooling rules).
             ignores: ["**/package.json"],
             language: "json/json",
-            name: "🧾 JSON: **/*.JSON",
+            name: "🐀 JSON: **/*.JSON",
             plugins: {
                 json: json,
                 ...jsonSchemaValidatorPlugins,
@@ -2625,15 +2621,13 @@ export const createConfig = (
                 "json/top-level-interop": "warn",
             },
         },
-        // #endregion 🧾 JSON Files
-        // #region 🧾 JSON5 Files
-        // ═══════════════════════════════════════════════════════════════════════════════
-        // SECTION: 🧾 JSON5 Files
+        // #endregion 🐀 JSON Files
+        // #region 🐁 JSON5 Files
         // ═══════════════════════════════════════════════════════════════════════════════
         {
             files: ["**/*.json5"],
             language: "json/json5",
-            name: "🧾 JSON5: **/*.JSON5",
+            name: "🐁 JSON5: **/*.JSON5",
             plugins: {
                 json: json,
                 jsonc: jsonc,
@@ -2641,8 +2635,8 @@ export const createConfig = (
             },
             rules: {
                 ...jsonSchemaValidatorRules,
-                "jsonc/array-bracket-newline": "warn",
-                "jsonc/array-bracket-spacing": "warn",
+                "jsonc/array-bracket-newline": "off", // Handled by Prettier
+                "jsonc/array-bracket-spacing": "off", // Handled by Prettier
                 "jsonc/array-element-newline": "off", // Handled by Prettier
                 // Crashes when combined with @eslint/json language handling in
                 // fixture/downstream flat-config runs.
@@ -2726,10 +2720,8 @@ export const createConfig = (
                 "jsonc/vue-custom-block/no-parsing-error": "warn",
             },
         },
-        // #endregion 🧾 JSON5 Files
-        // #region 🧾 TOML Files
-        // ═══════════════════════════════════════════════════════════════════════════════
-        // SECTION: 🧾 TOML Files
+        // #endregion 🐁 JSON5 Files
+        // #region 🐦‍🔥 TOML Files
         // ═══════════════════════════════════════════════════════════════════════════════
         {
             files: ["**/*.toml"],
@@ -2739,7 +2731,7 @@ export const createConfig = (
                 parser: tomlEslintParser,
                 parserOptions: { tomlVersion: "1.0.0" },
             },
-            name: "🧾 TOML: **/*.TOML",
+            name: "🐦‍🔥 TOML: **/*.TOML",
             plugins: { toml: toml },
             rules: {
                 // TOML Eslint Plugin Rules (toml/*)
@@ -2768,10 +2760,8 @@ export const createConfig = (
                 "toml/vue-custom-block/no-parsing-error": "warn",
             },
         },
-        // #endregion 🧾 TOML Files
+        // #endregion 🐦‍🔥 TOML Files
         // #region 📚 JSDoc Rules
-        // ═══════════════════════════════════════════════════════════════════════════════
-        // SECTION: 📚 JSDoc Rules
         // ═══════════════════════════════════════════════════════════════════════════════
         {
             ...jsdoc.configs["flat/recommended"],
@@ -2786,7 +2776,6 @@ export const createConfig = (
             name: "📚 JSDoc: recommended - src/**/*.{js,cjs,mjs,jsx}",
             rules: {
                 ...jsdoc.configs["flat/recommended"].rules,
-
                 "jsdoc/check-syntax": "warn",
                 "jsdoc/check-template-names": "warn",
                 "jsdoc/convert-to-jsdoc-comments": "warn",
@@ -2829,81 +2818,11 @@ export const createConfig = (
             },
         },
         // #endregion 📚 JSDoc Rules
-        // #region 🧾 JavaScript Config Files
-        // ═══════════════════════════════════════════════════════════════════════════════
-        // SECTION: 🧾 JavaScript Config Files
-        // ═══════════════════════════════════════════════════════════════════════════════
-        {
-            files: [
-                "**/*.config.{js,mjs,cjs}",
-                "**/*.config.*.{js,mjs,cjs}",
-                "**/.*rc.{js,mjs,cjs}",
-                "**/preset.mjs",
-            ],
-            languageOptions: {
-                globals: {
-                    ...globals.builtin,
-                    ...globals.nodeBuiltin,
-                    ...globals.commonjs,
-                },
-            },
-            name: "🧾 JS/MJS Config Files",
-            rules: {
-                "max-classes-per-file": "off",
-                "no-console": "off",
-                "no-undef-init": "off",
-                "perfectionist/sort-arrays": "off", // Configs often have intentionally unsorted arrays
-                "unicorn/consistent-function-scoping": "off", // Configs often use different scoping
-                "unicorn/filename-case": "off", // Allow config files to have any case
-                "unicorn/no-await-expression-member": "off", // Allow await in config expressions
-                "unicorn/no-unused-properties": "off", // Allow unused properties in config setups
-            },
-            settings: {
-                "import-x/resolver": {
-                    node: true,
-                },
-                n: {
-                    allowModules: [
-                        "electron",
-                        "node",
-                        "electron-devtools-installer",
-                    ],
-                },
-            },
-        },
-        // #endregion 🧾 JavaScript Config Files
-        // #region 🤖 GitHub Workflow Files
-        // ═══════════════════════════════════════════════════════════════════════════════
-        // SECTION: 🤖 GitHub Workflow Files
-        // ═══════════════════════════════════════════════════════════════════════════════
-        {
-            files: [
-                "**/.github/workflows/**/*.{yaml,yml}",
-                "config/tools/flatpak-build.yml",
-                "**/dependabot.yml",
-                "**/.spellcheck.yml",
-                "**/.pre-commit-config.yaml",
-                "**/.github/workflow-templates/**/*.{yaml,yml}",
-                "**/.github/actions/**/*.{yaml,yml}",
-            ],
-            name: "🧾 YAML/YML GitHub Workflows - ⛔ Overrides",
-            rules: {
-                "yml/block-mapping-colon-indicator-newline": "off",
-                "yml/no-empty-key": "off",
-                "yml/no-empty-mapping-value": "off",
-                "yml/sort-keys": "off",
-            },
-        },
-        // #endregion 🤖 GitHub Workflow Files
         // #region 🎭 Framework Configurations
-        // ═══════════════════════════════════════════════════════════════════════════════
-        // SECTION: 🎭 Framework Configurations
         // ═══════════════════════════════════════════════════════════════════════════════
         // These configurations are scoped to specific frameworks and file types.
         // Projects that don't use these frameworks won't be affected.
         // #region 🎭 Playwright Files
-        // ═══════════════════════════════════════════════════════════════════════════════
-        // SECTION: 🎭 Playwright Files
         // ═══════════════════════════════════════════════════════════════════════════════
         {
             ...playwright.configs["flat/recommended"],
@@ -2936,6 +2855,7 @@ export const createConfig = (
             },
             name: "🎭 Playwright E2E Tests: playwright/**, test/e2e/**, **/*.e2e.*",
             rules: {
+                ...playwright.configs["flat/recommended"].rules,
                 "playwright/max-expects": "warn",
                 "playwright/no-commented-out-tests": "warn",
                 "playwright/no-get-by-title": "warn",
@@ -2964,13 +2884,11 @@ export const createConfig = (
         // #endregion 🎭 Playwright Files
         // #region 📖 Storybook Files
         // ═══════════════════════════════════════════════════════════════════════════════
-        // SECTION: 📖 Storybook Files
-        // ═══════════════════════════════════════════════════════════════════════════════
         {
-            ...arrayFirst(storybook.configs["flat/recommended"]),
+            ...storybookRecommendedSetupConfig,
             files: [
                 "**/*.stories.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
-                ".storybook/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
+                "**/.storybook/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
             ],
             languageOptions: {
                 globals: {
@@ -2992,9 +2910,9 @@ export const createConfig = (
                     warnOnUnsupportedTypeScriptVersion: true,
                 },
             },
-            name: "📖 Storybook Stories: **/*.stories.{js,jsx,mjs,cjs,ts,tsx,cts,mts}, .storybook/**",
+            name: "📖 Storybook Stories: **/*.stories.{js,jsx,mjs,cjs,ts,tsx,cts,mts}, **/.storybook/**",
             rules: {
-                ...storybook.configs["flat/recommended"][1]?.rules,
+                ...storybookRecommendedStoriesRules,
                 "storybook/csf-component": "warn",
                 "storybook/meta-inline-properties": "warn",
                 "storybook/meta-satisfies-type": "warn",
@@ -3006,9 +2924,6 @@ export const createConfig = (
         // #endregion 📖 Storybook Files
         // #region 🖖 Vue Files
         // ═══════════════════════════════════════════════════════════════════════════════
-        // SECTION: 🖖 Vue Files
-        // ═══════════════════════════════════════════════════════════════════════════════
-
         {
             ...vue.configs["flat/base"][1],
             files: [
@@ -3143,8 +3058,6 @@ export const createConfig = (
         // #endregion 🖖 Vue Files
         // #region 🚀 Astro Files
         // ═══════════════════════════════════════════════════════════════════════════════
-        // SECTION: 🚀 Astro Files
-        // ═══════════════════════════════════════════════════════════════════════════════
         {
             ...arrayFirst(astro.configs.base),
             ...astro.configs.base[1],
@@ -3213,8 +3126,6 @@ export const createConfig = (
         // #endregion 🚀 Astro Files
         // #region ⚛️ Next.js Files
         // ═══════════════════════════════════════════════════════════════════════════════
-        // SECTION: ⚛️ Next.js Files
-        // ═══════════════════════════════════════════════════════════════════════════════
         {
             ...next.configs.recommended,
             files: [
@@ -3242,7 +3153,7 @@ export const createConfig = (
             // but don't force them to fix Next.js-specific issues if they're not using Next.js or don't care about
             // those rules
             rules: {
-                ...next.configs.recommended.rules,
+                // ...next.configs.recommended.rules,
                 "@next/next/google-font-display": "off",
                 "@next/next/google-font-preconnect": "off",
                 "@next/next/inline-script-id": "off",
@@ -3269,29 +3180,84 @@ export const createConfig = (
         },
         // #endregion ⚛️ Next.js Files
         // #endregion 🎭 Framework Configurations
-        // #region ⛔ Targeted Overrides
-        // ═══════════════════════════════════════════════════════════════════════════════
-        // SECTION: ⛔ Targeted Overrides
+        // #region 🐆 JS Config Files ⛔ Overrides
         // ═══════════════════════════════════════════════════════════════════════════════
         {
-            files: ["**/.vscode/**"],
-            name: "🛠️ VS Code Files: ⛔ Overrides",
+            files: [
+                "**/*.config.{js,mjs,cjs}",
+                "**/*.config.*.{js,mjs,cjs}",
+                "**/.*rc.{js,mjs,cjs}",
+                "**/preset.mjs",
+            ],
+            languageOptions: {
+                globals: {
+                    ...globals.builtin,
+                    ...globals.nodeBuiltin,
+                    ...globals.commonjs,
+                },
+            },
+            name: "🐆 JS/MJS Config Files",
             rules: {
-                "jsonc/array-bracket-newline": "off",
+                "max-classes-per-file": "off",
+                "no-console": "off",
+                "no-undef-init": "off",
+                "perfectionist/sort-arrays": "off", // Configs often have intentionally unsorted arrays
+                "unicorn/consistent-function-scoping": "off", // Configs often use different scoping
+                "unicorn/filename-case": "off", // Allow config files to have any case
+                "unicorn/no-await-expression-member": "off", // Allow await in config expressions
+                "unicorn/no-unused-properties": "off", // Allow unused properties in config setups
+            },
+            settings: {
+                "import-x/resolver": {
+                    node: true,
+                },
+                n: {
+                    allowModules: [
+                        "electron",
+                        "node",
+                        "electron-devtools-installer",
+                    ],
+                },
             },
         },
-        // #endregion ⛔ Targeted Overrides
-        // #region 📐 Stylistic Overrides
-        // ═══════════════════════════════════════════════════════════════════════════════
-        // SECTION: 📐 Stylistic Overrides
+        // #endregion 🐆 JS Config Files ⛔ Overrides
+        // #region 🤖 GitHub Workflow Files ⛔ Overrides
         // ═══════════════════════════════════════════════════════════════════════════════
         {
-            files: ["**/**"],
-            name: "📐 Global: Stylistic - ⛔ Overrides",
-            plugins: {
-                "@stylistic": stylistic,
-            },
+            files: [
+                "**/.github/workflows/**/*.{yaml,yml}",
+                "config/tools/flatpak-build.yml",
+                "**/dependabot.yml",
+                "**/.spellcheck.yml",
+                "**/.pre-commit-config.yaml",
+                "**/.github/workflow-templates/**/*.{yaml,yml}",
+                "**/.github/actions/**/*.{yaml,yml}",
+            ],
+            name: "🏝️ YAML/YML GitHub Workflows - ⛔ Overrides",
             rules: {
+                "yml/block-mapping-colon-indicator-newline": "off",
+                "yml/no-empty-key": "off",
+                "yml/no-empty-mapping-value": "off",
+                "yml/sort-keys": "off",
+            },
+        },
+        // #endregion 🤖 GitHub Workflow Files ⛔ Overrides
+        // #region 🎯 Targeted ⛔️ Overrides
+        // ═══════════════════════════════════════════════════════════════════════════════
+        // {
+        //     files: ["**/EXAMPLE-OVERRIDE-FILE/**"],
+        //     name: "🎯 Targeted: ⛔ Overrides 1",
+        //     rules: {
+        //     },
+        // },
+        // #endregion 🎯 Targeted ⛔️ Overrides
+        // #region 🎨 Stylistic ⛔️ Overrides
+        // ═══════════════════════════════════════════════════════════════════════════════
+        {
+            ...stylistic.configs.all,
+            name: "🎨 Global: Stylistic ⛔ Overrides",
+            rules: {
+                ...stylistic.configs["disable-legacy"].rules,
                 "@stylistic/curly-newline": "off",
                 "@stylistic/exp-jsx-props-style": "off",
                 "@stylistic/exp-list-style": "off",
@@ -3312,13 +3278,11 @@ export const createConfig = (
                 ],
             },
         },
-        // #endregion 📐 Stylistic Overrides
-        // #region 🛠️ Global Overrides
-        // ═══════════════════════════════════════════════════════════════════════════════
-        // SECTION: 🛠️ Global Overrides
+        // #endregion 🎨 Stylistic ⛔️ Overrides
+        // #region 🌍 Global ⛔️ Overrides
         // ═══════════════════════════════════════════════════════════════════════════════
         {
-            files: [...CODE_FILE_PATTERNS],
+            files: [...GLOBAL_FILE_PATTERNS],
             name: "🌐 Global: ⛔ Overrides",
             rules: {
                 "remark/require-remark-config-file-naming-convention": "off",
@@ -3340,19 +3304,16 @@ export const createConfig = (
                 "import-x/unambiguous": "off",
             },
         },
-        // #endregion 🛠️ Global Overrides
-        // #region 🧹 Prettier Disables
-        // ═══════════════════════════════════════════════════════════════════════════════
-        // SECTION: 🧹 Prettier Disables
+        // #endregion 🌍 Global ⛔️ Overrides
+        // #region 🧹 Prettier ⛔ Overrides
         // ═══════════════════════════════════════════════════════════════════════════════
         {
             name: "🌍 Global: 🎨 Prettier ⛔ Overrides",
             // This turns off rules globally that conflict and/or are handled by Prettier
             ...prettierOverrides,
         },
-        // #endregion 🧹 Prettier Disables
+        // #endregion 🧹 Prettier ⛔ Overrides
     ];
-
     return removeDisabledPluginRules(
         // eslint-disable-next-line typefest/prefer-ts-extras-safe-cast-to -- We know we're casting to readonly EslintConfigInput[]
         flattenConfigs(configs as readonly EslintConfigInput[]),
@@ -3363,9 +3324,6 @@ export const createConfig = (
 // #endregion 🛠️ Config
 // #region 🆘 Helper Functions
 // ═══════════════════════════════════════════════════════════════════════════════
-// SECTION: 🆘 Helper Functions
-// ═══════════════════════════════════════════════════════════════════════════════
-
 /* eslint-disable @typescript-eslint/no-unsafe-type-assertion, @typescript-eslint/prefer-readonly-parameter-types -- ESLint exposes mutable, loosely typed flat-config shapes at this composition boundary. Keep the unavoidable assertions local to these private helpers. */
 type MutableEslintConfig = Except<EslintConfig, "plugins" | "rules"> & {
     plugins?: UnknownRecord;
@@ -3374,16 +3332,13 @@ type MutableEslintConfig = Except<EslintConfig, "plugins" | "rules"> & {
 
 function flattenConfigs(configs: readonly EslintConfigInput[]): EslintConfig[] {
     // eslint-disable-next-line unicorn/no-array-reduce -- Clarity is more important than reduce's functional style here, and the array is expected to be small.
-    return configs.reduce<EslintConfig[]>((flattenedConfigs, config) => {
-        if (Array.isArray(config)) {
-            flattenedConfigs.push(
-                ...flattenConfigs(safeCastTo<readonly EslintConfig[]>(config))
-            );
+    return configs.reduce<EslintConfig[]>((result, entry) => {
+        if (Array.isArray(entry)) {
+            result.push(...flattenConfigs(entry));
         } else {
-            flattenedConfigs.push(config as EslintConfig);
+            result.push(entry as EslintConfig);
         }
-
-        return flattenedConfigs;
+        return result;
     }, []);
 }
 
@@ -3391,8 +3346,28 @@ function getRulePluginName(ruleName: string): string {
     if (ruleName.startsWith("@")) {
         return arrayJoin(stringSplit(ruleName, "/").slice(0, 2), "/");
     }
-
     return arrayFirst(stringSplit(ruleName, "/")) ?? ruleName;
+}
+
+function hasPluginRule(
+    pluginCandidate: unknown,
+    ruleName: string
+): pluginCandidate is ConfigurablePlugin {
+    if (
+        typeof pluginCandidate !== "object" ||
+        !isPresent(pluginCandidate) ||
+        Array.isArray(pluginCandidate) ||
+        !objectHasOwn(pluginCandidate, "rules")
+    ) {
+        return false;
+    }
+    const { rules } = pluginCandidate;
+    return (
+        typeof rules === "object" &&
+        isPresent(rules) &&
+        !Array.isArray(rules) &&
+        objectHasOwn(rules, ruleName)
+    );
 }
 
 function removeDisabledPluginRules(
@@ -3402,10 +3377,8 @@ function removeDisabledPluginRules(
     if (disabledPluginNames.size === 0) {
         return [...configs];
     }
-
     return configs.map((config): EslintConfig => {
         const nextConfig: MutableEslintConfig = { ...config };
-
         if (isDefined(nextConfig.plugins)) {
             nextConfig.plugins = objectFromEntries(
                 objectEntries(nextConfig.plugins).filter(
@@ -3413,7 +3386,6 @@ function removeDisabledPluginRules(
                 )
             );
         }
-
         if (isDefined(nextConfig.rules)) {
             nextConfig.rules = objectFromEntries(
                 objectEntries(nextConfig.rules).filter(
@@ -3425,7 +3397,6 @@ function removeDisabledPluginRules(
                 )
             );
         }
-
         return nextConfig as EslintConfig;
     });
 }
@@ -3436,11 +3407,9 @@ function resolvePlugin(
     fallbackPlugin: ConfigurablePlugin
 ): ConfigurablePlugin | null {
     const configuredPlugin = pluginOverrideEntries.get(pluginName);
-
     if (configuredPlugin === false || configuredPlugin === null) {
         return null;
     }
-
     return configuredPlugin ?? fallbackPlugin;
 }
 
@@ -3454,14 +3423,13 @@ function resolveTypedPlugin<TPlugin extends ConfigurablePlugin>(
         pluginName,
         fallbackPlugin
     );
-
     return resolvedPlugin === null ? null : (resolvedPlugin as TPlugin);
 }
 
 function scopeConfigToCodeFiles(config: EslintConfig): EslintConfig {
     return {
         ...config,
-        files: config.files ?? [...CODE_FILE_PATTERNS],
+        files: config.files ?? [...GLOBAL_FILE_PATTERNS],
     };
 }
 
@@ -3472,11 +3440,9 @@ function scopeTypeScriptEslintConfigToCodeFiles(
     const hasTypeScriptEslintRules = objectKeys(scopedConfig.rules ?? {}).some(
         (ruleName) => ruleName.startsWith("@typescript-eslint/")
     );
-
     if (!hasTypeScriptEslintRules) {
         return scopedConfig;
     }
-
     return {
         ...scopedConfig,
         plugins: {
@@ -3489,7 +3455,6 @@ function scopeTypeScriptEslintConfigToCodeFiles(
 function withoutProjectServiceParserOption(config: EslintConfig): EslintConfig {
     const languageOptions = config.languageOptions;
     const parserOptions = languageOptions?.["parserOptions"];
-
     if (
         !isPresent(parserOptions) ||
         typeof parserOptions !== "object" ||
@@ -3498,10 +3463,8 @@ function withoutProjectServiceParserOption(config: EslintConfig): EslintConfig {
     ) {
         return config;
     }
-
     const nextParserOptions: UnknownRecord = { ...parserOptions };
     Reflect.deleteProperty(nextParserOptions, "projectService");
-
     return {
         ...config,
         languageOptions: {
@@ -3512,35 +3475,37 @@ function withoutProjectServiceParserOption(config: EslintConfig): EslintConfig {
 }
 /* eslint-enable @typescript-eslint/no-unsafe-type-assertion, @typescript-eslint/prefer-readonly-parameter-types -- Re-enable after private config helper boundary. */
 // #endregion 🆘 Helper Functions
-
 // #region 📦 Preset Construction
 // ═══════════════════════════════════════════════════════════════════════════════
-// SECTION: 📦 Preset Construction
-// ═══════════════════════════════════════════════════════════════════════════════
-
-const allConfig: EslintConfig[] = createConfig();
-
-const withoutSdl2BaseConfig: EslintConfig[] = createConfig({
+const allConfigs: EslintConfig[] = createConfig();
+const withoutSdl2BaseConfigs: EslintConfig[] = createConfig({
     plugins: {
         sdl: false,
         "sdl-2": false,
     },
 });
-
-const withoutSdl2HasNodePlugin = withoutSdl2BaseConfig.some(
+const withoutSdl2HasNodePlugin = withoutSdl2BaseConfigs.some(
     (config) => isDefined(config.plugins) && keyIn(config.plugins, "n")
 );
+const withoutGitHubActions2Configs: EslintConfig[] = createConfig({
+    plugins: {
+        "github-actions": false,
+        "github-actions-2": false,
+    },
+});
 
 /** Shared preset arrays for plugin-style flat config consumption. */
 const sharedConfigs: Nick2Bad4UEslintConfigPresets = {
-    all: allConfig,
+    all: allConfigs,
     base: createConfig({
         plugins: {
             "etc-misc": false,
             typefest: false,
         },
     }),
-    recommended: allConfig,
+    // Keep recommended as a direct alias of all until this package has a
+    // smaller opinionated preset surface worth exposing separately.
+    recommended: allConfigs,
     // Some packages register shorter runtime namespaces than their package
     // names. Disable both the real namespace and the package-family alias so
     // consumers can choose the obvious withoutX preset name.
@@ -3565,12 +3530,8 @@ const sharedConfigs: Nick2Bad4UEslintConfigPresets = {
             "file-progress-2": false,
         },
     }),
-    withoutGithubActions2: createConfig({
-        plugins: {
-            "github-actions": false,
-            "github-actions-2": false,
-        },
-    }),
+    withoutGitHubActions2: withoutGitHubActions2Configs,
+    withoutGithubActions2: withoutGitHubActions2Configs,
     withoutImmutable2: createConfig({
         plugins: {
             immutable: false,
@@ -3594,7 +3555,7 @@ const sharedConfigs: Nick2Bad4UEslintConfigPresets = {
         },
     }),
     withoutSdl2: withoutSdl2HasNodePlugin
-        ? withoutSdl2BaseConfig
+        ? withoutSdl2BaseConfigs
         : [
               {
                   name: "Node plugin registration (withoutSdl2 only)",
@@ -3602,7 +3563,7 @@ const sharedConfigs: Nick2Bad4UEslintConfigPresets = {
                       n: nodePlugin,
                   },
               },
-              ...withoutSdl2BaseConfig,
+              ...withoutSdl2BaseConfigs,
           ],
     withoutStylelint2: createConfig({
         plugins: {
@@ -3647,10 +3608,7 @@ const sharedConfigs: Nick2Bad4UEslintConfigPresets = {
     }),
 };
 // #endregion 📦 Preset Construction
-
 // #region 📤 Public Exports
-// ═══════════════════════════════════════════════════════════════════════════════
-// SECTION: 📤 Public Exports
 // ═══════════════════════════════════════════════════════════════════════════════
 /**
  * Public named export for consumers that import this package as an ESLint

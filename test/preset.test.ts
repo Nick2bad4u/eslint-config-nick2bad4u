@@ -172,7 +172,8 @@ const presetByName: Readonly<Record<string, readonly Linter.Config[]>> = {
     withoutDocusaurus2: presets.withoutDocusaurus2,
     withoutEtcMisc: presets.withoutEtcMisc,
     withoutFileProgress2: presets.withoutFileProgress2,
-    withoutGithubActions2: presets.withoutGithubActions2,
+    withoutGitHubActions2: presets.withoutGitHubActions2,
+    withoutGithubActions2: presets.withoutGitHubActions2,
     withoutImmutable2: presets.withoutImmutable2,
     withoutRemark: presets.withoutRemark,
     withoutRepo: presets.withoutRepo,
@@ -201,13 +202,16 @@ const presetEntriesByName: Readonly<Record<string, readonly Linter.Config[]>> =
 
 describe("eslint-config-nick2bad4u presets", () => {
     it("exposes plugin-style flat config presets", () => {
-        expect.assertions(4);
+        expect.assertions(5);
 
         const allPreset = presets.all as readonly Linter.Config[];
 
         expect(nickTwoBadFourU.configs).toBe(presets);
         expect(allPreset.length).toBeGreaterThan(0);
         expect(presets.recommended).toBe(presets.all);
+        expect(Reflect.get(presets, "withoutGithubActions2")).toBe(
+            presets.withoutGitHubActions2
+        );
         expect(allPreset).toStrictEqual(
             expect.arrayContaining([expect.any(Object)])
         );
@@ -225,6 +229,7 @@ describe("eslint-config-nick2bad4u presets", () => {
         ["withoutDocusaurus2", ["docusaurus-2"]],
         ["withoutEtcMisc", ["etc-misc"]],
         ["withoutFileProgress2", ["file-progress", "file-progress-2"]],
+        ["withoutGitHubActions2", ["github-actions", "github-actions-2"]],
         ["withoutGithubActions2", ["github-actions", "github-actions-2"]],
         ["withoutImmutable2", ["immutable", "immutable-2"]],
         ["withoutRemark", ["remark"]],
@@ -286,6 +291,29 @@ describe("eslint-config-nick2bad4u presets", () => {
         expect(
             getRuleNamesForPlugin(allPreset, "typefest").length
         ).toBeGreaterThan(0);
+    });
+
+    it("keeps the Node plugin available when withoutSdl2 removes SDL namespaces", () => {
+        expect.assertions(3);
+
+        const registeredPluginNames = getRegisteredPluginNames(
+            presets.withoutSdl2
+        );
+        const sdlPluginNames = ["sdl", "sdl-2"];
+
+        expect([...registeredPluginNames]).toContain("n");
+        expect(
+            [...registeredPluginNames].filter((pluginName) =>
+                sdlPluginNames.includes(pluginName)
+            )
+        ).toStrictEqual([]);
+        expect(
+            [...getRuleNames(presets.withoutSdl2)].filter((ruleName) =>
+                sdlPluginNames.some((pluginName) =>
+                    ruleName.startsWith(`${pluginName}/`)
+                )
+            )
+        ).toStrictEqual([]);
     });
 
     it.each(Object.entries(presetEntriesByName))(

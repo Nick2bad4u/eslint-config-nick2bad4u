@@ -1,6 +1,6 @@
-import type { Linter } from "eslint";
+import type { ESLint, Linter } from "eslint";
 
-/** Options for creating the shared Nick2bad4u ESLint flat config. */
+/** Options for creating the shared Nick2Bad4U ESLint flat config. */
 export interface Nick2Bad4UEslintConfigOptions {
     /**
      * Replace or disable plugins by ESLint namespace.
@@ -9,7 +9,7 @@ export interface Nick2Bad4UEslintConfigOptions {
      * plugin section. Pass `false` or `null` to remove that plugin's registered
      * rules from the shared config by namespace.
      */
-    readonly plugins?: Readonly<Record<string, unknown>>;
+    readonly plugins?: Nick2Bad4UEslintConfigPluginOverrides;
 
     /**
      * Project root used for TypeScript parser `tsconfigRootDir` and local alias
@@ -26,6 +26,23 @@ export interface Nick2Bad4UEslintConfigOptions {
      */
     readonly tsconfigPaths?: readonly string[];
 }
+
+/** Public plugin override values accepted by `createConfig`. */
+export type Nick2Bad4UEslintConfigPluginOverride =
+    | ESLint.Plugin
+    | false
+    | null
+    | undefined
+    | {
+          readonly configs?: object;
+          readonly flat?: object;
+          readonly rules?: Readonly<Record<string, unknown>>;
+      };
+
+/** Plugin overrides keyed by ESLint namespace. */
+export type Nick2Bad4UEslintConfigPluginOverrides = Readonly<
+    Record<string, Nick2Bad4UEslintConfigPluginOverride>
+>;
 
 /** Named flat config presets exposed by this package. */
 export interface Nick2Bad4UEslintConfigPresets {
@@ -54,6 +71,13 @@ export interface Nick2Bad4UEslintConfigPresets {
     readonly withoutFileProgress2: Linter.Config[];
 
     /** Full shared config without GitHub Actions 2 rules. */
+    readonly withoutGitHubActions2: Linter.Config[];
+
+    /**
+     * Full shared config without GitHub Actions 2 rules.
+     *
+     * @deprecated Use `withoutGitHubActions2`.
+     */
     readonly withoutGithubActions2: Linter.Config[];
 
     /** Full shared config without Immutable 2 rules. */
@@ -96,7 +120,7 @@ export interface Nick2Bad4UEslintConfigPresets {
     readonly withoutWriteGoodComments2: Linter.Config[];
 }
 
-/** Create the shared Nick2bad4u ESLint flat config. */
+/** Create the shared Nick2Bad4U ESLint flat config. */
 export declare const createConfig: (
     options?: Nick2Bad4UEslintConfigOptions
 ) => Linter.Config[];

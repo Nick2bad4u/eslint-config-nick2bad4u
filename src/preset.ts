@@ -14,7 +14,8 @@ export const presets: Nick2Bad4UEslintConfigPresets = Object.freeze({
     withoutDocusaurus2: sharedConfigs.withoutDocusaurus2,
     withoutEtcMisc: sharedConfigs.withoutEtcMisc,
     withoutFileProgress2: sharedConfigs.withoutFileProgress2,
-    withoutGithubActions2: sharedConfigs.withoutGithubActions2,
+    withoutGitHubActions2: sharedConfigs.withoutGitHubActions2,
+    withoutGithubActions2: sharedConfigs.withoutGitHubActions2,
     withoutImmutable2: sharedConfigs.withoutImmutable2,
     withoutRemark: sharedConfigs.withoutRemark,
     withoutRepo: sharedConfigs.withoutRepo,
@@ -30,7 +31,7 @@ export const presets: Nick2Bad4UEslintConfigPresets = Object.freeze({
     withoutWriteGoodComments2: sharedConfigs.withoutWriteGoodComments2,
 });
 
-/** Create the shared Nick2bad4u ESLint flat config. */
+/** Create the shared Nick2Bad4U ESLint flat config. */
 export const createConfig = (
     options?: Nick2Bad4UEslintConfigOptions
 ): ReturnType<typeof createSharedConfig> => createSharedConfig(options);
