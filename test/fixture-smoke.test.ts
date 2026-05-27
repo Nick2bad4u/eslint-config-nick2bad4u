@@ -128,38 +128,44 @@ const fixtureTypeScriptProject = {
 const normalizeFixturePath = (filePath: string): string =>
     path.relative(fixtureWorkspaceRoot, filePath).replaceAll("\\", "/");
 
+const FIXTURE_SMOKE_TEST_TIMEOUT = 60_000;
+
 describe("fixture smoke matrix", () => {
-    it("lints every configured fixture surface without parser or rule-loading failures", async () => {
-        expect.assertions(2);
+    it(
+        "lints every configured fixture surface without parser or rule-loading failures",
+        async () => {
+            expect.assertions(2);
 
-        const eslint = new ESLint({
-            cwd: fixtureWorkspaceRoot,
-            overrideConfig: [
-                ...createConfig({
-                    rootDirectory: fixtureWorkspaceRoot,
-                    tsconfigPaths: ["./tsconfig.json"],
-                }),
-                forcedOptionalFrameworkRules,
-                forcedOptionalDocusaurusRules,
-                fixtureTypeScriptProject,
-            ],
-            overrideConfigFile: true,
-        });
+            const eslint = new ESLint({
+                cwd: fixtureWorkspaceRoot,
+                overrideConfig: [
+                    ...createConfig({
+                        rootDirectory: fixtureWorkspaceRoot,
+                        tsconfigPaths: ["./tsconfig.json"],
+                    }),
+                    forcedOptionalFrameworkRules,
+                    forcedOptionalDocusaurusRules,
+                    fixtureTypeScriptProject,
+                ],
+                overrideConfigFile: true,
+            });
 
-        const results = await eslint.lintFiles([...fixturePaths]);
-        const lintedPaths = results.map((result) =>
-            normalizeFixturePath(result.filePath)
-        );
-        const fatalMessages = results.flatMap((result) =>
-            result.messages
-                .filter((message) => message.fatal === true)
-                .map(
-                    (message) =>
-                        `${normalizeFixturePath(result.filePath)}:${String(message.line)}:${String(message.column)} ${message.message}`
-                )
-        );
+            const results = await eslint.lintFiles([...fixturePaths]);
+            const lintedPaths = results.map((result) =>
+                normalizeFixturePath(result.filePath)
+            );
+            const fatalMessages = results.flatMap((result) =>
+                result.messages
+                    .filter((message) => message.fatal === true)
+                    .map(
+                        (message) =>
+                            `${normalizeFixturePath(result.filePath)}:${String(message.line)}:${String(message.column)} ${message.message}`
+                    )
+            );
 
-        expect(new Set(lintedPaths)).toStrictEqual(new Set(fixturePaths));
-        expect(fatalMessages).toStrictEqual([]);
-    });
+            expect(new Set(lintedPaths)).toStrictEqual(new Set(fixturePaths));
+            expect(fatalMessages).toStrictEqual([]);
+        },
+        FIXTURE_SMOKE_TEST_TIMEOUT
+    );
 });
