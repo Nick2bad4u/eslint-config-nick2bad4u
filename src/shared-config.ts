@@ -1977,9 +1977,9 @@ export const createConfig = (
                 ...vitest.configs.all.rules,
                 "vitest/max-expects": ["warn", { max: 20 }], // Encourage more focused tests, but allow flexibility when needed
                 "vitest/prefer-mock-return-shorthand": "warn",
-                "vitest/prefer-to-be-falsy": "warn",
-                "vitest/prefer-to-be-truthy": "warn",
-                "vitest/require-test-timeout": "off",
+                "vitest/prefer-to-be-falsy": "off", // Allow explicit checks for false, 0, '', etc. for clarity in tests
+                "vitest/prefer-to-be-truthy": "off", // Allow explicit checks for true, non-empty strings, non-zero numbers, etc. for clarity in tests
+                "vitest/require-test-timeout": "off", // Allow flexibility in test timeouts, especially for integration tests or tests with external dependencies
                 "vitest/warn-todo": "warn",
             },
         },
@@ -2068,6 +2068,7 @@ export const createConfig = (
                 "@typescript-eslint/no-unsafe-type-assertion": "off",
                 "@typescript-eslint/no-unused-vars": "off",
                 "@typescript-eslint/no-use-before-define": "off", // Allow use before define in tests
+                "@typescript-eslint/prefer-readonly-parameter-types": "off",
                 "@typescript-eslint/unbound-method": "off",
                 "default-case": "off",
                 "func-name-matching": "off", // Allow function names to not match variable names

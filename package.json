@@ -101,7 +101,7 @@
     "dependencies": {
         "@docusaurus/eslint-plugin": "^3.10.1",
         "@eslint-community/eslint-plugin-eslint-comments": "^4.7.2",
-        "@eslint-react/eslint-plugin": "^5.8.5",
+        "@eslint-react/eslint-plugin": "^5.8.6",
         "@eslint/config-helpers": "^0.6.0",
         "@eslint/css": "^1.2.0",
         "@eslint/js": "^10.0.1",
@@ -216,7 +216,7 @@
             "optional": false
         }
     },
-    "packageManager": "npm@11.15.0",
+    "packageManager": "npm@11.16.0",
     "engines": {
         "node": ">=22.0.0"
     },
