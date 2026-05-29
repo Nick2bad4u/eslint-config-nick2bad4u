@@ -4,8 +4,6 @@ import { describe, expect, it } from "vitest";
 
 import nickTwoBadFourU, { createConfig, presets } from "../src/preset";
 
-/* eslint-disable @typescript-eslint/prefer-readonly-parameter-types -- Linter.Config is ESLint's mutable public config shape. */
-
 const getRuleNames = (configEntries: readonly Linter.Config[]): Set<string> => {
     const ruleNames = configEntries.flatMap((configEntry) =>
         Object.keys(configEntry.rules ?? {})
@@ -191,7 +189,6 @@ const presetByName: Readonly<Record<string, readonly Linter.Config[]>> = {
 
 const getPresetByName = (presetName: string): readonly Linter.Config[] =>
     presetByName[presetName] ?? presets.all;
-/* eslint-enable @typescript-eslint/prefer-readonly-parameter-types -- Re-enable after local Linter.Config helpers. */
 
 const presetEntriesByName: Readonly<Record<string, readonly Linter.Config[]>> =
     {

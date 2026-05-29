@@ -1400,7 +1400,7 @@ export const createConfig = (
         {
             ...css.configs.recommended,
             files: ["**/*.css"],
-            ignores: ["docs/**", "**/test/**"],
+            ignores: ["docs/**", "**/test*/**"],
             language: "css/css",
             languageOptions: {
                 tolerant: true,
@@ -1417,7 +1417,7 @@ export const createConfig = (
         {
             ...cssModules.configs["recommended"],
             files: ["**/*.css"],
-            ignores: ["docs/**", "**/test/**"],
+            ignores: ["docs/**", "**/test*/**"],
             name: "🎨 CSS Modules: recommended",
             plugins: {
                 "css-modules": cssModules,
@@ -1430,7 +1430,7 @@ export const createConfig = (
         },
         {
             files: ["**/*.css"],
-            ignores: ["docs/**", "**/test/**"],
+            ignores: ["docs/**", "**/test*/**"],
             name: "🎨 Undefined CSS Classes: recommended",
             plugins: {
                 "undefined-css-classes": undefinedCSS,
@@ -2141,17 +2141,9 @@ export const createConfig = (
         // #region 📦 Package Metadata
         // ═══════════════════════════════════════════════════════════════════════════════
         {
+            ...json.configs.recommended,
             files: ["**/package.json"],
-            name: "📦 Package: JSON recommended",
-            plugins: {
-                json: json,
-            },
-            rules: {
-                ...json.configs.recommended.rules,
-            },
-        },
-        {
-            files: ["**/package.json"],
+            language: "json/json",
             languageOptions: {
                 parser: jsoncEslintParser,
                 parserOptions: { jsonSyntax: "JSON" },
@@ -2159,10 +2151,12 @@ export const createConfig = (
             name: "📦 Package: **/Package.json",
             plugins: {
                 depend: depend,
+                json: json,
                 "node-dependencies": nodeDepends,
                 "package-json": packageJson,
             },
             rules: {
+                ...json.configs.recommended.rules,
                 "depend/ban-dependencies": "error",
                 "json/sort-keys": "off",
                 // NOTE: Keeping node-dependencies scoped to package.json avoids perf + parser issues.
@@ -2402,6 +2396,15 @@ export const createConfig = (
                 "**/.github/agents/**",
             ],
             language: "markdown/gfm",
+            languageOptions: {
+                frontmatter: "yaml",
+                math: true,
+                parserOptions: {
+                    ecmaFeatures: {
+                        impliedStrict: true,
+                    },
+                },
+            },
             name: "📁 Markdown: **/*.{MD,MARKUP,ATOM,RSS,MARKDOWN}",
             plugins: {
                 markdown: markdown,
@@ -2605,6 +2608,7 @@ export const createConfig = (
         // #region 🐀 JSON Files
         // ═══════════════════════════════════════════════════════════════════════════════
         {
+            ...json.configs.recommended,
             files: ["**/*.json"],
             // Package.json has a dedicated config block above that uses jsonc-eslint-parser
             // (needed for some package.json-specific tooling rules).
