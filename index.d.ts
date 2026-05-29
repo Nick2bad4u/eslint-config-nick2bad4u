@@ -3,6 +3,16 @@ import type { ESLint, Linter } from "eslint";
 /** Options for creating the shared Nick2Bad4U ESLint flat config. */
 export interface Nick2Bad4UEslintConfigOptions {
     /**
+     * Root-level files passed to TypeScript ESLint's
+     * `parserOptions.projectService.allowDefaultProject`.
+     *
+     * Defaults to `["*.mjs", ".*.mjs"]`. Only include files that are not
+     * already covered by `tsconfigPaths`; TypeScript ESLint errors when a file
+     * is both in a configured project and in `allowDefaultProject`.
+     */
+    readonly allowDefaultProjectFilePatterns?: readonly string[];
+
+    /**
      * Replace or disable plugins by ESLint namespace.
      *
      * Pass a plugin object to dogfood an explicitly configurable source-rule

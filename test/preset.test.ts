@@ -190,6 +190,12 @@ const presetByName: Readonly<Record<string, readonly Linter.Config[]>> = {
 const getPresetByName = (presetName: string): readonly Linter.Config[] =>
     presetByName[presetName] ?? presets.all;
 
+const findConfigByName = (
+    configEntries: readonly Linter.Config[],
+    configName: string
+): Linter.Config | undefined =>
+    configEntries.find((configEntry) => configEntry.name === configName);
+
 const presetEntriesByName: Readonly<Record<string, readonly Linter.Config[]>> =
     {
         all: presets.all,
@@ -338,9 +344,9 @@ describe("eslint-config-nick2bad4u presets", () => {
     it("configures browser and Node globals for Docusaurus workspace files", () => {
         expect.assertions(1);
 
-        const docusaurusConfig = presets.all.find(
-            (configEntry) =>
-                configEntry.name === "🦖 Docusaurus: Workspace Files"
+        const docusaurusConfig = findConfigByName(
+            presets.all,
+            "🦖 Docusaurus: Workspace Files"
         );
         const docusaurusGlobals =
             docusaurusConfig?.languageOptions?.["globals"];
@@ -350,6 +356,112 @@ describe("eslint-config-nick2bad4u presets", () => {
                 "document",
                 "process",
                 "window",
+            ])
+        );
+    });
+
+    it("keeps the default TypeScript project allow-list narrow", () => {
+        expect.assertions(1);
+
+        const globalConfig = findConfigByName(presets.all, "🌍 Global: Rules");
+        const parserOptions = globalConfig?.languageOptions?.["parserOptions"];
+        const projectService = isNonArrayObject(parserOptions)
+            ? parserOptions["projectService"]
+            : undefined;
+        const allowDefaultProject = isNonArrayObject(projectService)
+            ? projectService["allowDefaultProject"]
+            : undefined;
+
+        expect(allowDefaultProject).toStrictEqual(["*.mjs", ".*.mjs"]);
+    });
+
+    it("supports opting root config files into the default TypeScript project", () => {
+        expect.assertions(1);
+
+        const configEntries = createConfig({
+            allowDefaultProjectFilePatterns: [
+                "*.config.{js,mjs,cjs,ts,mts,cts}",
+                "*.config.*.{js,mjs,cjs,ts,mts,cts}",
+                ".*rc.{js,mjs,cjs,ts,mts,cts}",
+                "preset.mjs",
+            ],
+        }) as readonly Linter.Config[];
+        const globalConfig = findConfigByName(
+            configEntries,
+            "🌍 Global: Rules"
+        );
+        const parserOptions = globalConfig?.languageOptions?.["parserOptions"];
+        const projectService = isNonArrayObject(parserOptions)
+            ? parserOptions["projectService"]
+            : undefined;
+        const allowDefaultProject = isNonArrayObject(projectService)
+            ? projectService["allowDefaultProject"]
+            : undefined;
+
+        expect(allowDefaultProject).toStrictEqual([
+            "*.config.{js,mjs,cjs,ts,mts,cts}",
+            "*.config.*.{js,mjs,cjs,ts,mts,cts}",
+            ".*rc.{js,mjs,cjs,ts,mts,cts}",
+            "preset.mjs",
+        ]);
+    });
+
+    it("scopes Docusaurus 2 rules to the docs workspace", () => {
+        expect.assertions(2);
+
+        const docusaurusConfig = findConfigByName(
+            presets.all,
+            "🦖 Docusaurus 2: Experimental: Includes All + Extra Rules"
+        );
+        const docusaurusContentConfig = findConfigByName(
+            presets.all,
+            "🦖 Docusaurus 2: Content"
+        );
+
+        expect(docusaurusConfig?.files).toStrictEqual([
+            "**/docs/docusaurus/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
+        ]);
+        expect(docusaurusContentConfig?.files).toStrictEqual([
+            "**/docs/docusaurus/**/*.{md,mdx}",
+        ]);
+    });
+
+    it("scopes TypeDoc to package API source files", () => {
+        expect.assertions(2);
+
+        const typedocConfig = findConfigByName(
+            presets.all,
+            "⌨️ TypeDoc: Recommended"
+        );
+
+        expect(typedocConfig?.files).toStrictEqual([
+            "packages/*/src/**/*.{ts,tsx,mts,cts}",
+            "src/**/*.{ts,tsx,mts,cts}",
+        ]);
+        expect(typedocConfig?.ignores).toStrictEqual(
+            expect.arrayContaining([
+                "**/docs/**",
+                "**/test/**",
+                "**/tests/**",
+            ])
+        );
+    });
+
+    it("keeps Test Signal away from harness and fixture internals", () => {
+        expect.assertions(1);
+
+        const testSignalConfig = findConfigByName(
+            presets.all,
+            "🧪 Test Signal: All"
+        );
+
+        expect(testSignalConfig?.ignores).toStrictEqual(
+            expect.arrayContaining([
+                "**/*rule-tester*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
+                "**/test/_internal/**",
+                "**/test/fixtures/**",
+                "**/tests/_internal/**",
+                "**/tests/fixtures/**",
             ])
         );
     });

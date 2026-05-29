@@ -76,6 +76,12 @@ factory options applied before the array is returned.
 import { createConfig } from "eslint-config-nick2bad4u";
 
 export default createConfig({
+    allowDefaultProjectFilePatterns: [
+        "*.config.{js,mjs,cjs,ts,mts,cts}",
+        "*.config.*.{js,mjs,cjs,ts,mts,cts}",
+        ".*rc.{js,mjs,cjs,ts,mts,cts}",
+        "preset.mjs",
+    ],
     rootDirectory: import.meta.dirname,
     tsconfigPaths: ["./tsconfig.eslint.json"],
 });
@@ -83,6 +89,7 @@ export default createConfig({
 
 | Option | Default | Guidance |
 | --- | --- | --- |
+| `allowDefaultProjectFilePatterns` | `["*.mjs", ".*.mjs"]` | Root globs passed to `parserOptions.projectService.allowDefaultProject`. Only include files outside `tsconfigPaths`. |
 | `rootDirectory` | `process.cwd()` | Set this when ESLint runs from outside the package root. |
 | `tsconfigPaths` | `["./tsconfig.eslint.json"]` | Prefer one catch-all lint tsconfig. Add paths only for isolated compiler settings. |
 | `plugins` | `{}` | Pass a plugin object to replace a namespace, or `false`/`null` to disable it. |
@@ -208,7 +215,7 @@ export default [
 | --- | --- | --- |
 | `ESLINT_CONFIG_ROOT` | path string | Fallback root directory when `createConfig({ rootDirectory })` is not used. |
 | `ESLINT_PROGRESS` | unset, `on`, `nofile`, `off`, `0`, `false` | Controls file progress output. |
-| `ENABLE_JSON_SCHEMA_VALIDATION` | `1` | Enables optional JSON/YAML schema validation when the consumer installs the validator plugin. |
+| `ENABLE_JSON_SCHEMA_VALIDATION` | `1` | Enables the optional validator preset for JSON, JSONC, JSON5, YAML, TOML, JavaScript, and Vue custom blocks when the consumer installs an ESLint-10-compatible validator plugin. |
 
 ## Validation after configuration changes
 

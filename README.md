@@ -93,6 +93,12 @@ shared defaults:
 import { createConfig } from "eslint-config-nick2bad4u";
 
 export default createConfig({
+    allowDefaultProjectFilePatterns: [
+        "*.config.{js,mjs,cjs,ts,mts,cts}",
+        "*.config.*.{js,mjs,cjs,ts,mts,cts}",
+        ".*rc.{js,mjs,cjs,ts,mts,cts}",
+        "preset.mjs",
+    ],
     rootDirectory: import.meta.dirname,
     tsconfigPaths: ["./tsconfig.eslint.json"],
 });
@@ -100,6 +106,7 @@ export default createConfig({
 
 | Option | Type | Default | Use it when |
 | --- | --- | --- | --- |
+| `allowDefaultProjectFilePatterns` | `readonly string[]` | `["*.mjs", ".*.mjs"]` | Root config files are intentionally outside `tsconfigPaths`; do not include files already covered by your lint tsconfig. |
 | `rootDirectory` | `string` | `process.cwd()` | ESLint runs outside the project root or a monorepo package needs its own root. |
 | `tsconfigPaths` | `readonly string[]` | `["./tsconfig.eslint.json"]` | The project uses a differently named lint tsconfig or a truly separate TypeScript project. |
 | `plugins` | `Readonly<Record<string, unknown>>` | `{}` | You need to dogfood a local plugin build or disable packaged plugin rules by namespace. |
@@ -201,10 +208,10 @@ Use the same shape for other plugin namespaces, such as `withoutCopilot`,
 
 ### JSON schema validation
 
-JSON/YAML schema validation is disabled by default because schema fetching can
-make lint runs flaky in offline or locked-down environments. To opt in, install
-`eslint-plugin-json-schema-validator` in the consuming repo and set the opt-in
-environment variable when running ESLint:
+Schema validation is disabled by default because schema fetching can make lint
+runs flaky in offline or locked-down environments. To opt in, install an
+ESLint-10-compatible `eslint-plugin-json-schema-validator` in the consuming repo
+and set the opt-in environment variable when running ESLint:
 
 ```sh
 ENABLE_JSON_SCHEMA_VALIDATION=1 eslint .

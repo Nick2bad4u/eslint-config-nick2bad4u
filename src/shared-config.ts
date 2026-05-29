@@ -104,15 +104,17 @@ const processEnvironment = globalThis.process.env;
 
 // #region ✅ JSON Schema Validator
 // ═══════════════════════════════════════════════════════════════════════════════
-// NOTE: eslint-plugin-json-schema-validator may attempt to fetch remote schemas
-// at lint time. That makes linting flaky/offline-hostile.
-// Keep it opt-in via ENABLE_JSON_SCHEMA_VALIDATION=1.
+// NOTE: eslint-plugin-json-schema-validator validates more than JSON files. Its
+// recommended preset also covers JSONC, JSON5, YAML, TOML, JavaScript, and Vue
+// custom blocks. Keep the whole preset opt-in so default linting remains
+// offline-friendly and compatible with ESLint 10 while the validator catches up.
 const enableJsonSchemaValidation =
     processEnvironment["ENABLE_JSON_SCHEMA_VALIDATION"] === "1";
 const jsonSchemaValidatorPackageName = "eslint-plugin-json-schema-validator";
+const jsonSchemaValidatorRecommendedConfigName = "recommended";
 const jsonSchemaValidatorRuleName = "no-invalid";
 
-let eslintPluginJsonSchemaValidator: ConfigurablePlugin | null = null;
+let jsonSchemaValidatorRecommendedConfigs: EslintConfig[] = [];
 
 if (enableJsonSchemaValidation) {
     try {
@@ -132,7 +134,18 @@ if (enableJsonSchemaValidation) {
                 jsonSchemaValidatorRuleName
             )
         ) {
-            eslintPluginJsonSchemaValidator = jsonSchemaValidatorCandidate;
+            const recommendedConfigs = getNamedPluginConfigs(
+                jsonSchemaValidatorCandidate,
+                jsonSchemaValidatorRecommendedConfigName,
+                "✅ JSON Schema Validator: Recommended"
+            );
+            if (recommendedConfigs === null) {
+                console.warn(
+                    `[eslint-config-nick2bad4u] ${jsonSchemaValidatorPackageName} did not export configs.${jsonSchemaValidatorRecommendedConfigName}; JSON schema validation remains disabled.`
+                );
+            } else {
+                jsonSchemaValidatorRecommendedConfigs = recommendedConfigs;
+            }
         } else {
             console.warn(
                 `[eslint-config-nick2bad4u] ${jsonSchemaValidatorPackageName} did not export a plugin with the ${jsonSchemaValidatorRuleName} rule; JSON schema validation remains disabled.`
@@ -145,16 +158,16 @@ if (enableJsonSchemaValidation) {
     }
 }
 
-const jsonSchemaValidatorPlugins =
-    eslintPluginJsonSchemaValidator === null
-        ? {}
-        : { "json-schema-validator": eslintPluginJsonSchemaValidator };
-const jsonSchemaValidatorRules =
-    eslintPluginJsonSchemaValidator === null
-        ? {}
-        : { "json-schema-validator/no-invalid": "error" };
-
 // #endregion ✅ JSON Schema Validator
+// #region 📁 Markdown Code Block Processor
+// ═══════════════════════════════════════════════════════════════════════════════
+// The markdown processor changes Markdown linting from "lint the document" to
+// "lint extracted fenced code blocks". Keep it opt-in so remark/remark and the
+// markdown/gfm document rules remain the default Markdown path.
+const enableMarkdownCodeBlockLinting =
+    processEnvironment["ENABLE_MARKDOWN_CODE_BLOCK_LINTING"] === "1";
+
+// #endregion 📁 Markdown Code Block Processor
 // #region 🏗️ Setup and Public Types
 // ═══════════════════════════════════════════════════════════════════════════════
 // Parser project defaults intentionally live in this package instead of each
@@ -163,12 +176,56 @@ const jsonSchemaValidatorRules =
 // A single catch-all tsconfig.eslint.json (includes **/* and **/.* for dotfiles,
 // extends tsconfig.json, allowJs:true) is the only project ESLint needs.
 // Consumer repos can override via createConfig({ tsconfigPaths: [...] }).
+const DEFAULT_PROJECT_FILE_PATTERNS = Object.freeze(["*.mjs", ".*.mjs"]);
 const DEFAULT_TSCONFIG_PATHS = Object.freeze(["./tsconfig.eslint.json"]);
+const DOCUSAURUS_CODE_FILE_PATTERNS = Object.freeze([
+    "**/docs/docusaurus/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
+]);
+const DOCUSAURUS_CONTENT_FILE_PATTERNS = Object.freeze([
+    "**/docs/docusaurus/**/*.{md,mdx}",
+]);
+const DOCUSAURUS_IGNORES = Object.freeze([
+    "**/docs/docusaurus/.docusaurus/**",
+    "**/docs/docusaurus/build/**",
+    "**/docs/docusaurus/static/eslint-inspector/**",
+    "**/docs/docusaurus/static/remark-inspector/**",
+    "**/docs/docusaurus/static/stylelint-inspector/**",
+]);
 const GLOBAL_FILE_PATTERNS = Object.freeze([
     "**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
 ]);
+const ROOT_CONFIG_FILE_PATTERNS = Object.freeze([
+    "*.config.{js,mjs,cjs,ts,mts,cts}",
+    "*.config.*.{js,mjs,cjs,ts,mts,cts}",
+    ".*rc.{js,mjs,cjs,ts,mts,cts}",
+    "preset.mjs",
+]);
 const SOURCE_FILE_PATTERNS = Object.freeze([
     "src/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
+]);
+const TEST_SIGNAL_IGNORES = Object.freeze([
+    "**/*rule-tester*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
+    "**/__fixtures__/**",
+    "**/test/_internal/**",
+    "**/test/fixtures/**",
+    "**/tests/_internal/**",
+    "**/tests/fixtures/**",
+]);
+const TYPEDOC_API_FILE_PATTERNS = Object.freeze([
+    "packages/*/src/**/*.{ts,tsx,mts,cts}",
+    "src/**/*.{ts,tsx,mts,cts}",
+]);
+const TYPEDOC_API_IGNORES = Object.freeze([
+    "**/*.config.{ts,tsx,mts,cts}",
+    "**/*.config.*.{ts,tsx,mts,cts}",
+    "**/*.{spec,test}.{ts,tsx,mts,cts}",
+    "**/*.stories.{ts,tsx,mts,cts}",
+    "**/__fixtures__/**",
+    "**/__tests__/**",
+    "**/docs/**",
+    "**/fixtures/**",
+    "**/test/**",
+    "**/tests/**",
 ]);
 
 /**
@@ -179,6 +236,13 @@ const SOURCE_FILE_PATTERNS = Object.freeze([
  * ESLint setup.
  */
 export interface Nick2Bad4UEslintConfigOptions {
+    /**
+     * Root-level files allowed to use TypeScript ESLint's default project.
+     *
+     * @remarks
+     * Only include files that are not already covered by `tsconfigPaths`.
+     */
+    readonly allowDefaultProjectFilePatterns?: readonly string[];
     /** Plugin overrides keyed by ESLint namespace. */
     readonly plugins?: PluginOverrides;
     /** Project root used for parser root resolution and local alias checks. */
@@ -288,6 +352,9 @@ const storybookRecommendedStoriesRules =
 export const createConfig = (
     options: Nick2Bad4UEslintConfigOptions = {}
 ): EslintConfig[] => {
+    const allowDefaultProjectFilePatterns =
+        options.allowDefaultProjectFilePatterns ??
+        DEFAULT_PROJECT_FILE_PATTERNS;
     const rootDirectory = path.resolve(
         options.rootDirectory ?? processEnvironment["ESLINT_CONFIG_ROOT"] ?? "."
     );
@@ -924,6 +991,8 @@ export const createConfig = (
         // ═══════════════════════════════════════════════════════════════════════════════
         {
             ...docusaurus2.configs.experimental,
+            files: [...DOCUSAURUS_CODE_FILE_PATTERNS],
+            ignores: [...DOCUSAURUS_IGNORES],
             name: "🦖 Docusaurus 2: Experimental: Includes All + Extra Rules",
             rules: {
                 ...docusaurus2.configs.experimental.rules,
@@ -932,6 +1001,8 @@ export const createConfig = (
         },
         {
             ...docusaurus2.configs.content,
+            files: [...DOCUSAURUS_CONTENT_FILE_PATTERNS],
+            ignores: [...DOCUSAURUS_IGNORES],
             name: "🦖 Docusaurus 2: Content",
         },
         // ═══════════════════════════════════════════════════════════════════════════════
@@ -976,6 +1047,12 @@ export const createConfig = (
                 },
             },
         },
+        // #region ✅ JSON Schema Validator
+        // ═══════════════════════════════════════════════════════════════════════════════
+        ...(enableJsonSchemaValidation
+            ? jsonSchemaValidatorRecommendedConfigs
+            : []),
+        // #endregion ✅ JSON Schema Validator
         // MARK: 🤖 Copilot
         copilot.configs.all,
         // MARK: 🛡️ SDL
@@ -1069,7 +1146,15 @@ export const createConfig = (
                   ),
               ]),
         // MARK: 🧪 Test Signal
-        ...(testSignalPlugin === null ? [] : [testSignalPlugin.configs.all]),
+        ...(testSignalPlugin === null
+            ? []
+            : [
+                  {
+                      ...testSignalPlugin.configs.all,
+                      ignores: [...TEST_SIGNAL_IGNORES],
+                      name: "🧪 Test Signal: All",
+                  },
+              ]),
         // MARK: ⚡ Vite
         vite.configs.all,
         // MARK: 🎨 Stylelint
@@ -1178,6 +1263,8 @@ export const createConfig = (
         repo.configs.node,
         {
             ...typedoc.configs.recommended,
+            files: [...TYPEDOC_API_FILE_PATTERNS],
+            ignores: [...TYPEDOC_API_IGNORES],
             name: "⌨️ TypeDoc: Recommended",
             rules: {
                 ...typedoc.configs.recommended.rules,
@@ -1471,16 +1558,10 @@ export const createConfig = (
                 // Common React entry/root files without applying React rules to all of src/
                 "**/src/*.{jsx,tsx}",
                 "**/src/{App,main,index,router,routes,Root,ErrorBoundary}.{js,jsx,ts,tsx}",
-                "**/docs/docusaurus/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
+                ...DOCUSAURUS_CODE_FILE_PATTERNS,
                 "**/assets/js/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
             ],
-            ignores: [
-                "**/docs/docusaurus/.docusaurus/**",
-                "**/docs/docusaurus/build/**",
-                "**/docs/docusaurus/static/eslint-inspector/**",
-                "**/docs/docusaurus/static/stylelint-inspector/**",
-                "**/docs/docusaurus/static/remark-inspector/**",
-            ],
+            ignores: [...DOCUSAURUS_IGNORES],
             name: "🕸️ React + Web Files",
             rules: {
                 ...react.configs.all.rules,
@@ -1495,14 +1576,8 @@ export const createConfig = (
         // ═══════════════════════════════════════════════════════════════════════════════
         {
             ...docusaurus.configs.all,
-            files: ["**/docs/docusaurus/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}"],
-            ignores: [
-                "**/docs/docusaurus/.docusaurus/**",
-                "**/docs/docusaurus/build/**",
-                "**/docs/docusaurus/static/eslint-inspector/**",
-                "**/docs/docusaurus/static/stylelint-inspector/**",
-                "**/docs/docusaurus/static/remark-inspector/**",
-            ],
+            files: [...DOCUSAURUS_CODE_FILE_PATTERNS],
+            ignores: [...DOCUSAURUS_IGNORES],
             languageOptions: {
                 globals: {
                     ...globals.browser,
@@ -1530,6 +1605,19 @@ export const createConfig = (
                 ...docusaurus.configs.all.rules,
                 "@docusaurus/no-untranslated-text": "off",
                 "@docusaurus/string-literal-i18n-messages": "off",
+                "import-x/no-unresolved": [
+                    "error",
+                    {
+                        ignore: [
+                            "^@docusaurus/",
+                            "^@generated(?:/|$)",
+                            "^@site(?:/|$)",
+                            "^@theme(?:/|$)",
+                            "^@theme-init(?:/|$)",
+                            "^@theme-original(?:/|$)",
+                        ],
+                    },
+                ],
             },
         },
         // #endregion 🦖 Docusaurus Files
@@ -1700,7 +1788,9 @@ export const createConfig = (
                     ecmaVersion: "latest",
                     jsDocParsingMode: "all",
                     projectService: {
-                        allowDefaultProject: ["*.mjs", ".*.mjs"],
+                        allowDefaultProject: [
+                            ...allowDefaultProjectFilePatterns,
+                        ],
                     },
                     sourceType: "module",
                     tsconfigRootDir: rootDirectory,
@@ -2433,6 +2523,105 @@ export const createConfig = (
                 "markdown/table-column-count": "warn",
             },
         },
+        ...(enableMarkdownCodeBlockLinting
+            ? [
+                  // The markdown processor is an extraction pass: ESLint
+                  // receives virtual files such as `README.md/0_0.js`, not the
+                  // original Markdown document. That keeps remark/remark away
+                  // from snippets, but it also means an enabled processor
+                  // changes the Markdown lint pass from "document rules" to
+                  // "extracted snippet rules". Keep this opt-in via
+                  // ENABLE_MARKDOWN_CODE_BLOCK_LINTING=1.
+                  // Non-standalone snippets need `<!-- eslint-skip -->`
+                  // immediately before the fence or a non-JS language tag such
+                  // as `text`.
+                  {
+                      files: ["**/*.{md,markdown}"],
+                      ignores: [
+                          "**/docs/packages/**",
+                          "**/docs/TSDoc/**",
+                          "**/.github/agents/**",
+                      ],
+                      name: "📁 Markdown: Code block processor",
+                      processor: "markdown/markdown",
+                  },
+                  // Extracted code fences are matched again by normal
+                  // flat-config globs. For example, `README.md/0_0.js` matches
+                  // the global JS/TS blocks and `README.md/1_1.json` matches
+                  // the JSON block. Keep this override narrow to virtual
+                  // Markdown paths so these relaxations do not affect real
+                  // source files.
+                  {
+                      files: ["**/*.md/**", "**/*.markdown/**"],
+                      languageOptions: {
+                          parserOptions: {
+                              ecmaFeatures: {
+                                  impliedStrict: true,
+                              },
+                              program: null,
+                              project: false,
+                              projectService: false,
+                          },
+                      },
+                      name: "📁 Markdown: Code block virtual files ⛔ Overrides",
+                      rules: {
+                          ...tseslint.configs.disableTypeChecked.rules,
+                          "@typescript-eslint/no-unused-vars": "off",
+                          "eol-last": "off",
+                          "import-x/default": "off",
+                          "import-x/export": "off",
+                          "import-x/extensions": "off",
+                          "import-x/max-dependencies": "off",
+                          "import-x/named": "off",
+                          "import-x/namespace": "off",
+                          "import-x/no-anonymous-default-export": "off",
+                          "import-x/no-cycle": "off",
+                          "import-x/no-extraneous-dependencies": "off",
+                          "import-x/no-relative-packages": "off",
+                          "import-x/no-restricted-paths": "off",
+                          "import-x/no-unassigned-import": "off",
+                          "import-x/no-unresolved": "off",
+                          "import-x/no-unused-modules": "off",
+                          "import-x/unambiguous": "off",
+                          "json/sort-keys": "off",
+                          "n/no-extraneous-import": "off",
+                          "n/no-extraneous-require": "off",
+                          "n/no-missing-import": "off",
+                          "n/no-missing-require": "off",
+                          "n/no-unpublished-import": "off",
+                          "n/no-unpublished-require": "off",
+                          "n/no-unsupported-features/es-builtins": "off",
+                          "n/no-unsupported-features/es-syntax": "off",
+                          "n/no-unsupported-features/node-builtins": "off",
+                          "no-undef": "off",
+                          "no-unused-expressions": "off",
+                          "no-unused-vars": "off",
+                          "padded-blocks": "off",
+                          "perfectionist/sort-array-includes": "off",
+                          "perfectionist/sort-arrays": "off",
+                          "perfectionist/sort-classes": "off",
+                          "perfectionist/sort-enums": "off",
+                          "perfectionist/sort-exports": "off",
+                          "perfectionist/sort-imports": "off",
+                          "perfectionist/sort-interfaces": "off",
+                          "perfectionist/sort-intersection-types": "off",
+                          "perfectionist/sort-maps": "off",
+                          "perfectionist/sort-modules": "off",
+                          "perfectionist/sort-named-exports": "off",
+                          "perfectionist/sort-named-imports": "off",
+                          "perfectionist/sort-object-types": "off",
+                          "perfectionist/sort-objects": "off",
+                          "perfectionist/sort-sets": "off",
+                          "perfectionist/sort-switch-case": "off",
+                          "perfectionist/sort-union-types": "off",
+                          "perfectionist/sort-variable-declarations": "off",
+                          strict: "off",
+                          "unicode-bom": "off",
+                          "unicorn/filename-case": "off",
+                      },
+                  },
+              ]
+            : []),
         // #endregion 📁 Markdown Files
         // #region 🏝️ YAML Files
         // ═══════════════════════════════════════════════════════════════════════════════
@@ -2448,11 +2637,9 @@ export const createConfig = (
             },
             name: "🏝️ YAML/YML: **/*.{YAML,YML}",
             plugins: {
-                ...jsonSchemaValidatorPlugins,
                 yml: yml,
             },
             rules: {
-                ...jsonSchemaValidatorRules,
                 "yml/block-mapping": "warn",
                 "yml/block-mapping-colon-indicator-newline": "error",
                 "yml/block-mapping-question-indicator-newline": "error",
@@ -2516,7 +2703,6 @@ export const createConfig = (
             plugins: {
                 json: json,
                 jsonc: jsonc,
-                ...jsonSchemaValidatorPlugins,
             },
             rules: {
                 "jsonc/array-bracket-newline": "off", // Handled by Prettier
@@ -2617,11 +2803,9 @@ export const createConfig = (
             name: "🐀 JSON: **/*.JSON",
             plugins: {
                 json: json,
-                ...jsonSchemaValidatorPlugins,
             },
             rules: {
                 ...json.configs.recommended.rules,
-                ...jsonSchemaValidatorRules,
                 "json/sort-keys": ["warn"],
                 "json/top-level-interop": "warn",
             },
@@ -2636,10 +2820,8 @@ export const createConfig = (
             plugins: {
                 json: json,
                 jsonc: jsonc,
-                ...jsonSchemaValidatorPlugins,
             },
             rules: {
-                ...jsonSchemaValidatorRules,
                 "jsonc/array-bracket-newline": "off", // Handled by Prettier
                 "jsonc/array-bracket-spacing": "off", // Handled by Prettier
                 "jsonc/array-element-newline": "off", // Handled by Prettier
@@ -2766,6 +2948,31 @@ export const createConfig = (
             },
         },
         // #endregion 🐦‍🔥 TOML Files
+        // #region 📁 Markdown Code Block Final Overrides
+        // ═══════════════════════════════════════════════════════════════════════════════
+        ...(enableMarkdownCodeBlockLinting
+            ? [
+                  // Data-language blocks are declared after the markdown
+                  // processor above, so they can re-enable sorting rules for
+                  // virtual snippets like `README.md/1_1.json`. Keep
+                  // config-example snippets free to mirror the docs narrative
+                  // instead of package/file ordering conventions.
+                  {
+                      files: ["**/*.{md,markdown}/**"],
+                      name: "📁 Markdown: Code block sorting ⛔ Overrides",
+                      rules: {
+                          "json/sort-keys": "off",
+                          "jsonc/sort-array-values": "off",
+                          "jsonc/sort-keys": "off",
+                          "toml/keys-order": "off",
+                          "toml/tables-order": "off",
+                          "yml/sort-keys": "off",
+                          "yml/sort-sequence-values": "off",
+                      },
+                  },
+              ]
+            : []),
+        // #endregion 📁 Markdown Code Block Final Overrides
         // #region 📚 JSDoc Rules
         // ═══════════════════════════════════════════════════════════════════════════════
         {
@@ -3185,10 +3392,11 @@ export const createConfig = (
         },
         // #endregion ⚛️ Next.js Files
         // #endregion 🎭 Framework Configurations
-        // #region 🐆 JS Config Files ⛔ Overrides
+        // #region 🐆 Config Files ⛔ Overrides
         // ═══════════════════════════════════════════════════════════════════════════════
         {
             files: [
+                ...ROOT_CONFIG_FILE_PATTERNS,
                 "**/*.config.{js,mjs,cjs}",
                 "**/*.config.*.{js,mjs,cjs}",
                 "**/.*rc.{js,mjs,cjs}",
@@ -3201,7 +3409,7 @@ export const createConfig = (
                     ...globals.commonjs,
                 },
             },
-            name: "🐆 JS/MJS Config Files",
+            name: "🐆 Config Files",
             rules: {
                 "max-classes-per-file": "off",
                 "no-console": "off",
@@ -3345,6 +3553,34 @@ function flattenConfigs(configs: readonly EslintConfigInput[]): EslintConfig[] {
         }
         return result;
     }, []);
+}
+
+function getNamedPluginConfigs(
+    pluginCandidate: ConfigurablePlugin,
+    configName: string,
+    fallbackName: string
+): EslintConfig[] | null {
+    const { configs } = pluginCandidate;
+    if (
+        typeof configs !== "object" ||
+        !isPresent(configs) ||
+        Array.isArray(configs) ||
+        !objectHasOwn(configs, configName)
+    ) {
+        return null;
+    }
+    const configInput = configs[configName] as EslintConfigInput;
+    const normalizedConfigs = flattenConfigs([configInput]);
+    return normalizedConfigs.map(
+        (config, index): EslintConfig => ({
+            ...config,
+            name:
+                config.name ??
+                (normalizedConfigs.length === 1
+                    ? fallbackName
+                    : `${fallbackName} ${String(index + 1)}`),
+        })
+    );
 }
 
 function getRulePluginName(ruleName: string): string {

@@ -84,6 +84,8 @@ Required touchpoints:
 
 Example shape:
 
+<!-- eslint-skip -->
+
 ```js
 withoutMyPlugin: createConfig({
     plugins: {

@@ -337,10 +337,11 @@ import { presets } from "eslint-config-nick2bad4u";
 export default [...presets.all];
 ```
 
-### Optional JSON/YAML schema validation does not run
+### Optional schema validation does not run
 
-Schema validation is opt-in. Install `eslint-plugin-json-schema-validator` in the
-consuming repository and run ESLint with the opt-in environment variable:
+Schema validation is opt-in. Install an ESLint-10-compatible
+`eslint-plugin-json-schema-validator` in the consuming repository and run ESLint
+with the opt-in environment variable:
 
 ```powershell
 $env:ENABLE_JSON_SCHEMA_VALIDATION = "1"
