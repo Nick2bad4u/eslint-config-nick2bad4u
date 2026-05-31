@@ -5,12 +5,12 @@ Use this guide to choose the right support path for
 
 ## Where to ask
 
-| Request | Where to go |
-| --- | --- |
-| Bug report | Open a GitHub issue in the repository issue tracker. |
-| Feature request or preset proposal | Open a GitHub issue with the use case and expected config behavior. |
-| Documentation problem | Open a GitHub issue or pull request that identifies the stale or missing section. |
-| Security concern | Follow the private reporting process in the [security policy](./SECURITY.md). |
+| Request                            | Where to go                                                                       |
+| ---------------------------------- | --------------------------------------------------------------------------------- |
+| Bug report                         | Open a GitHub issue in the repository issue tracker.                              |
+| Feature request or preset proposal | Open a GitHub issue with the use case and expected config behavior.               |
+| Documentation problem              | Open a GitHub issue or pull request that identifies the stale or missing section. |
+| Security concern                   | Follow the private reporting process in the [security policy](./SECURITY.md).     |
 
 Issue tracker: [Nick2bad4u/eslint-config-nick2bad4u issues](https://github.com/Nick2bad4u/eslint-config-nick2bad4u/issues)
 

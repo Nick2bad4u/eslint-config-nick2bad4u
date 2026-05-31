@@ -12,11 +12,11 @@ The package exports an ESM default object and named helpers from the package roo
 import nick2bad4u, { createConfig, presets } from "eslint-config-nick2bad4u";
 ```
 
-| Export | Description |
-| --- | --- |
-| `nick2bad4u.configs` | Preset arrays available on the default export. |
-| `presets` | Named export for the same preset arrays. |
-| `createConfig()` | Factory for changing root resolution, TypeScript projects, or plugin replacements. |
+| Export               | Description                                                                        |
+| -------------------- | ---------------------------------------------------------------------------------- |
+| `nick2bad4u.configs` | Preset arrays available on the default export.                                     |
+| `presets`            | Named export for the same preset arrays.                                           |
+| `createConfig()`     | Factory for changing root resolution, TypeScript projects, or plugin replacements. |
 
 The package is ESM-only. Use `eslint.config.mjs` or an ESM `eslint.config.js`
 in consuming projects.
@@ -53,14 +53,14 @@ config precedence.
 import nick2bad4u from "eslint-config-nick2bad4u";
 
 export default [
-    ...nick2bad4u.configs.all,
-    {
-        files: ["src/**/*.ts"],
-        name: "Project TypeScript overrides",
-        rules: {
-            "no-console": "off",
-        },
-    },
+ ...nick2bad4u.configs.all,
+ {
+  files: ["src/**/*.ts"],
+  name: "Project TypeScript overrides",
+  rules: {
+   "no-console": "off",
+  },
+ },
 ];
 ```
 
@@ -76,23 +76,23 @@ factory options applied before the array is returned.
 import { createConfig } from "eslint-config-nick2bad4u";
 
 export default createConfig({
-    allowDefaultProjectFilePatterns: [
-        "*.config.{js,mjs,cjs,ts,mts,cts}",
-        "*.config.*.{js,mjs,cjs,ts,mts,cts}",
-        ".*rc.{js,mjs,cjs,ts,mts,cts}",
-        "preset.mjs",
-    ],
-    rootDirectory: import.meta.dirname,
-    tsconfigPaths: ["./tsconfig.eslint.json"],
+ allowDefaultProjectFilePatterns: [
+  "*.config.{js,mjs,cjs,ts,mts,cts}",
+  "*.config.*.{js,mjs,cjs,ts,mts,cts}",
+  ".*rc.{js,mjs,cjs,ts,mts,cts}",
+  "preset.mjs",
+ ],
+ rootDirectory: import.meta.dirname,
+ tsconfigPaths: ["./tsconfig.eslint.json"],
 });
 ```
 
-| Option | Default | Guidance |
-| --- | --- | --- |
-| `allowDefaultProjectFilePatterns` | `["*.mjs", ".*.mjs"]` | Root globs passed to `parserOptions.projectService.allowDefaultProject`. Only include files outside `tsconfigPaths`. |
-| `rootDirectory` | `process.cwd()` | Set this when ESLint runs from outside the package root. |
-| `tsconfigPaths` | `["./tsconfig.eslint.json"]` | Prefer one catch-all lint tsconfig. Add paths only for isolated compiler settings. |
-| `plugins` | `{}` | Pass a plugin object to replace a namespace, or `false`/`null` to disable it. |
+| Option                            | Default                      | Guidance                                                                                                             |
+| --------------------------------- | ---------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `allowDefaultProjectFilePatterns` | `["*.mjs", ".*.mjs"]`        | Root globs passed to `parserOptions.projectService.allowDefaultProject`. Only include files outside `tsconfigPaths`. |
+| `rootDirectory`                   | `process.cwd()`              | Set this when ESLint runs from outside the package root.                                                             |
+| `tsconfigPaths`                   | `["./tsconfig.eslint.json"]` | Prefer one catch-all lint tsconfig. Add paths only for isolated compiler settings.                                   |
+| `plugins`                         | `{}`                         | Pass a plugin object to replace a namespace, or `false`/`null` to disable it.                                        |
 
 ### Root directory
 
@@ -103,7 +103,7 @@ Passing `import.meta.dirname` is the most explicit option for ESM config files.
 import { createConfig } from "eslint-config-nick2bad4u";
 
 export default createConfig({
-    rootDirectory: import.meta.dirname,
+ rootDirectory: import.meta.dirname,
 });
 ```
 
@@ -118,15 +118,15 @@ That project should cover every file ESLint can visit.
 
 ```json
 {
-    "$schema": "https://www.schemastore.org/tsconfig.json",
-    "extends": "./tsconfig.json",
-    "compilerOptions": {
-        "allowJs": true,
-        "checkJs": true,
-        "noEmit": true
-    },
-    "exclude": ["node_modules/**", "dist/**", "coverage/**", ".cache/**"],
-    "include": ["**/*", "**/.*"]
+ "$schema": "https://www.schemastore.org/tsconfig.json",
+ "extends": "./tsconfig.json",
+ "compilerOptions": {
+  "allowJs": true,
+  "checkJs": true,
+  "noEmit": true
+ },
+ "exclude": ["node_modules/**", "dist/**", "coverage/**", ".cache/**"],
+ "include": ["**/*", "**/.*"]
 }
 ```
 
@@ -140,11 +140,8 @@ compiler options that cannot live in the catch-all lint project.
 import { createConfig } from "eslint-config-nick2bad4u";
 
 export default createConfig({
-    rootDirectory: import.meta.dirname,
-    tsconfigPaths: [
-        "./tsconfig.eslint.json",
-        "./tsconfig.benchmarks.json",
-    ],
+ rootDirectory: import.meta.dirname,
+ tsconfigPaths: ["./tsconfig.eslint.json", "./tsconfig.benchmarks.json"],
 });
 ```
 
@@ -157,9 +154,9 @@ to remove a packaged namespace from the shared config.
 import { createConfig } from "eslint-config-nick2bad4u";
 
 export default createConfig({
-    plugins: {
-        typefest: false,
-    },
+ plugins: {
+  typefest: false,
+ },
 });
 ```
 
@@ -171,20 +168,20 @@ import { createConfig } from "eslint-config-nick2bad4u";
 import localTypefest from "./plugin.mjs";
 
 export default [
-    ...createConfig({
-        rootDirectory: import.meta.dirname,
-        plugins: { typefest: false },
-    }),
-    {
-        files: ["src/**/*.{ts,tsx,mts,cts}"],
-        name: "Local Typefest rules",
-        plugins: {
-            typefest: localTypefest,
-        },
-        rules: {
-            ...localTypefest.configs.experimental.rules,
-        },
-    },
+ ...createConfig({
+  rootDirectory: import.meta.dirname,
+  plugins: { typefest: false },
+ }),
+ {
+  files: ["src/**/*.{ts,tsx,mts,cts}"],
+  name: "Local Typefest rules",
+  plugins: {
+   typefest: localTypefest,
+  },
+  rules: {
+   ...localTypefest.configs.experimental.rules,
+  },
+ },
 ];
 ```
 
@@ -195,27 +192,27 @@ import nick2bad4u from "eslint-config-nick2bad4u";
 import localTypefest from "./plugin.mjs";
 
 export default [
-    ...nick2bad4u.configs.withoutTypefest,
-    {
-        files: ["src/**/*.{ts,tsx,mts,cts}"],
-        name: "Local Typefest rules",
-        plugins: {
-            typefest: localTypefest,
-        },
-        rules: {
-            ...localTypefest.configs.experimental.rules,
-        },
-    },
+ ...nick2bad4u.configs.withoutTypefest,
+ {
+  files: ["src/**/*.{ts,tsx,mts,cts}"],
+  name: "Local Typefest rules",
+  plugins: {
+   typefest: localTypefest,
+  },
+  rules: {
+   ...localTypefest.configs.experimental.rules,
+  },
+ },
 ];
 ```
 
 ## Environment variables
 
-| Variable | Values | Effect |
-| --- | --- | --- |
-| `ESLINT_CONFIG_ROOT` | path string | Fallback root directory when `createConfig({ rootDirectory })` is not used. |
-| `ESLINT_PROGRESS` | unset, `on`, `nofile`, `off`, `0`, `false` | Controls file progress output. |
-| `ENABLE_JSON_SCHEMA_VALIDATION` | `1` | Enables the optional validator preset for JSON, JSONC, JSON5, YAML, TOML, JavaScript, and Vue custom blocks when the consumer installs an ESLint-10-compatible validator plugin. |
+| Variable                        | Values                                     | Effect                                                                                                                                     |
+| ------------------------------- | ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| `ESLINT_CONFIG_ROOT`            | path string                                | Fallback root directory when `createConfig({ rootDirectory })` is not used.                                                                |
+| `ESLINT_PROGRESS`               | unset, `on`, `nofile`, `off`, `0`, `false` | Controls file progress output.                                                                                                             |
+| `ENABLE_JSON_SCHEMA_VALIDATION` | `1`                                        | Enables the optional `eslint-plugin-json-schema-validator-2` preset for JSON, JSONC, JSON5, YAML, TOML, JavaScript, and Vue custom blocks. |
 
 ## Validation after configuration changes
 

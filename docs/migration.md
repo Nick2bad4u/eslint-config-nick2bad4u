@@ -146,14 +146,14 @@ Append project-specific overrides after the shared preset:
 import nick2bad4u from "eslint-config-nick2bad4u";
 
 export default [
-    ...nick2bad4u.configs.all,
-    {
-        files: ["scripts/**/*.mjs"],
-        name: "Project script overrides",
-        rules: {
-            "no-console": "off",
-        },
-    },
+ ...nick2bad4u.configs.all,
+ {
+  files: ["scripts/**/*.mjs"],
+  name: "Project script overrides",
+  rules: {
+   "no-console": "off",
+  },
+ },
 ];
 ```
 
@@ -164,8 +164,8 @@ settings:
 import { createConfig } from "eslint-config-nick2bad4u";
 
 export default createConfig({
-    rootDirectory: import.meta.dirname,
-    tsconfigPaths: ["./tsconfig.eslint.json"],
+ rootDirectory: import.meta.dirname,
+ tsconfigPaths: ["./tsconfig.eslint.json"],
 });
 ```
 
@@ -184,11 +184,11 @@ stacking multiple complete presets:
 import { createConfig } from "eslint-config-nick2bad4u";
 
 export default createConfig({
-    rootDirectory: import.meta.dirname,
-    plugins: {
-        "docusaurus-2": false,
-        vite: false,
-    },
+ rootDirectory: import.meta.dirname,
+ plugins: {
+  "docusaurus-2": false,
+  vite: false,
+ },
 });
 ```
 
@@ -199,15 +199,15 @@ file ESLint can visit, including JavaScript config files and dotfiles.
 
 ```json
 {
-    "$schema": "https://www.schemastore.org/tsconfig.json",
-    "extends": "./tsconfig.json",
-    "compilerOptions": {
-        "allowJs": true,
-        "checkJs": true,
-        "noEmit": true
-    },
-    "exclude": ["node_modules/**", "dist/**", "coverage/**", ".cache/**"],
-    "include": ["**/*", "**/.*"]
+ "$schema": "https://www.schemastore.org/tsconfig.json",
+ "extends": "./tsconfig.json",
+ "compilerOptions": {
+  "allowJs": true,
+  "checkJs": true,
+  "noEmit": true
+ },
+ "exclude": ["node_modules/**", "dist/**", "coverage/**", ".cache/**"],
+ "include": ["**/*", "**/.*"]
 }
 ```
 
@@ -219,8 +219,8 @@ changes module detection, add that file explicitly:
 
 ```json
 {
-    "files": ["stylelint.config.mjs"],
-    "include": ["**/*", "**/.*"]
+ "files": ["stylelint.config.mjs"],
+ "include": ["**/*", "**/.*"]
 }
 ```
 
@@ -244,30 +244,30 @@ npx eslint .
 All presets are exposed on the default export as `.configs` and as the named
 `presets` export.
 
-| Preset | Description |
-| --- | --- |
-| `all` | Full shared config, including packaged Typefest and Etc-Misc source-rule sections. |
-| `recommended` | Alias for `all`. |
-| `base` | Shared config without explicit source-rule plugin sections. |
-| `withoutCopilot` | Full shared config without Copilot rules. |
-| `withoutDocusaurus2` | Full shared config without Docusaurus 2 plugin rules. |
-| `withoutEtcMisc` | Full shared config without the Etc-Misc source-rule section. |
-| `withoutFileProgress2` | Full shared config without File Progress 2 rules. |
-| `withoutGitHubActions2` | Full shared config without GitHub Actions 2 rules. |
-| `withoutGithubActions2` | Deprecated alias for `withoutGitHubActions2`. |
-| `withoutImmutable2` | Full shared config without Immutable 2 rules. |
-| `withoutRemark` | Full shared config without Remark plugin rules. |
-| `withoutRepo` | Full shared config without Repo plugin rules. |
-| `withoutRuntimeCleanup` | Full shared config without Runtime Cleanup plugin rules. |
-| `withoutSdl2` | Full shared config without SDL 2 rules. |
-| `withoutStylelint2` | Full shared config without Stylelint 2 rules. |
-| `withoutTestSignal` | Full shared config without Test Signal plugin rules. |
-| `withoutTsconfig` | Full shared config without tsconfig-validation rules. |
-| `withoutTsdocRequire2` | Full shared config without TSDoc Require 2 rules. |
-| `withoutTypedoc` | Full shared config without TypeDoc rules. |
-| `withoutTypefest` | Full shared config without the Typefest source-rule section. |
-| `withoutVite` | Full shared config without Vite plugin rules. |
-| `withoutWriteGoodComments2` | Full shared config without Write Good Comments 2 rules. |
+| Preset                      | Description                                                                        |
+| --------------------------- | ---------------------------------------------------------------------------------- |
+| `all`                       | Full shared config, including packaged Typefest and Etc-Misc source-rule sections. |
+| `recommended`               | Alias for `all`.                                                                   |
+| `base`                      | Shared config without explicit source-rule plugin sections.                        |
+| `withoutCopilot`            | Full shared config without Copilot rules.                                          |
+| `withoutDocusaurus2`        | Full shared config without Docusaurus 2 plugin rules.                              |
+| `withoutEtcMisc`            | Full shared config without the Etc-Misc source-rule section.                       |
+| `withoutFileProgress2`      | Full shared config without File Progress 2 rules.                                  |
+| `withoutGitHubActions2`     | Full shared config without GitHub Actions 2 rules.                                 |
+| `withoutGithubActions2`     | Deprecated alias for `withoutGitHubActions2`.                                      |
+| `withoutImmutable2`         | Full shared config without Immutable 2 rules.                                      |
+| `withoutRemark`             | Full shared config without Remark plugin rules.                                    |
+| `withoutRepo`               | Full shared config without Repo plugin rules.                                      |
+| `withoutRuntimeCleanup`     | Full shared config without Runtime Cleanup plugin rules.                           |
+| `withoutSdl2`               | Full shared config without SDL 2 rules.                                            |
+| `withoutStylelint2`         | Full shared config without Stylelint 2 rules.                                      |
+| `withoutTestSignal`         | Full shared config without Test Signal plugin rules.                               |
+| `withoutTsconfig`           | Full shared config without tsconfig-validation rules.                              |
+| `withoutTsdocRequire2`      | Full shared config without TSDoc Require 2 rules.                                  |
+| `withoutTypedoc`            | Full shared config without TypeDoc rules.                                          |
+| `withoutTypefest`           | Full shared config without the Typefest source-rule section.                       |
+| `withoutVite`               | Full shared config without Vite plugin rules.                                      |
+| `withoutWriteGoodComments2` | Full shared config without Write Good Comments 2 rules.                            |
 
 ## Local plugin dogfooding
 
@@ -280,17 +280,17 @@ import nick2bad4u from "eslint-config-nick2bad4u";
 import typefest from "./plugin.mjs";
 
 export default [
-    ...nick2bad4u.configs.withoutTypefest,
-    {
-        files: ["src/**/*.{ts,tsx,mts,cts}"],
-        name: "Local Typefest rules",
-        plugins: {
-            typefest,
-        },
-        rules: {
-            ...typefest.configs.experimental.rules,
-        },
-    },
+ ...nick2bad4u.configs.withoutTypefest,
+ {
+  files: ["src/**/*.{ts,tsx,mts,cts}"],
+  name: "Local Typefest rules",
+  plugins: {
+   typefest,
+  },
+  rules: {
+   ...typefest.configs.experimental.rules,
+  },
+ },
 ];
 ```
 
@@ -339,9 +339,8 @@ export default [...presets.all];
 
 ### Optional schema validation does not run
 
-Schema validation is opt-in. Install an ESLint-10-compatible
-`eslint-plugin-json-schema-validator` in the consuming repository and run ESLint
-with the opt-in environment variable:
+Schema validation is opt-in. Install `eslint-plugin-json-schema-validator-2` in
+the consuming repository and run ESLint with the opt-in environment variable:
 
 ```powershell
 $env:ENABLE_JSON_SCHEMA_VALIDATION = "1"

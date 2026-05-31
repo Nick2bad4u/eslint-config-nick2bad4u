@@ -1,5 +1,5 @@
 /* eslint-disable-next-line @eslint-community/eslint-comments/disable-enable-pair -- Disabled by design */
-/* eslint-disable import-x/no-rename-default, no-console, @typescript-eslint/triple-slash-reference, import-x/max-dependencies -- Disabled by design */
+/* eslint-disable import-x/no-rename-default, @typescript-eslint/triple-slash-reference, import-x/max-dependencies -- Disabled by design */
 /**
  * Optimized ESLint configuration
  *
@@ -44,6 +44,7 @@ import githubActions from "eslint-plugin-github-actions-2";
 import immutable from "eslint-plugin-immutable-2";
 import { importX } from "eslint-plugin-import-x";
 import jsdoc from "eslint-plugin-jsdoc";
+import jsonSchemaValidator from "eslint-plugin-json-schema-validator-2";
 import jsonc from "eslint-plugin-jsonc";
 import listeners from "eslint-plugin-listeners";
 import math from "eslint-plugin-math";
@@ -80,7 +81,6 @@ import writeGoodComments from "eslint-plugin-write-good-comments-2";
 import yml from "eslint-plugin-yml";
 import globals from "globals";
 import * as jsoncEslintParser from "jsonc-eslint-parser";
-import { createRequire } from "node:module";
 import * as path from "node:path";
 import * as tomlEslintParser from "toml-eslint-parser";
 import {
@@ -99,64 +99,28 @@ import {
 import tseslint from "typescript-eslint";
 import * as yamlEslintParser from "yaml-eslint-parser";
 
-const require = createRequire(import.meta.url);
 const processEnvironment = globalThis.process.env;
 
 // #region ✅ JSON Schema Validator
 // ═══════════════════════════════════════════════════════════════════════════════
-// NOTE: eslint-plugin-json-schema-validator validates more than JSON files. Its
+// NOTE: eslint-plugin-json-schema-validator-2 validates more than JSON files. Its
 // recommended preset also covers JSONC, JSON5, YAML, TOML, JavaScript, and Vue
 // custom blocks. Keep the whole preset opt-in so default linting remains
-// offline-friendly and compatible with ESLint 10 while the validator catches up.
+// offline-friendly.
+// PowerShell one-shot:
+// $env:ENABLE_JSON_SCHEMA_VALIDATION=1; npx eslint .; Remove-Item Env:ENABLE_JSON_SCHEMA_VALIDATION -EA 0
 const enableJsonSchemaValidation =
     processEnvironment["ENABLE_JSON_SCHEMA_VALIDATION"] === "1";
-const jsonSchemaValidatorPackageName = "eslint-plugin-json-schema-validator";
-const jsonSchemaValidatorRecommendedConfigName = "recommended";
-const jsonSchemaValidatorRuleName = "no-invalid";
-
-let jsonSchemaValidatorRecommendedConfigs: EslintConfig[] = [];
-
-if (enableJsonSchemaValidation) {
-    try {
-        // eslint-disable-next-line import-x/no-dynamic-require -- Controlled optional package name constant; no user input reaches require.
-        const loadedJsonSchemaValidator: unknown = require(
-            jsonSchemaValidatorPackageName
-        );
-        const jsonSchemaValidatorCandidate = objectHasOwn(
-            loadedJsonSchemaValidator,
-            "default"
-        )
-            ? loadedJsonSchemaValidator.default
-            : loadedJsonSchemaValidator;
-        if (
-            hasPluginRule(
-                jsonSchemaValidatorCandidate,
-                jsonSchemaValidatorRuleName
-            )
-        ) {
-            const recommendedConfigs = getNamedPluginConfigs(
-                jsonSchemaValidatorCandidate,
-                jsonSchemaValidatorRecommendedConfigName,
-                "✅ JSON Schema Validator: Recommended"
-            );
-            if (recommendedConfigs === null) {
-                console.warn(
-                    `[eslint-config-nick2bad4u] ${jsonSchemaValidatorPackageName} did not export configs.${jsonSchemaValidatorRecommendedConfigName}; JSON schema validation remains disabled.`
-                );
-            } else {
-                jsonSchemaValidatorRecommendedConfigs = recommendedConfigs;
-            }
-        } else {
-            console.warn(
-                `[eslint-config-nick2bad4u] ${jsonSchemaValidatorPackageName} did not export a plugin with the ${jsonSchemaValidatorRuleName} rule; JSON schema validation remains disabled.`
-            );
-        }
-    } catch {
-        console.warn(
-            `[eslint-config-nick2bad4u] ${jsonSchemaValidatorPackageName} is not installed; JSON schema validation remains disabled.`
-        );
-    }
-}
+const jsonSchemaValidatorRecommendedConfigs = enableJsonSchemaValidation
+    ? jsonSchemaValidator.configs.recommended.map(
+          (config, index): EslintConfig => ({
+              ...config,
+              name:
+                  config.name ??
+                  `✅ JSON Schema Validator: Recommended ${String(index + 1)}`,
+          })
+      )
+    : [];
 
 // #endregion ✅ JSON Schema Validator
 // #region 📁 Markdown Code Block Processor
@@ -164,6 +128,8 @@ if (enableJsonSchemaValidation) {
 // The markdown processor changes Markdown linting from "lint the document" to
 // "lint extracted fenced code blocks". Keep it opt-in so remark/remark and the
 // markdown/gfm document rules remain the default Markdown path.
+// PowerShell one-shot:
+// $flag = "ENABLE_MARKDOWN_CODE_BLOCK_LINTING"; Set-Item "Env:$flag" 1; npx eslint .; Remove-Item "Env:$flag" -EA 0
 const enableMarkdownCodeBlockLinting =
     processEnvironment["ENABLE_MARKDOWN_CODE_BLOCK_LINTING"] === "1";
 
@@ -311,6 +277,9 @@ type PluginOverrides = Readonly<Record<string, PluginOverride>>;
  * - "nofile": enable progress but hide file names
  * - "off" / "0" / "false": disable progress
  */
+// PowerShell one-shots:
+// $env:ESLINT_PROGRESS="nofile"; npx eslint .; Remove-Item Env:ESLINT_PROGRESS -EA 0
+// $env:ESLINT_PROGRESS="off"; npx eslint .; Remove-Item Env:ESLINT_PROGRESS -EA 0
 const ESLINT_PROGRESS_MODE = (
     processEnvironment["ESLINT_PROGRESS"] ?? "on"
 ).toLowerCase();
@@ -1097,7 +1066,7 @@ export const createConfig = (
                         type: "natural",
                         useConfigurationIf: {
                             matchesAstSelector:
-                                "TSAsExpression > ArrayExpression",
+                                "TSAsExpression:not(TSSatisfiesExpression > TSAsExpression) > ArrayExpression",
                         },
                     },
                 ],
@@ -1169,6 +1138,9 @@ export const createConfig = (
             // prettier-ignore
             rules: {
                 ...repo.configs.recommended.rules,
+                ...repo.configs.github.rules,
+                ...repo.configs.dependabot.rules,
+                ...repo.configs.node.rules,
                 "repo-compliance/require-aws-amplify-artifacts-base-directory": "off",
                 "repo-compliance/require-aws-amplify-artifacts-base-directory-relative-path": "off",
                 "repo-compliance/require-aws-amplify-artifacts-files": "off",
@@ -1193,7 +1165,7 @@ export const createConfig = (
                 "repo-compliance/require-bitbucket-pipelines-pull-requests": "off",
                 "repo-compliance/require-bitbucket-pipelines-pull-requests-target-branches": "off",
                 "repo-compliance/require-bitbucket-pipelines-step-name": "off",
-                "repo-compliance/require-copilot-instructions-file": "warn",
+                "repo-compliance/require-copilot-instructions-file": "off",
                 "repo-compliance/require-digitalocean-app-spec-component": "off",
                 "repo-compliance/require-digitalocean-app-spec-file": "off",
                 "repo-compliance/require-digitalocean-app-spec-name": "off",
@@ -1258,9 +1230,6 @@ export const createConfig = (
                 "repo-compliance/require-vercel-version-value": "off",
             },
         },
-        repo.configs.github,
-        repo.configs.dependabot,
-        repo.configs.node,
         {
             ...typedoc.configs.recommended,
             files: [...TYPEDOC_API_FILE_PATTERNS],
@@ -3555,60 +3524,11 @@ function flattenConfigs(configs: readonly EslintConfigInput[]): EslintConfig[] {
     }, []);
 }
 
-function getNamedPluginConfigs(
-    pluginCandidate: ConfigurablePlugin,
-    configName: string,
-    fallbackName: string
-): EslintConfig[] | null {
-    const { configs } = pluginCandidate;
-    if (
-        typeof configs !== "object" ||
-        !isPresent(configs) ||
-        Array.isArray(configs) ||
-        !objectHasOwn(configs, configName)
-    ) {
-        return null;
-    }
-    const configInput = configs[configName] as EslintConfigInput;
-    const normalizedConfigs = flattenConfigs([configInput]);
-    return normalizedConfigs.map(
-        (config, index): EslintConfig => ({
-            ...config,
-            name:
-                config.name ??
-                (normalizedConfigs.length === 1
-                    ? fallbackName
-                    : `${fallbackName} ${String(index + 1)}`),
-        })
-    );
-}
-
 function getRulePluginName(ruleName: string): string {
     if (ruleName.startsWith("@")) {
         return arrayJoin(stringSplit(ruleName, "/").slice(0, 2), "/");
     }
     return arrayFirst(stringSplit(ruleName, "/")) ?? ruleName;
-}
-
-function hasPluginRule(
-    pluginCandidate: unknown,
-    ruleName: string
-): pluginCandidate is ConfigurablePlugin {
-    if (
-        typeof pluginCandidate !== "object" ||
-        !isPresent(pluginCandidate) ||
-        Array.isArray(pluginCandidate) ||
-        !objectHasOwn(pluginCandidate, "rules")
-    ) {
-        return false;
-    }
-    const { rules } = pluginCandidate;
-    return (
-        typeof rules === "object" &&
-        isPresent(rules) &&
-        !Array.isArray(rules) &&
-        objectHasOwn(rules, ruleName)
-    );
 }
 
 function removeDisabledPluginRules(

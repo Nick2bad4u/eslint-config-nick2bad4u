@@ -5,15 +5,15 @@ presets, public types, and release validation in `eslint-config-nick2bad4u`.
 
 ## Source-of-truth map
 
-| Surface | Source of truth | Keep synchronized with |
-| --- | --- | --- |
-| Runtime config blocks and preset construction | [`src/shared-config.ts`](../src/shared-config.ts) | [`test/preset.test.ts`](../test/preset.test.ts), [`README.md`](../README.md), [migration guide](./migration.md) |
-| Public runtime entry point | [`src/preset.ts`](../src/preset.ts) | [`index.d.ts`](../index.d.ts), [`package.json`](../package.json) exports |
-| Published type contract | [`index.d.ts`](../index.d.ts) | [`src/preset.ts`](../src/preset.ts), [`src/shared-config.ts`](../src/shared-config.ts), README examples |
-| Package metadata, scripts, peers, dependencies, published files | [`package.json`](../package.json) | README requirements, migration steps, release checks |
-| Preset behavior | [`test/preset.test.ts`](../test/preset.test.ts) | [`README.md`](../README.md), [configuration guide](./configuration.md), [migration guide](./migration.md) |
-| Consumer documentation | [`README.md`](../README.md), [configuration guide](./configuration.md) | Public API and current package scripts |
-| Migration documentation | [migration guide](./migration.md) | Peer ranges, bundled dependencies, preset names |
+| Surface                                                         | Source of truth                                                        | Keep synchronized with                                                                                          |
+| --------------------------------------------------------------- | ---------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| Runtime config blocks and preset construction                   | [`src/shared-config.ts`](../src/shared-config.ts)                      | [`test/preset.test.ts`](../test/preset.test.ts), [`README.md`](../README.md), [migration guide](./migration.md) |
+| Public runtime entry point                                      | [`src/preset.ts`](../src/preset.ts)                                    | [`index.d.ts`](../index.d.ts), [`package.json`](../package.json) exports                                        |
+| Published type contract                                         | [`index.d.ts`](../index.d.ts)                                          | [`src/preset.ts`](../src/preset.ts), [`src/shared-config.ts`](../src/shared-config.ts), README examples         |
+| Package metadata, scripts, peers, dependencies, published files | [`package.json`](../package.json)                                      | README requirements, migration steps, release checks                                                            |
+| Preset behavior                                                 | [`test/preset.test.ts`](../test/preset.test.ts)                        | [`README.md`](../README.md), [configuration guide](./configuration.md), [migration guide](./migration.md)       |
+| Consumer documentation                                          | [`README.md`](../README.md), [configuration guide](./configuration.md) | Public API and current package scripts                                                                          |
+| Migration documentation                                         | [migration guide](./migration.md)                                      | Peer ranges, bundled dependencies, preset names                                                                 |
 
 Do not patch generated output to make checks pass. Fix the source, config, or
 generator workflow instead.
@@ -101,17 +101,17 @@ import nick2bad4u from "eslint-config-nick2bad4u";
 import localPlugin from "./plugin.mjs";
 
 export default [
-    ...nick2bad4u.configs.withoutMyPlugin,
-    {
-        files: ["src/**/*.{js,mjs,cjs,ts,mts,cts,tsx,jsx}"],
-        name: "Local MyPlugin rules",
-        plugins: {
-            "my-plugin": localPlugin,
-        },
-        rules: {
-            ...localPlugin.configs.recommended.rules,
-        },
-    },
+ ...nick2bad4u.configs.withoutMyPlugin,
+ {
+  files: ["src/**/*.{js,mjs,cjs,ts,mts,cts,tsx,jsx}"],
+  name: "Local MyPlugin rules",
+  plugins: {
+   "my-plugin": localPlugin,
+  },
+  rules: {
+   ...localPlugin.configs.recommended.rules,
+  },
+ },
 ];
 ```
 

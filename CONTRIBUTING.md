@@ -52,12 +52,12 @@ configure, migrate, dogfood, or validate this package.
 Use the smallest reliable check while developing, then run the aggregate checks
 before review.
 
-| Change type | Recommended checks |
-| --- | --- |
-| Documentation only | `npm run lint:prettier`, `npm run lint`, `npm run lint:secretlint` |
-| Config or preset behavior | `npm run test`, `npm run typecheck`, `npm run lint` |
-| Package metadata, exports, or published files | `npm run lint:package:strict`, `npm run package:check` |
-| Release readiness | `npm run release:verify` |
+| Change type                                   | Recommended checks                                                 |
+| --------------------------------------------- | ------------------------------------------------------------------ |
+| Documentation only                            | `npm run lint:prettier`, `npm run lint`, `npm run lint:secretlint` |
+| Config or preset behavior                     | `npm run test`, `npm run typecheck`, `npm run lint`                |
+| Package metadata, exports, or published files | `npm run lint:package:strict`, `npm run package:check`             |
+| Release readiness                             | `npm run release:verify`                                           |
 
 `npm run lint:all` is the normal pre-PR aggregate check. `npm run
 release:verify` is the stricter release gate and includes no-cache linting,
