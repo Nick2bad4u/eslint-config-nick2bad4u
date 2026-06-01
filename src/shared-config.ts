@@ -925,6 +925,7 @@ export const createConfig = (
                 "eslint-plugin/require-meta-docs-recommended": "warn",
                 "eslint-plugin/require-meta-docs-url": "warn",
                 "eslint-plugin/require-test-case-name": "warn",
+                "eslint-plugin/require-test-error-positions": "warn",
                 "eslint-plugin/test-case-property-ordering": "warn",
                 "eslint-plugin/test-case-shorthand-strings": "warn",
                 "eslint-plugin/unique-test-case-names": "warn",
