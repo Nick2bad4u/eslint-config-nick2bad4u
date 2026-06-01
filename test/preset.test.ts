@@ -476,10 +476,7 @@ describe("eslint-config-nick2bad4u presets", () => {
         expect.assertions(3);
 
         const globalConfig = findConfigByName(presets.all, "🌍 Global: Rules");
-        const unicornConfig = findConfigByName(
-            presets.all,
-            "🦄 Unicorn: All"
-        );
+        const unicornConfig = findConfigByName(presets.all, "🦄 Unicorn: All");
 
         expect(globalConfig?.rules?.["no-continue"]).toBe("off");
         expect(
@@ -497,9 +494,7 @@ describe("eslint-config-nick2bad4u presets", () => {
                 allowRegExp: false,
             },
         ]);
-        expect(unicornConfig?.rules?.["unicorn/no-keyword-prefix"]).toBe(
-            "off"
-        );
+        expect(unicornConfig?.rules?.["unicorn/no-keyword-prefix"]).toBe("off");
     });
 
     it("keeps targeted shared false-positive overrides scoped", () => {
