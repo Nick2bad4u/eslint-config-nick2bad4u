@@ -457,13 +457,98 @@ describe("eslint-config-nick2bad4u presets", () => {
 
         expect(testSignalConfig?.ignores).toStrictEqual(
             expect.arrayContaining([
+                "**/*RuleTester*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
+                "**/*ruleTester*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
                 "**/*rule-tester*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
+                "**/RuleTester/**",
+                "**/benchmark/**",
+                "**/benchmarks/**",
+                "**/rule-tester/**",
                 "**/test/_internal/**",
                 "**/test/fixtures/**",
                 "**/tests/_internal/**",
                 "**/tests/fixtures/**",
             ])
         );
+    });
+
+    it("relaxes global low-value style and template-expression rules", () => {
+        expect.assertions(3);
+
+        const globalConfig = findConfigByName(presets.all, "🌍 Global: Rules");
+        const unicornConfig = findConfigByName(
+            presets.all,
+            "🦄 Unicorn: All"
+        );
+
+        expect(globalConfig?.rules?.["no-continue"]).toBe("off");
+        expect(
+            globalConfig?.rules?.[
+                "@typescript-eslint/restrict-template-expressions"
+            ]
+        ).toStrictEqual([
+            "error",
+            {
+                allowAny: false,
+                allowBoolean: false,
+                allowNever: false,
+                allowNullish: false,
+                allowNumber: true,
+                allowRegExp: false,
+            },
+        ]);
+        expect(unicornConfig?.rules?.["unicorn/no-keyword-prefix"]).toBe(
+            "off"
+        );
+    });
+
+    it("keeps targeted shared false-positive overrides scoped", () => {
+        expect.assertions(9);
+
+        const configFileConfig = findConfigByName(
+            presets.all,
+            "🐆 Config Files"
+        );
+        const javaScriptConfig = findConfigByName(
+            presets.all,
+            "☕ JavaScript: JS/MJS/CJS ⛔ Overrides"
+        );
+        const nodeEsmConfig = findConfigByName(
+            presets.all,
+            "🟢 Node ESM: MJS ⛔ Overrides"
+        );
+        const markdownSnapshotConfig = findConfigByName(
+            presets.all,
+            "📸 Markdown Snapshots: ⛔ Overrides"
+        );
+        const testConfig = findConfigByName(
+            presets.all,
+            "🧪 Tests: Tests, Benchmarks ⛔ Overrides"
+        );
+        const typeDeclarationConfig = findConfigByName(
+            presets.all,
+            "🗄️ Type Declarations: TypeScript Parser"
+        );
+
+        expect(configFileConfig?.rules?.["n/no-process-env"]).toBe("off");
+        expect(javaScriptConfig?.files).toStrictEqual(["**/*.{js,mjs,cjs}"]);
+        expect(
+            javaScriptConfig?.rules?.[
+                "@typescript-eslint/explicit-module-boundary-types"
+            ]
+        ).toBe("off");
+        expect(nodeEsmConfig?.files).toStrictEqual(["*.mjs", "**/*.mjs"]);
+        expect(nodeEsmConfig?.rules?.["import-x/extensions"]).toBe("off");
+        expect(markdownSnapshotConfig?.files).toStrictEqual([
+            "**/__snapshots__/**/*.{md,markdown,mdx}",
+        ]);
+        expect(markdownSnapshotConfig?.rules?.["remark/remark"]).toBe("off");
+        expect(testConfig?.rules?.["vitest/require-hook"]).toBe("off");
+        expect(
+            typeDeclarationConfig?.rules?.[
+                "@typescript-eslint/prefer-readonly-parameter-types"
+            ]
+        ).toBe("off");
     });
 
     it("supports local source-rule plugin replacement via createConfig", () => {

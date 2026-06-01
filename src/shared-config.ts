@@ -148,8 +148,14 @@ const SOURCE_FILE_PATTERNS = Object.freeze([
     "src/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
 ]);
 const TEST_SIGNAL_IGNORES = Object.freeze([
+    "**/*RuleTester*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
+    "**/*ruleTester*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
     "**/*rule-tester*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
+    "**/RuleTester/**",
     "**/__fixtures__/**",
+    "**/benchmark/**",
+    "**/benchmarks/**",
+    "**/rule-tester/**",
     "**/test/_internal/**",
     "**/test/fixtures/**",
     "**/tests/_internal/**",
@@ -620,17 +626,7 @@ export const createConfig = (
                         },
                     },
                 ],
-                "unicorn/no-keyword-prefix": [
-                    "error",
-                    {
-                        checkProperties: false,
-                        disallowedPrefixes: [
-                            "interface",
-                            "type",
-                            "enum",
-                        ],
-                    },
-                ], // Allow "class" prefix for className and other legitimate uses
+                "unicorn/no-keyword-prefix": "off", // Too hostile for TypeScript/domain names like typeNode and errorMessage
                 "unicorn/no-null": "off", // Noisy and low quality
                 "unicorn/no-useless-undefined": "off",
                 "unicorn/prevent-abbreviations": "off", // Noisy and low quality
@@ -1921,6 +1917,17 @@ export const createConfig = (
                     },
                 ],
                 "@typescript-eslint/require-array-sort-compare": "warn",
+                "@typescript-eslint/restrict-template-expressions": [
+                    "error",
+                    {
+                        allowAny: false,
+                        allowBoolean: false,
+                        allowNever: false,
+                        allowNullish: false,
+                        allowNumber: true,
+                        allowRegExp: false,
+                    },
+                ],
                 "@typescript-eslint/strict-boolean-expressions": "warn",
                 "@typescript-eslint/strict-void-return": "warn",
                 "@typescript-eslint/switch-exhaustiveness-check": "error", // Ensure switch statements are exhaustive
@@ -1957,6 +1964,7 @@ export const createConfig = (
                 "max-params": "off", // Use TypeScript version which can be configured to ignore `this` parameters and is more aware of function overloads.
                 "max-statements": "off",
                 "no-array-constructor": "off", // Use typescript version instead
+                "no-continue": "off",
                 "no-dupe-class-members": "off", // Use typescript version instead
                 "no-empty-character-class": "error",
                 "no-implied-eval": "off", // Use TypeScript version which can catch more cases with type information
@@ -2132,6 +2140,7 @@ export const createConfig = (
                 "unicorn/no-await-expression-member": "off", // Allow await in test expressions
                 "unicorn/prefer-at": "off",
                 "unicorn/prefer-spread": "off",
+                "vitest/require-hook": "off",
             },
             settings: {
                 "import-x/resolver": {
@@ -3368,6 +3377,7 @@ export const createConfig = (
             name: "🐆 Config Files",
             rules: {
                 "max-classes-per-file": "off",
+                "n/no-process-env": "off",
                 "no-console": "off",
                 "no-undef-init": "off",
                 "perfectionist/sort-arrays": "off", // Configs often have intentionally unsorted arrays
@@ -3458,6 +3468,27 @@ export const createConfig = (
             },
         },
         {
+            files: ["**/*.{js,mjs,cjs}"],
+            name: "☕ JavaScript: JS/MJS/CJS ⛔ Overrides",
+            rules: {
+                "@typescript-eslint/explicit-module-boundary-types": "off",
+            },
+        },
+        {
+            files: ["*.mjs", "**/*.mjs"],
+            name: "🟢 Node ESM: MJS ⛔ Overrides",
+            rules: {
+                "import-x/extensions": "off",
+            },
+        },
+        {
+            files: ["**/__snapshots__/**/*.{md,markdown,mdx}"],
+            name: "📸 Markdown Snapshots: ⛔ Overrides",
+            rules: {
+                "remark/remark": "off",
+            },
+        },
+        {
             files: ["**/*.d.{ts,tsx,mts,cts}"],
             languageOptions: {
                 parser: tseslint.parser,
@@ -3470,6 +3501,7 @@ export const createConfig = (
             },
             name: "🗄️ Type Declarations: TypeScript Parser",
             rules: {
+                "@typescript-eslint/prefer-readonly-parameter-types": "off",
                 "import-x/unambiguous": "off",
             },
         },
