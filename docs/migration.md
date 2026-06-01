@@ -337,15 +337,12 @@ import { presets } from "eslint-config-nick2bad4u";
 export default [...presets.all];
 ```
 
-### Optional schema validation does not run
+### Schema validation does not run
 
-Schema validation is opt-in. Install `eslint-plugin-json-schema-validator-2` in
-the consuming repository and run ESLint with the opt-in environment variable:
-
-```powershell
-$env:ENABLE_JSON_SCHEMA_VALIDATION = "1"
-npx eslint .
-```
+Schema validation now runs by default through
+`eslint-plugin-json-schema-validator-2`. If schema validation is missing, update
+this shared config and reinstall dependencies so the consuming project resolves
+the current package version.
 
 ## PowerShell quick-migration script
 

@@ -101,28 +101,6 @@ import * as yamlEslintParser from "yaml-eslint-parser";
 
 const processEnvironment = globalThis.process.env;
 
-// #region ✅ JSON Schema Validator
-// ═══════════════════════════════════════════════════════════════════════════════
-// NOTE: eslint-plugin-json-schema-validator-2 validates more than JSON files. Its
-// recommended preset also covers JSONC, JSON5, YAML, TOML, JavaScript, and Vue
-// custom blocks. Keep the whole preset opt-in so default linting remains
-// offline-friendly.
-// PowerShell one-shot:
-// $env:ENABLE_JSON_SCHEMA_VALIDATION=1; npx eslint .; Remove-Item Env:ENABLE_JSON_SCHEMA_VALIDATION -EA 0
-const enableJsonSchemaValidation =
-    processEnvironment["ENABLE_JSON_SCHEMA_VALIDATION"] === "1";
-const jsonSchemaValidatorRecommendedConfigs = enableJsonSchemaValidation
-    ? jsonSchemaValidator.configs.recommended.map(
-          (config, index): EslintConfig => ({
-              ...config,
-              name:
-                  config.name ??
-                  `✅ JSON Schema Validator: Recommended ${String(index + 1)}`,
-          })
-      )
-    : [];
-
-// #endregion ✅ JSON Schema Validator
 // #region 📁 Markdown Code Block Processor
 // ═══════════════════════════════════════════════════════════════════════════════
 // The markdown processor changes Markdown linting from "lint the document" to
@@ -1018,9 +996,7 @@ export const createConfig = (
         },
         // #region ✅ JSON Schema Validator
         // ═══════════════════════════════════════════════════════════════════════════════
-        ...(enableJsonSchemaValidation
-            ? jsonSchemaValidatorRecommendedConfigs
-            : []),
+        jsonSchemaValidator.configs.recommended,
         // #endregion ✅ JSON Schema Validator
         // MARK: 🤖 Copilot
         copilot.configs.all,
@@ -2481,7 +2457,18 @@ export const createConfig = (
                 "markdown/no-html": "off",
                 "markdown/no-invalid-label-refs": "warn",
                 "markdown/no-missing-atx-heading-space": "warn",
-                "markdown/no-missing-label-refs": "warn",
+                "markdown/no-missing-label-refs": [
+                    "warn",
+                    {
+                        allowLabels: [
+                            "!CAUTION",
+                            "!IMPORTANT",
+                            "!NOTE",
+                            "!TIP",
+                            "!WARNING",
+                        ],
+                    },
+                ],
                 "markdown/no-missing-link-fragments": "warn",
                 "markdown/no-multiple-h1": "warn",
                 "markdown/no-reference-like-urls": "warn",

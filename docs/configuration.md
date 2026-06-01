@@ -212,7 +212,6 @@ export default [
 | ------------------------------- | ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------ |
 | `ESLINT_CONFIG_ROOT`            | path string                                | Fallback root directory when `createConfig({ rootDirectory })` is not used.                                                                |
 | `ESLINT_PROGRESS`               | unset, `on`, `nofile`, `off`, `0`, `false` | Controls file progress output.                                                                                                             |
-| `ENABLE_JSON_SCHEMA_VALIDATION` | `1`                                        | Enables the optional `eslint-plugin-json-schema-validator-2` preset for JSON, JSONC, JSON5, YAML, TOML, JavaScript, and Vue custom blocks. |
 
 ## Validation after configuration changes
 

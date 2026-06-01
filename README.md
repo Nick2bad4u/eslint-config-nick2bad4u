@@ -206,16 +206,9 @@ Use the same shape for other plugin namespaces, such as `withoutCopilot`,
 
 ## Optional behavior
 
-### JSON schema validation
-
-Schema validation is disabled by default because schema fetching can make lint
-runs flaky in offline or locked-down environments. To opt in, install
-`eslint-plugin-json-schema-validator-2` in the consuming repo and set the opt-in
-environment variable when running ESLint:
-
-```sh
-ENABLE_JSON_SCHEMA_VALIDATION=1 eslint .
-```
+JSON schema validation is enabled as part of the default config through
+`eslint-plugin-json-schema-validator-2`. The validator caches schema lookups, so
+normal lint runs do not repeatedly fetch the same schema URLs.
 
 ### Progress output
 
