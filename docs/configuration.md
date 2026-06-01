@@ -208,10 +208,10 @@ export default [
 
 ## Environment variables
 
-| Variable                        | Values                                     | Effect                                                                                                                                     |
-| ------------------------------- | ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| `ESLINT_CONFIG_ROOT`            | path string                                | Fallback root directory when `createConfig({ rootDirectory })` is not used.                                                                |
-| `ESLINT_PROGRESS`               | unset, `on`, `nofile`, `off`, `0`, `false` | Controls file progress output.                                                                                                             |
+| Variable             | Values                                     | Effect                                                                      |
+| -------------------- | ------------------------------------------ | --------------------------------------------------------------------------- |
+| `ESLINT_CONFIG_ROOT` | path string                                | Fallback root directory when `createConfig({ rootDirectory })` is not used. |
+| `ESLINT_PROGRESS`    | unset, `on`, `nofile`, `off`, `0`, `false` | Controls file progress output.                                              |
 
 ## Validation after configuration changes
 
