@@ -43,6 +43,7 @@ jobs:
                   cache-dependency-path: package-lock.json
 
             - name: Install dependencies
+              shell: bash
               run: npm ci
 
             - name: Run gitleaks scan
