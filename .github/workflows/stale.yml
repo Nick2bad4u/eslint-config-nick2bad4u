@@ -1,10 +1,10 @@
 # yaml-language-server: $schema=https://www.schemastore.org/github-workflow.json
-name: Mark Stale Issues And Pull Requests
+name: "Mark Stale Issues And Pull Requests"
 
-run-name: Stale Sweep • ${{ github.ref_name }} @${{ github.actor }}
+run-name: "Stale Sweep • ${{ github.ref_name }} @${{ github.actor }}"
 
 concurrency:
-    group: stale-${{ github.workflow }}-${{ github.ref }}
+    group: "stale-${{ github.workflow }}-${{ github.ref }}"
     cancel-in-progress: true
 
 on:
@@ -12,37 +12,37 @@ on:
         - cron: "38 7 * * *"
     pull_request_target:
         branches:
-            - main
+            - "main"
         types:
-            - opened
-            - reopened
-            - synchronize
+            - "opened"
+            - "reopened"
+            - "synchronize"
     issues:
         types:
-            - opened
-            - reopened
-            - edited
+            - "opened"
+            - "reopened"
+            - "edited"
     workflow_dispatch:
 
 jobs:
     stale:
-        name: Mark Stale Issues And Pull Requests
-        runs-on: ubuntu-latest
+        name: "Mark Stale Issues And Pull Requests"
+        runs-on: "ubuntu-latest"
         timeout-minutes: 20
         permissions:
-            contents: read
-            issues: write
-            pull-requests: write
+            contents: "read"
+            issues: "write"
+            pull-requests: "write"
         steps:
-            - name: Harden Runner
-              uses: step-security/harden-runner@a5ad31d6a139d249332a2605b85202e8c0b78450 # v2.19.1
+            - name: "Harden Runner"
+              uses: "step-security/harden-runner@a5ad31d6a139d249332a2605b85202e8c0b78450" # v2.19.1
               with:
-                  egress-policy: audit
+                  egress-policy: "audit"
 
-            - name: Mark stale issues and pull requests
-              uses: actions/stale@b5d41d4e1d5dceea10e7104786b73624c18a190f # v10.2.0
+            - name: "Mark stale issues and pull requests"
+              uses: "actions/stale@b5d41d4e1d5dceea10e7104786b73624c18a190f" # v10.2.0
               with:
-                  repo-token: ${{ secrets.GITHUB_TOKEN }}
+                  repo-token: "${{ secrets.GITHUB_TOKEN }}"
                   stale-issue-message: "Stale issue"
                   stale-pr-message: "Stale pull request"
                   stale-issue-label: "no-issue-activity"

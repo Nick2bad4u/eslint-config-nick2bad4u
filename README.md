@@ -3,20 +3,20 @@
 [![npm license.](https://flat.badgen.net/npm/license/eslint-config-nick2bad4u?color=purple)](https://github.com/Nick2bad4u/eslint-config-nick2bad4u/blob/main/LICENSE) [![npm total downloads.](https://flat.badgen.net/npm/dt/eslint-config-nick2bad4u?color=pink)](https://www.npmjs.com/package/eslint-config-nick2bad4u) [![latest GitHub release.](https://flat.badgen.net/github/release/Nick2bad4u/eslint-config-nick2bad4u?color=cyan)](https://github.com/Nick2bad4u/eslint-config-nick2bad4u/releases) [![GitHub stars.](https://flat.badgen.net/github/stars/Nick2bad4u/eslint-config-nick2bad4u?color=yellow)](https://github.com/Nick2bad4u/eslint-config-nick2bad4u/stargazers) [![GitHub forks.](https://flat.badgen.net/github/forks/Nick2bad4u/eslint-config-nick2bad4u?color=green)](https://github.com/Nick2bad4u/eslint-config-nick2bad4u/forks) [![GitHub open issues.](https://flat.badgen.net/github/open-issues/Nick2bad4u/eslint-config-nick2bad4u?color=red)](https://github.com/Nick2bad4u/eslint-config-nick2bad4u/issues) [![codecov.](https://codecov.io/gh/Nick2bad4u/eslint-config-nick2bad4u/branch/main/graph/badge.svg)](https://codecov.io/gh/Nick2bad4u/eslint-config-nick2bad4u)
 
 Shared ESM-only [ESLint flat config](https://eslint.org/docs/latest/use/configure/configuration-files)
-for Nick2bad4u ESLint plugin projects.
+for Nick2bad4u TypeScript/JavaScript repositories.
 
 This package centralizes the lint stack used across those repositories: TypeScript-aware
-ESLint configuration, Markdown/JSON/YAML/CSS-adjacent linting, package checks,
-prose checks, and project-specific plugin presets. Consumers bring `eslint` and
-`typescript` as peer dependencies; this package brings the ESLint plugins and
-parsers that the shared config enables.
+ESLint configuration, Markdown/JSON/YAML/TOML/CSS-adjacent linting, package
+checks, prose checks, and project-specific plugin presets. Consumers bring
+`eslint` and `typescript` as peer dependencies; this package brings the ESLint
+plugins and parsers that the shared config enables.
 
 ## Requirements
 
 | Tool       | Supported range      | Why it is required                                              |
 | ---------- | -------------------- | --------------------------------------------------------------- |
 | Node.js    | `>=22.0.0`           | Runtime for ESLint, the config package, and repository scripts. |
-| ESLint     | `^10.4.0`            | Peer dependency supplied by each consuming project.             |
+| ESLint     | `^10.4.1`            | Peer dependency supplied by each consuming project.             |
 | TypeScript | `^5.0.0 \|\| ^6.0.3` | Peer dependency used by TypeScript-aware lint rules.            |
 
 Repository development also expects npm `>=11.0.0`; consumers can use the package
@@ -227,14 +227,17 @@ Use the aggregate scripts before opening a pull request or publishing:
 
 ```sh
 npm run lint:all
+npm run lint:actions
 npm run release:verify
 ```
 
 `lint:all` builds the runtime, runs ESLint, typechecks, runs Vitest, checks
 Prettier formatting, validates package metadata and published package shape,
-lints YAML, and runs Secretlint. `release:verify` adds the stricter no-cache lint
-path, package checks with `publint` and ATTW, and sync checks for peer ranges and
-Node version files.
+runs Gitleaks, and runs Secretlint. ESLint covers YAML through the shared config;
+use `lint:yaml` or `lint:yamllint` when you need a targeted YAML-only pass.
+`lint:actions` runs `actionlint` against GitHub workflows. `release:verify` uses
+the stricter no-cache lint path, repeats strict package checks with `publint` and
+ATTW, and syncs peer ranges and Node version files.
 
 Release notes are generated with `git-cliff` through the `changelog:*` scripts.
 For contribution and maintenance workflows, see the

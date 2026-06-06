@@ -1,10 +1,10 @@
 # yaml-language-server: $schema=https://www.schemastore.org/github-workflow.json
-name: Trufflehog Secret Scan
+name: "Trufflehog Secret Scan"
 
-run-name: Trufflehog Secret Scan • ${{ github.ref_name }} @${{ github.actor }}
+run-name: "Trufflehog Secret Scan • ${{ github.ref_name }} @${{ github.actor }}"
 
 concurrency:
-    group: trufflehog-${{ github.workflow }}-${{ github.ref }}
+    group: "trufflehog-${{ github.workflow }}-${{ github.ref }}"
     cancel-in-progress: true
 
 on:
@@ -12,35 +12,35 @@ on:
     pull_request:
     merge_group:
         types:
-            - checks_requested
+            - "checks_requested"
     workflow_dispatch:
     schedule:
         - cron: "44 4 * * 0" # Runs every Sunday at midnight UTC; https://crontab.guru/#0_0_*_*_0
 
 jobs:
     trufflehog:
-        name: Trufflehog Secret Scan
-        runs-on: ubuntu-latest
+        name: "Trufflehog Secret Scan"
+        runs-on: "ubuntu-latest"
         timeout-minutes: 20
         permissions:
-            contents: read
+            contents: "read"
         steps:
-            - name: Harden the runner (Audit all outbound calls)
-              uses: step-security/harden-runner@a5ad31d6a139d249332a2605b85202e8c0b78450 # v2.19.1
+            - name: "Harden the runner (Audit all outbound calls)"
+              uses: "step-security/harden-runner@a5ad31d6a139d249332a2605b85202e8c0b78450" # v2.19.1
               with:
-                  egress-policy: audit
+                  egress-policy: "audit"
 
-            - name: Checkout code
-              uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+            - name: "Checkout code"
+              uses: "actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd" # v6.0.2
               with:
                   fetch-depth: 0
-            - name: Secret Scanning (entire repo)
-              uses: trufflesecurity/trufflehog@17456f8c7d042d8c82c9a8ca9e937231f9f42e26 # v3.95.2
+            - name: "Secret Scanning (entire repo)"
+              uses: "trufflesecurity/trufflehog@17456f8c7d042d8c82c9a8ca9e937231f9f42e26" # v3.95.2
               with:
                   base: ""
-                  head: ${{ github.ref_name }}
+                  head: "${{ github.ref_name }}"
                   # Only fail the job for VERIFIED secrets.
                   # Unverified/unknown results are often high-noise in OSS repos
                   # (example strings, docs, placeholder tokens) and already
                   # covered by other scanners (gitleaks, etc.).
-                  extra_args: --results=verified --exclude-detectors=URI
+                  extra_args: "--results=verified --exclude-detectors=URI"

@@ -1,5 +1,5 @@
 matrix:
-    - name: fixture
+    - name: "fixture"
       sources:
-          - docs/**/*.md
+          - "docs/**/*.md"
 version: "0.1"
