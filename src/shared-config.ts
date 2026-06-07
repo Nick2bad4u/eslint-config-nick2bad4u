@@ -1886,8 +1886,6 @@ export const createConfig = (
                 "@typescript-eslint/no-unnecessary-parameter-property-assignment":
                     "warn",
                 "@typescript-eslint/no-unnecessary-qualifier": "warn",
-                "@typescript-eslint/no-unnecessary-template-expression": "warn",
-                "@typescript-eslint/no-unnecessary-type-arguments": "warn",
                 "@typescript-eslint/no-unsafe-type-assertion": "warn",
                 "@typescript-eslint/no-unused-private-class-members": "warn",
                 "@typescript-eslint/no-use-before-define": [
@@ -2018,26 +2016,18 @@ export const createConfig = (
                 ],
                 "max-params": "off", // Use TypeScript version which can be configured to ignore `this` parameters and is more aware of function overloads.
                 "max-statements": "off",
-                "no-array-constructor": "off", // Use typescript version instead
                 "no-continue": "off",
-                "no-dupe-class-members": "off", // Use typescript version instead
-                "no-empty-character-class": "error",
                 "no-implied-eval": "off", // Use TypeScript version which can catch more cases with type information
                 "no-inline-comments": "off", // Allow inline comments for complex logic explanations
-                "no-invalid-regexp": "error",
                 "no-invalid-this": "off", // Use TypeScript version which understands class properties and arrow functions
                 "no-loop-func": "off", // Use typescript version instead
                 "no-magic-numbers": "off", // Use Typescript Version instead
-                "no-redeclare": "off", // Use typescript version instead
                 "no-restricted-imports": "off", // Use the TypeScript-specific version for better type-aware handling
                 "no-shadow": "off", // Use the TypeScript-specific version for better type-aware handling
                 "no-ternary": "off",
                 "no-undefined": "off", // Use explicit `undefined` for clarity and type safety
-                "no-unexpected-multiline": "off",
                 "no-unused-private-class-members": "off", // Use typescript version instead
                 "no-use-before-define": "off", // Use typescript version instead
-                "no-useless-backreference": "error",
-                "no-useless-constructor": "off", // Use typescript version instead
                 "no-void": "off",
                 "object-shorthand": "off",
                 "one-var": "off",
@@ -2046,8 +2036,6 @@ export const createConfig = (
                     { allowNamedFunctions: true, allowUnboundThis: true },
                 ],
                 "prefer-destructuring": "off",
-                "prefer-promise-reject-errors": "off", // Disable base rule in favor of TypeScript-specific version
-                "require-await": "off", // Use the TypeScript version of this rule which is more type-aware and works better with async functions in general.
                 "require-unicode-regexp": "off",
                 "sdl/no-nonnull-assertion-on-security-input": "error",
                 "sdl/no-trusted-types-policy-pass-through": "error",
