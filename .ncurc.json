@@ -6,7 +6,7 @@
     "concurrency": 8,
     "configFileName": ".ncurc.json",
     "configFilePath": "./",
-    "cooldown": "15m",
+    "cooldown": "1m",
     "deep": false,
     "dep": [
         "prod",
