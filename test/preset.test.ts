@@ -2,7 +2,11 @@ import type { Linter } from "eslint";
 
 import { describe, expect, it } from "vitest";
 
-import nickTwoBadFourU, { createConfig, presets } from "../src/preset";
+import nickTwoBadFourU, {
+    allowDefaultProjectFilePatternPresets,
+    createConfig,
+    presets,
+} from "../src/preset";
 
 const getRuleNames = (configEntries: readonly Linter.Config[]): Set<string> => {
     const ruleNames = configEntries.flatMap((configEntry) =>
@@ -360,8 +364,8 @@ describe("eslint-config-nick2bad4u presets", () => {
         );
     });
 
-    it("keeps the default TypeScript project allow-list narrow", () => {
-        expect.assertions(1);
+    it("enables only root-level default TypeScript project fallback patterns by default", () => {
+        expect.assertions(3);
 
         const globalConfig = findConfigByName(presets.all, "🌍 Global: Rules");
         const parserOptions = globalConfig?.languageOptions?.["parserOptions"];
@@ -372,19 +376,46 @@ describe("eslint-config-nick2bad4u presets", () => {
             ? projectService["allowDefaultProject"]
             : undefined;
 
-        expect(allowDefaultProject).toStrictEqual(["*.mjs", ".*.mjs"]);
+        expect(allowDefaultProject).toStrictEqual([
+            "*.{js,mjs,cjs}",
+            ".*.{js,mjs,cjs}",
+        ]);
+        expect(nickTwoBadFourU.allowDefaultProjectFilePatternPresets).toBe(
+            allowDefaultProjectFilePatternPresets
+        );
+        expect(
+            allowDefaultProjectFilePatternPresets.defaultRootFiles
+        ).toStrictEqual(allowDefaultProject);
+    });
+
+    it("exports opt-in default-project file-pattern presets", () => {
+        expect.assertions(3);
+
+        expect(
+            allowDefaultProjectFilePatternPresets.rootConfigFiles
+        ).toStrictEqual([
+            "*.config.{js,mjs,cjs,ts,mts,cts}",
+            "*.config.*.{js,mjs,cjs,ts,mts,cts}",
+            ".*rc.{js,mjs,cjs,ts,mts,cts}",
+            "preset.mjs",
+        ]);
+        expect(
+            allowDefaultProjectFilePatternPresets.rootScriptFiles
+        ).toStrictEqual([
+            "*.{js,mjs,cjs,ts,mts,cts}",
+            ".*.{js,mjs,cjs,ts,mts,cts}",
+        ]);
+        expect(
+            allowDefaultProjectFilePatternPresets.rootMjsFiles
+        ).toStrictEqual(["*.mjs", ".*.mjs"]);
     });
 
     it("supports opting root config files into the default TypeScript project", () => {
         expect.assertions(1);
 
         const configEntries = createConfig({
-            allowDefaultProjectFilePatterns: [
-                "*.config.{js,mjs,cjs,ts,mts,cts}",
-                "*.config.*.{js,mjs,cjs,ts,mts,cts}",
-                ".*rc.{js,mjs,cjs,ts,mts,cts}",
-                "preset.mjs",
-            ],
+            allowDefaultProjectFilePatterns:
+                allowDefaultProjectFilePatternPresets.rootConfigFiles,
         }) as readonly Linter.Config[];
         const globalConfig = findConfigByName(
             configEntries,

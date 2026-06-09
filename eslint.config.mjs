@@ -14,6 +14,10 @@ const rootConfig = [
 ];
 
 // eslint-disable-next-line no-barrel-files/no-barrel-files -- Intentional adapter re-export for the repo's ESLint config entrypoint.
-export { configs, createConfig } from "./dist/shared-config.js";
+export {
+    allowDefaultProjectFilePatternPresets,
+    configs,
+    createConfig,
+} from "./dist/shared-config.js";
 
 export default rootConfig;

@@ -1,9 +1,28 @@
 import {
     createConfig as createSharedConfig,
+    type Nick2Bad4UAllowDefaultProjectFilePatternPresets,
     type Nick2Bad4UEslintConfigOptions,
     type Nick2Bad4UEslintConfigPresets,
+    allowDefaultProjectFilePatternPresets as sharedAllowDefaultProjectFilePatternPresets,
     configs as sharedConfigs,
 } from "./shared-config.js";
+
+/** Opt-in file-pattern presets for TypeScript ESLint's default-project fallback. */
+export const allowDefaultProjectFilePatternPresets: Nick2Bad4UAllowDefaultProjectFilePatternPresets =
+    Object.freeze({
+        defaultRootFiles: [
+            ...sharedAllowDefaultProjectFilePatternPresets.defaultRootFiles,
+        ],
+        rootConfigFiles: [
+            ...sharedAllowDefaultProjectFilePatternPresets.rootConfigFiles,
+        ],
+        rootMjsFiles: [
+            ...sharedAllowDefaultProjectFilePatternPresets.rootMjsFiles,
+        ],
+        rootScriptFiles: [
+            ...sharedAllowDefaultProjectFilePatternPresets.rootScriptFiles,
+        ],
+    });
 
 /** Shared flat config presets. */
 export const presets: Nick2Bad4UEslintConfigPresets = Object.freeze({
@@ -38,9 +57,11 @@ export const createConfig = (
 
 /** Default package export containing config presets and factory helper. */
 const nickTwoBadFourU: {
+    readonly allowDefaultProjectFilePatternPresets: typeof allowDefaultProjectFilePatternPresets;
     readonly configs: Nick2Bad4UEslintConfigPresets;
     readonly createConfig: typeof createConfig;
 } = Object.freeze({
+    allowDefaultProjectFilePatternPresets,
     configs: presets,
     createConfig,
 });

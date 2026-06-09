@@ -1,14 +1,31 @@
 import type { ESLint, Linter } from "eslint";
 
+/** Common opt-in globs for TypeScript ESLint's default-project fallback. */
+export interface Nick2Bad4UAllowDefaultProjectFilePatternPresets {
+    /** Default root-only fallback patterns used by the shared config. */
+    readonly defaultRootFiles: readonly string[];
+
+    /** Root config files such as `eslint.config.mjs` and `.secretlintrc.cjs`. */
+    readonly rootConfigFiles: readonly string[];
+
+    /** Compatibility preset for root `*.mjs` and `.*.mjs` files. */
+    readonly rootMjsFiles: readonly string[];
+
+    /** Root script files such as `eslint.config.mjs` and `.remarkrc.mjs`. */
+    readonly rootScriptFiles: readonly string[];
+}
+
 /** Options for creating the shared Nick2Bad4U ESLint flat config. */
 export interface Nick2Bad4UEslintConfigOptions {
     /**
      * Root-level files passed to TypeScript ESLint's
      * `parserOptions.projectService.allowDefaultProject`.
      *
-     * Defaults to `["*.mjs", ".*.mjs"]`. Only include files that are not
-     * already covered by `tsconfigPaths`; TypeScript ESLint errors when a file
-     * is both in a configured project and in `allowDefaultProject`.
+     * Defaults to root-only JavaScript file globs. Only include a small number
+     * of root files that are intentionally not covered by the nearest
+     * `tsconfig.json`; broad TypeScript globs also match declaration files, and
+     * TypeScript ESLint errors when a file is both in a configured project and
+     * in `allowDefaultProject`.
      */
     readonly allowDefaultProjectFilePatterns?: readonly string[];
 
@@ -28,11 +45,10 @@ export interface Nick2Bad4UEslintConfigOptions {
     readonly rootDirectory?: string;
 
     /**
-     * TypeScript project files, relative to `rootDirectory`. Defaults to
-     * `["./tsconfig.eslint.json"]` — a single catch-all tsconfig that should
-     * use `"include": ["**\/*", "**\/.*"]` to cover all linted files including
-     * dotfiles. Override when your repo uses a different filename or needs
-     * additional projects (e.g. a separate `tsconfig.benchmarks.json`).
+     * Import resolver TypeScript project files, relative to `rootDirectory`.
+     * Defaults to `["./tsconfig.eslint.json"]`. This does not replace
+     * TypeScript parser project-service discovery of the nearest
+     * `tsconfig.json`.
      */
     readonly tsconfigPaths?: readonly string[];
 }
@@ -138,7 +154,11 @@ export declare const createConfig: (
 /** Shared flat config presets. */
 export declare const presets: Nick2Bad4UEslintConfigPresets;
 
+/** Opt-in file-pattern presets for TypeScript ESLint's default-project fallback. */
+export declare const allowDefaultProjectFilePatternPresets: Nick2Bad4UAllowDefaultProjectFilePatternPresets;
+
 declare const nickTwoBadFourU: {
+    readonly allowDefaultProjectFilePatternPresets: typeof allowDefaultProjectFilePatternPresets;
     readonly configs: Nick2Bad4UEslintConfigPresets;
     readonly createConfig: typeof createConfig;
 };

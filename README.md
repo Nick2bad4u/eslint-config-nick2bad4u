@@ -85,31 +85,29 @@ Long-form project documentation lives in [`docs/`](./docs/index.md).
 
 ## `createConfig()`
 
-Use `createConfig()` when a project needs to customize root resolution,
-TypeScript project files, or plugin replacement/disabling while keeping the
-shared defaults:
+Use `createConfig()` when a project needs to customize root resolution, import
+resolver project paths, or plugin replacement/disabling while keeping the shared
+defaults:
 
 ```js
-import { createConfig } from "eslint-config-nick2bad4u";
+import {
+ allowDefaultProjectFilePatternPresets,
+ createConfig,
+} from "eslint-config-nick2bad4u";
 
 export default createConfig({
- allowDefaultProjectFilePatterns: [
-  "*.config.{js,mjs,cjs,ts,mts,cts}",
-  "*.config.*.{js,mjs,cjs,ts,mts,cts}",
-  ".*rc.{js,mjs,cjs,ts,mts,cts}",
-  "preset.mjs",
- ],
+ allowDefaultProjectFilePatterns:
+  allowDefaultProjectFilePatternPresets.rootScriptFiles,
  rootDirectory: import.meta.dirname,
- tsconfigPaths: ["./tsconfig.eslint.json"],
 });
 ```
 
-| Option                            | Type                                | Default                      | Use it when                                                                                                              |
-| --------------------------------- | ----------------------------------- | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| `allowDefaultProjectFilePatterns` | `readonly string[]`                 | `["*.mjs", ".*.mjs"]`        | Root config files are intentionally outside `tsconfigPaths`; do not include files already covered by your lint tsconfig. |
-| `rootDirectory`                   | `string`                            | `process.cwd()`              | ESLint runs outside the project root or a monorepo package needs its own root.                                           |
-| `tsconfigPaths`                   | `readonly string[]`                 | `["./tsconfig.eslint.json"]` | The project uses a differently named lint tsconfig or a truly separate TypeScript project.                               |
-| `plugins`                         | `Readonly<Record<string, unknown>>` | `{}`                         | You need to dogfood a local plugin build or disable packaged plugin rules by namespace.                                  |
+| Option                            | Type                                | Default                      | Use it when                                                                                                          |
+| --------------------------------- | ----------------------------------- | ---------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `allowDefaultProjectFilePatterns` | `readonly string[]`                 | Root JS/CJS/MJS globs        | Root config files are intentionally outside the nearest `tsconfig.json`; keep this list tiny and avoid broad globs.  |
+| `rootDirectory`                   | `string`                            | `process.cwd()`              | ESLint runs outside the project root or a monorepo package needs its own root.                                       |
+| `tsconfigPaths`                   | `readonly string[]`                 | `["./tsconfig.eslint.json"]` | Import resolver project paths; this does not replace TypeScript parser project-service discovery of `tsconfig.json`. |
+| `plugins`                         | `Readonly<Record<string, unknown>>` | `{}`                         | You need to dogfood a local plugin build or disable packaged plugin rules by namespace.                              |
 
 An example copy-paste config is available at
 [`examples/eslint.config.create.mjs`](./examples/eslint.config.create.mjs).
@@ -151,14 +149,14 @@ needs to provide a local build of that plugin for dogfooding.
 
 ## TypeScript project setup
 
-The default TypeScript-aware configuration resolves from `process.cwd()` and
-expects `./tsconfig.eslint.json`. That project should include every file ESLint
-can lint: source, tests, scripts, dotfiles, examples, and docs tooling.
+The TypeScript parser uses `projectService`, so typed linting follows
+TypeScript's normal nearest-`tsconfig.json` lookup from `rootDirectory` or
+`process.cwd()`. That `tsconfig.json` should include every TypeScript-aware file
+ESLint can lint: source, tests, scripts, dotfiles, examples, and docs tooling.
 
 ```json
 {
  "$schema": "https://www.schemastore.org/tsconfig.json",
- "extends": "./tsconfig.json",
  "compilerOptions": {
   "allowJs": true,
   "checkJs": true,
@@ -169,9 +167,37 @@ can lint: source, tests, scripts, dotfiles, examples, and docs tooling.
 }
 ```
 
-One catch-all lint tsconfig is easier to maintain than multiple narrow projects.
+If a repository keeps a separate `tsconfig.eslint.json`, that file can still be
+useful for `tsconfigPaths` and import resolution, but it does not make the
+parser project service pick that file instead of `tsconfig.json`. Put
+lint-visible files in a nearest `tsconfig.json`, or opt a small number of root
+files into `allowDefaultProjectFilePatterns`. The shared default already covers
+root-only `js`, `mjs`, and `cjs` files, including dotfiles.
+
+Override the default when a project wants a different root-only fallback:
+
+```js
+import {
+ allowDefaultProjectFilePatternPresets,
+ createConfig,
+} from "eslint-config-nick2bad4u";
+
+export default createConfig({
+ allowDefaultProjectFilePatterns:
+  allowDefaultProjectFilePatternPresets.rootConfigFiles,
+ rootDirectory: import.meta.dirname,
+});
+```
+
+`allowDefaultProjectFilePatternPresets.defaultRootFiles` matches the packaged
+default. `rootScriptFiles` adds `ts`, `mts`, and `cts` for projects that know
+those root files are outside `tsconfig.json`; `rootConfigFiles` and
+`rootMjsFiles` are also available for narrower projects.
+
 The `"**/.*"` include matters because dotfiles such as `.secretlintrc.cjs` are
-not matched by extension globs like `**/*.cjs`.
+not matched by extension globs like `**/*.cjs`. Do not use broad
+`allowDefaultProjectFilePatterns` as a replacement for a correct `tsconfig.json`;
+each default-project match has parser-service overhead.
 
 Set `ESLINT_CONFIG_ROOT` only when you need to drive the root directory from the
 environment instead of passing `rootDirectory` to `createConfig()`.

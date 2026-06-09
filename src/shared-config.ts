@@ -85,8 +85,10 @@ import * as path from "node:path";
 import * as tomlEslintParser from "toml-eslint-parser";
 import {
     arrayFirst,
+    arrayIncludes,
     arrayJoin,
     isDefined,
+    isEmpty,
     isPresent,
     keyIn,
     objectEntries,
@@ -114,13 +116,58 @@ const enableMarkdownCodeBlockLinting =
 // #endregion 📁 Markdown Code Block Processor
 // #region 🏗️ Setup and Public Types
 // ═══════════════════════════════════════════════════════════════════════════════
-// Parser project defaults intentionally live in this package instead of each
-// plugin preset. Consumers get type-aware rules out of the box, but can point
-// the shared config at a repo-specific ESLint project when needed.
-// A single catch-all tsconfig.eslint.json (includes **/* and **/.* for dotfiles,
-// extends tsconfig.json, allowJs:true) is the only project ESLint needs.
-// Consumer repos can override via createConfig({ tsconfigPaths: [...] }).
-const DEFAULT_PROJECT_FILE_PATTERNS = Object.freeze(["*.mjs", ".*.mjs"]);
+// Consumers get type-aware rules out of the box through TypeScript ESLint's
+// project service. Keep lint-visible files in the nearest tsconfig.json; use
+// allowDefaultProjectFilePatterns only for a tiny root-file fallback.
+const COMMENT_LENGTH_SEMANTIC_COMMENTS = Object.freeze([
+    "*`*",
+    "@abstract",
+    "@async",
+    "@author",
+    "@callback",
+    "@constructs",
+    "@deprecated",
+    "@emits",
+    "@event",
+    "@example",
+    "@fires",
+    "@fixme",
+    "@generator",
+    "@highlight",
+    "@internal",
+    "@link",
+    "@listens",
+    "@memberof",
+    "@mixes",
+    "@mixin",
+    "@module",
+    "@namespace",
+    "@note",
+    "@override",
+    "@packageDocumentation",
+    "@param",
+    "@private",
+    "@protected",
+    "@public",
+    "@readonly",
+    "@remarks",
+    "@returns",
+    "@see",
+    "@since",
+    "@status",
+    "@template",
+    "@todo",
+    "@typeParam",
+    "@typedef",
+    "@version",
+    "@virtual",
+    "@warn",
+    "@yields",
+]);
+const DEFAULT_PROJECT_FILE_PATTERNS = Object.freeze([
+    "*.{js,mjs,cjs}",
+    ".*.{js,mjs,cjs}",
+]);
 const DEFAULT_TSCONFIG_PATHS = Object.freeze(["./tsconfig.eslint.json"]);
 const DOCUSAURUS_CODE_FILE_PATTERNS = Object.freeze([
     "**/docs/docusaurus/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
@@ -138,12 +185,119 @@ const DOCUSAURUS_IGNORES = Object.freeze([
 const GLOBAL_FILE_PATTERNS = Object.freeze([
     "**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
 ]);
+const JSONC_AND_JSON5_RULES = {
+    "jsonc/array-bracket-newline": "off", // Handled by Prettier
+    "jsonc/array-bracket-spacing": "off", // Handled by Prettier
+    "jsonc/array-element-newline": "off", // Handled by Prettier
+    // Crashes when combined with @eslint/json language handling in
+    // fixture/downstream flat-config runs.
+    "jsonc/auto": "off",
+    "jsonc/comma-dangle": "warn",
+    "jsonc/comma-style": "warn",
+    "jsonc/indent": "off", // Handled by Prettier
+    "jsonc/key-name-casing": "off",
+    "jsonc/key-spacing": "warn",
+    "jsonc/no-bigint-literals": "warn",
+    "jsonc/no-binary-expression": "warn",
+    "jsonc/no-binary-numeric-literals": "warn",
+    "jsonc/no-comments": "warn",
+    "jsonc/no-dupe-keys": "warn",
+    "jsonc/no-escape-sequence-in-identifier": "warn",
+    "jsonc/no-floating-decimal": "warn",
+    "jsonc/no-hexadecimal-numeric-literals": "warn",
+    "jsonc/no-infinity": "warn",
+    "jsonc/no-irregular-whitespace": "warn",
+    "jsonc/no-multi-str": "warn",
+    "jsonc/no-nan": "warn",
+    "jsonc/no-number-props": "warn",
+    "jsonc/no-numeric-separators": "warn",
+    "jsonc/no-octal": "warn",
+    "jsonc/no-octal-escape": "warn",
+    "jsonc/no-octal-numeric-literals": "warn",
+    "jsonc/no-parenthesized": "warn",
+    "jsonc/no-plus-sign": "warn",
+    "jsonc/no-regexp-literals": "warn",
+    "jsonc/no-sparse-arrays": "warn",
+    "jsonc/no-template-literals": "warn",
+    "jsonc/no-undefined-value": "warn",
+    "jsonc/no-unicode-codepoint-escapes": "warn",
+    "jsonc/no-useless-escape": "warn",
+    "jsonc/object-curly-newline": "warn",
+    "jsonc/object-curly-spacing": "warn",
+    "jsonc/object-property-newline": "warn",
+    "jsonc/quote-props": "warn",
+    "jsonc/quotes": "warn",
+    "jsonc/sort-array-values": [
+        "error",
+        {
+            order: { type: "asc" },
+            pathPattern: "^files$", // Hits the files property
+        },
+        {
+            order: [
+                "eslint",
+                "eslintplugin",
+                "eslint-plugin",
+                {
+                    // Fallback order
+                    order: { type: "asc" },
+                },
+            ],
+            pathPattern: "^keywords$", // Hits the keywords property
+        },
+    ],
+    "jsonc/sort-keys": [
+        "error",
+        // For example, a definition for package.json
+        {
+            order: [
+                "name",
+                "version",
+                "private",
+                "publishConfig",
+            ],
+            pathPattern: "^$", // Hits the root properties
+        },
+        {
+            order: { type: "asc" },
+            pathPattern: "^(?:dev|peer|optional|bundled)?[Dd]ependencies$",
+        },
+    ],
+    "jsonc/space-unary-ops": "warn",
+    "jsonc/valid-json-number": "warn",
+    "jsonc/vue-custom-block/no-parsing-error": "warn",
+} satisfies Linter.RulesRecord;
 const ROOT_CONFIG_FILE_PATTERNS = Object.freeze([
     "*.config.{js,mjs,cjs,ts,mts,cts}",
     "*.config.*.{js,mjs,cjs,ts,mts,cts}",
     ".*rc.{js,mjs,cjs,ts,mts,cts}",
     "preset.mjs",
 ]);
+const ROOT_SCRIPT_FILE_PATTERNS = Object.freeze([
+    "*.{js,mjs,cjs,ts,mts,cts}",
+    ".*.{js,mjs,cjs,ts,mts,cts}",
+]);
+
+/** Common opt-in globs for TypeScript ESLint's default-project fallback. */
+export interface Nick2Bad4UAllowDefaultProjectFilePatternPresets {
+    /** Default root-only fallback patterns used by the shared config. */
+    readonly defaultRootFiles: readonly string[];
+    /** Root config files such as `eslint.config.mjs` and `.secretlintrc.cjs`. */
+    readonly rootConfigFiles: readonly string[];
+    /** Compatibility preset for root `*.mjs` and `.*.mjs` files. */
+    readonly rootMjsFiles: readonly string[];
+    /** Root script files such as `eslint.config.mjs` and `.remarkrc.mjs`. */
+    readonly rootScriptFiles: readonly string[];
+}
+
+/** Common opt-in globs for TypeScript ESLint's default-project fallback. */
+export const allowDefaultProjectFilePatternPresets: Nick2Bad4UAllowDefaultProjectFilePatternPresets =
+    Object.freeze({
+        defaultRootFiles: DEFAULT_PROJECT_FILE_PATTERNS,
+        rootConfigFiles: ROOT_CONFIG_FILE_PATTERNS,
+        rootMjsFiles: Object.freeze(["*.mjs", ".*.mjs"]),
+        rootScriptFiles: ROOT_SCRIPT_FILE_PATTERNS,
+    });
 const SOURCE_FILE_PATTERNS = Object.freeze([
     "src/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
 ]);
@@ -190,7 +344,9 @@ export interface Nick2Bad4UEslintConfigOptions {
      * Root-level files allowed to use TypeScript ESLint's default project.
      *
      * @remarks
-     * Only include files that are not already covered by `tsconfigPaths`.
+     * Defaults to root-only JavaScript file globs. Only include a small number
+     * of root files that are intentionally not covered by the nearest
+     * `tsconfig.json`; broad TypeScript globs also match declaration files.
      */
     readonly allowDefaultProjectFilePatterns?: readonly string[];
     /** Plugin overrides keyed by ESLint namespace. */
@@ -273,10 +429,14 @@ const IS_CI =
     CI_ENVIRONMENT_VALUE !== "" &&
     CI_ENVIRONMENT_VALUE !== "0" &&
     CI_ENVIRONMENT_VALUE !== "false";
-const DISABLE_PROGRESS =
-    ESLINT_PROGRESS_MODE === "off" ||
-    ESLINT_PROGRESS_MODE === "0" ||
-    ESLINT_PROGRESS_MODE === "false";
+const DISABLE_PROGRESS = arrayIncludes(
+    [
+        "0",
+        "false",
+        "off",
+    ],
+    ESLINT_PROGRESS_MODE
+);
 const HIDE_PROGRESS_FILENAMES = ESLINT_PROGRESS_MODE === "nofile";
 
 // Storybook helper
@@ -294,7 +454,7 @@ const storybookRecommendedStoriesRules =
 // #endregion 🏗️ Setup and Public Types
 // #region 🛠️ Config
 // ═══════════════════════════════════════════════════════════════════════════════
-/* eslint-disable max-lines-per-function -- This exported factory intentionally keeps shared flat-config composition in one place. */
+/* eslint-disable max-lines-per-function -- Keep shared flat-config composition centralized. */
 /**
  * Create the shared Nick2Bad4U ESLint flat config.
  *
@@ -322,6 +482,11 @@ export const createConfig = (
             .filter(([, plugin]) => plugin === false || plugin === null)
             .map(([pluginName]) => pluginName)
     );
+    const projectService = isEmpty(allowDefaultProjectFilePatterns)
+        ? true
+        : {
+              allowDefaultProject: [...allowDefaultProjectFilePatterns],
+          };
     const typefest = resolveTypedPlugin(
         pluginOverrideEntries,
         "typefest",
@@ -466,8 +631,10 @@ export const createConfig = (
                 },
                 "import-x/resolver-next": [
                     createTypeScriptImportResolver({
-                        alwaysTryTypes: true, // Always try to resolve types under `<root>@types` directory even if it doesn't contain any source code, like `@types/unist`
-                        bun: true, // Resolve Bun modules (https://github.com/import-js/eslint-import-resolver-typescript#bun) // Don't warn about multiple projects
+                        // Prefer package types, including ambient packages such as @types/unist.
+                        alwaysTryTypes: true,
+                        // Resolve Bun modules in import-x's TypeScript resolver.
+                        bun: true,
                         extensions: [
                             ".cjs",
                             ".cts",
@@ -640,12 +807,12 @@ export const createConfig = (
             rules: {
                 ...nodePlugin.configs["flat/all"].rules,
                 "n/file-extension-in-import": "off",
-                // Deprecated Rule: https://github.com/eslint-community/eslint-plugin-n/blob/HEAD/docs/rules/no-hide-core-modules.md
-                //  This is deprecated since v4.2.0. This rule was based on an invalid assumption.
+                // @Deprecated Rule: https://github.com/eslint-community/eslint-plugin-n/blob/HEAD/docs/rules/no-hide-core-modules.md
+                // This is deprecated since v4.2.0. This rule was based on an invalid assumption.
                 // @see https://github.com/mysticatea/eslint-plugin-node/issues/69
                 "n/no-hide-core-modules": "off",
                 "n/no-missing-import": "off",
-                // Deprecated Rule: Old alias for hashbang
+                // @Deprecated Rule: Old alias for hashbang
                 // @see https://github.com/eslint-community/eslint-plugin-n/issues/529
                 "n/shebang": "off",
             },
@@ -747,45 +914,7 @@ export const createConfig = (
                         logicalWrap: true,
                         maxLength: 120,
                         mode: "compact-on-overflow",
-                        semanticComments: [
-                            "@abstract",
-                            "@async",
-                            "@author",
-                            "@callback",
-                            "@constructs",
-                            "@deprecated",
-                            "@emits",
-                            "@event",
-                            "@example",
-                            "@fires",
-                            "@generator",
-                            "@internal",
-                            "@link",
-                            "@listens",
-                            "@memberof",
-                            "@mixes",
-                            "@mixin",
-                            "@module",
-                            "@namespace",
-                            "@override",
-                            "@packageDocumentation",
-                            "@param",
-                            "@private",
-                            "@protected",
-                            "@public",
-                            "@readonly",
-                            "@remarks",
-                            "@returns",
-                            "@see",
-                            "@since",
-                            "@template",
-                            "@typeParam",
-                            "@typedef",
-                            "@version",
-                            "@virtual",
-                            "@yields",
-                            "*`*",
-                        ],
+                        semanticComments: [...COMMENT_LENGTH_SEMANTIC_COMMENTS],
                         tabSize: 4,
                     },
                 ],
@@ -797,45 +926,7 @@ export const createConfig = (
                         logicalWrap: true,
                         maxLength: 120,
                         mode: "compact-on-overflow",
-                        semanticComments: [
-                            "@abstract",
-                            "@async",
-                            "@author",
-                            "@callback",
-                            "@constructs",
-                            "@deprecated",
-                            "@emits",
-                            "@event",
-                            "@example",
-                            "@fires",
-                            "@generator",
-                            "@internal",
-                            "@link",
-                            "@listens",
-                            "@memberof",
-                            "@mixes",
-                            "@mixin",
-                            "@module",
-                            "@namespace",
-                            "@override",
-                            "@packageDocumentation",
-                            "@param",
-                            "@private",
-                            "@protected",
-                            "@public",
-                            "@readonly",
-                            "@remarks",
-                            "@returns",
-                            "@see",
-                            "@since",
-                            "@template",
-                            "@typeParam",
-                            "@typedef",
-                            "@version",
-                            "@virtual",
-                            "@yields",
-                            "*`*",
-                        ],
+                        semanticComments: [...COMMENT_LENGTH_SEMANTIC_COMMENTS],
                         tabSize: 4,
                     },
                 ],
@@ -847,45 +938,7 @@ export const createConfig = (
                         logicalWrap: true,
                         maxLength: 120,
                         mode: "compact-on-overflow",
-                        semanticComments: [
-                            "@abstract",
-                            "@async",
-                            "@author",
-                            "@callback",
-                            "@constructs",
-                            "@deprecated",
-                            "@emits",
-                            "@event",
-                            "@example",
-                            "@fires",
-                            "@generator",
-                            "@internal",
-                            "@link",
-                            "@listens",
-                            "@memberof",
-                            "@mixes",
-                            "@mixin",
-                            "@module",
-                            "@namespace",
-                            "@override",
-                            "@packageDocumentation",
-                            "@param",
-                            "@private",
-                            "@protected",
-                            "@public",
-                            "@readonly",
-                            "@remarks",
-                            "@returns",
-                            "@see",
-                            "@since",
-                            "@template",
-                            "@typeParam",
-                            "@typedef",
-                            "@version",
-                            "@virtual",
-                            "@yields",
-                            "*`*",
-                        ],
+                        semanticComments: [...COMMENT_LENGTH_SEMANTIC_COMMENTS],
                         tabSize: 4,
                     },
                 ],
@@ -1074,11 +1127,13 @@ export const createConfig = (
         tseslint.configs.stylisticTypeChecked.map((config) =>
             scopeTypeScriptEslintConfigToCodeFiles(config)
         ),
-        // These two plugin families are explicit opt-out/dogfood targets.
-        // Keep them conditional so createConfig({ plugins: { name: false } })
-        // removes the upstream preset before the final namespace cleanup pass.
-        // runtime-cleanup also ships projectService: true; this config owns TS
-        // project resolution, so strip that one parser option before composing.
+        /*
+         * Runtime Cleanup is an explicit opt-out/dogfood target.
+         * Keep it conditional so createConfig({ plugins: { name: false } })
+         * removes the upstream preset before the final namespace cleanup pass.
+         * Strip runtime-cleanup's projectService so this config owns TS project
+         * resolution.
+         */
         // MARK: 🍧 Runtime Cleanup
         ...(runtimeCleanupPlugin === null
             ? []
@@ -1783,11 +1838,7 @@ export const createConfig = (
                     },
                     ecmaVersion: "latest",
                     jsDocParsingMode: "all",
-                    projectService: {
-                        allowDefaultProject: [
-                            ...allowDefaultProjectFilePatterns,
-                        ],
-                    },
+                    projectService,
                     sourceType: "module",
                     tsconfigRootDir: rootDirectory,
                     warnOnUnsupportedTypeScriptVersion: true,
@@ -1995,7 +2046,8 @@ export const createConfig = (
                             "pragma|ignored|import|prettier|eslint|tslint|copyright|license|eslint-disable|@ts-.*|jsx-a11y.*|@eslint.*|global|jsx|jsdoc|prettier|istanbul|jcoreio|metamask|microsoft|no-unsafe-optional-chaining|no-unnecessary-type-assertion|no-non-null-asserted-optional-chain|no-non-null-asserted-nullish-coalescing|@typescript-eslint.*|@docusaurus.*|@react.*|boundaries.*|depend.*|deprecation.*|etc.*|ex.*|functional.*|import-x.*|import-zod.*|jsx-a11y.*|loadable-imports.*|math.*|n.*|neverthrow.*|no-constructor-bind.*|no-explicit-type-exports.*|no-lookahead-lookbehind-regexp.*|no-secrets.*|no-unary-plus.*|no-unawaited-dot-catch-throw.*|no-unsanitized.*|no-use-extend-native.*|observers.*|prefer-arrow.*|perfectionist.*|prettier.*|promise.*|react.*|react-hooks.*|react-hooks-addons.*|redos.*|regexp.*|require-jsdoc.*|safe-jsx.*|security.*|sonarjs.*|sort-class-members.*|sort-destructure-keys.*|sort-keys-fix.*|sql-template.*|ssr-friendly.*|styled-components-a11y.*|switch-case.*|total-functions.*|tsdoc.*|unicorn.*|unused-imports.*|usememo-recommendations.*|validate-jsx-nesting.*|write-good-comments.*|xss.*|v8.*|c8.*|istanbul.*|nyc.*|codecov.*|coveralls.*|c8-coverage.*|codecov-coverage.*",
                     },
                 ],
-                "class-methods-use-this": "off", // Use the TypeScript version of this rule which is more type-aware and works better with class properties and React components.
+                // Use the TypeScript rule; it handles class properties and React components better.
+                "class-methods-use-this": "off",
                 "consistent-return": "off", // Use Typescript version
                 curly: "off",
                 "default-param-last": "off", // Use TypeScript version instead for better type awareness
@@ -2197,7 +2249,8 @@ export const createConfig = (
                     // You will also need to install and configure the TypeScript resolver
                     // See also https://github.com/import-js/eslint-import-resolver-typescript#configuration
                     typescript: {
-                        alwaysTryTypes: true, // Always try to resolve types under `<root>@types` directory even if it doesn't contain any source code, like `@types/unist`
+                        // Prefer package types, including ambient packages such as @types/unist.
+                        alwaysTryTypes: true,
                         project: [...tsconfigPaths],
                     },
                 },
@@ -2715,89 +2768,7 @@ export const createConfig = (
                 jsonc: jsonc,
             },
             rules: {
-                "jsonc/array-bracket-newline": "off", // Handled by Prettier
-                "jsonc/array-bracket-spacing": "off", // Handled by Prettier
-                "jsonc/array-element-newline": "off", // Handled by Prettier
-                // Crashes when combined with @eslint/json language handling in
-                // fixture/downstream flat-config runs.
-                "jsonc/auto": "off",
-                "jsonc/comma-dangle": "warn",
-                "jsonc/comma-style": "warn",
-                "jsonc/indent": "off", // Handled by Prettier
-                "jsonc/key-name-casing": "off",
-                "jsonc/key-spacing": "warn",
-                "jsonc/no-bigint-literals": "warn",
-                "jsonc/no-binary-expression": "warn",
-                "jsonc/no-binary-numeric-literals": "warn",
-                "jsonc/no-comments": "warn",
-                "jsonc/no-dupe-keys": "warn",
-                "jsonc/no-escape-sequence-in-identifier": "warn",
-                "jsonc/no-floating-decimal": "warn",
-                "jsonc/no-hexadecimal-numeric-literals": "warn",
-                "jsonc/no-infinity": "warn",
-                "jsonc/no-irregular-whitespace": "warn",
-                "jsonc/no-multi-str": "warn",
-                "jsonc/no-nan": "warn",
-                "jsonc/no-number-props": "warn",
-                "jsonc/no-numeric-separators": "warn",
-                "jsonc/no-octal": "warn",
-                "jsonc/no-octal-escape": "warn",
-                "jsonc/no-octal-numeric-literals": "warn",
-                "jsonc/no-parenthesized": "warn",
-                "jsonc/no-plus-sign": "warn",
-                "jsonc/no-regexp-literals": "warn",
-                "jsonc/no-sparse-arrays": "warn",
-                "jsonc/no-template-literals": "warn",
-                "jsonc/no-undefined-value": "warn",
-                "jsonc/no-unicode-codepoint-escapes": "warn",
-                "jsonc/no-useless-escape": "warn",
-                "jsonc/object-curly-newline": "warn",
-                "jsonc/object-curly-spacing": "warn",
-                "jsonc/object-property-newline": "warn",
-                "jsonc/quote-props": "warn",
-                "jsonc/quotes": "warn",
-                "jsonc/sort-array-values": [
-                    "error",
-                    {
-                        order: { type: "asc" },
-                        pathPattern: "^files$", // Hits the files property
-                    },
-                    {
-                        order: [
-                            "eslint",
-                            "eslintplugin",
-                            "eslint-plugin",
-                            {
-                                // Fallback order
-                                order: { type: "asc" },
-                            },
-                        ],
-                        pathPattern: "^keywords$", // Hits the keywords property
-                    },
-                ],
-                "jsonc/sort-keys": [
-                    "error",
-                    // For example, a definition for package.json
-                    {
-                        order: [
-                            "name",
-                            "version",
-                            "private",
-                            "publishConfig",
-                            // ...
-                        ],
-                        pathPattern: "^$", // Hits the root properties
-                    },
-                    {
-                        order: { type: "asc" },
-                        pathPattern:
-                            "^(?:dev|peer|optional|bundled)?[Dd]ependencies$",
-                    },
-                    // ...
-                ],
-                "jsonc/space-unary-ops": "warn",
-                "jsonc/valid-json-number": "warn",
-                "jsonc/vue-custom-block/no-parsing-error": "warn",
+                ...JSONC_AND_JSON5_RULES,
             },
         },
         // #endregion 🐭 JSONC Files
@@ -2832,89 +2803,7 @@ export const createConfig = (
                 jsonc: jsonc,
             },
             rules: {
-                "jsonc/array-bracket-newline": "off", // Handled by Prettier
-                "jsonc/array-bracket-spacing": "off", // Handled by Prettier
-                "jsonc/array-element-newline": "off", // Handled by Prettier
-                // Crashes when combined with @eslint/json language handling in
-                // fixture/downstream flat-config runs.
-                "jsonc/auto": "off",
-                "jsonc/comma-dangle": "warn",
-                "jsonc/comma-style": "warn",
-                "jsonc/indent": "off", // Handled by Prettier
-                "jsonc/key-name-casing": "off",
-                "jsonc/key-spacing": "warn",
-                "jsonc/no-bigint-literals": "warn",
-                "jsonc/no-binary-expression": "warn",
-                "jsonc/no-binary-numeric-literals": "warn",
-                "jsonc/no-comments": "warn",
-                "jsonc/no-dupe-keys": "warn",
-                "jsonc/no-escape-sequence-in-identifier": "warn",
-                "jsonc/no-floating-decimal": "warn",
-                "jsonc/no-hexadecimal-numeric-literals": "warn",
-                "jsonc/no-infinity": "warn",
-                "jsonc/no-irregular-whitespace": "warn",
-                "jsonc/no-multi-str": "warn",
-                "jsonc/no-nan": "warn",
-                "jsonc/no-number-props": "warn",
-                "jsonc/no-numeric-separators": "warn",
-                "jsonc/no-octal": "warn",
-                "jsonc/no-octal-escape": "warn",
-                "jsonc/no-octal-numeric-literals": "warn",
-                "jsonc/no-parenthesized": "warn",
-                "jsonc/no-plus-sign": "warn",
-                "jsonc/no-regexp-literals": "warn",
-                "jsonc/no-sparse-arrays": "warn",
-                "jsonc/no-template-literals": "warn",
-                "jsonc/no-undefined-value": "warn",
-                "jsonc/no-unicode-codepoint-escapes": "warn",
-                "jsonc/no-useless-escape": "warn",
-                "jsonc/object-curly-newline": "warn",
-                "jsonc/object-curly-spacing": "warn",
-                "jsonc/object-property-newline": "warn",
-                "jsonc/quote-props": "warn",
-                "jsonc/quotes": "warn",
-                "jsonc/sort-array-values": [
-                    "error",
-                    {
-                        order: { type: "asc" },
-                        pathPattern: "^files$", // Hits the files property
-                    },
-                    {
-                        order: [
-                            "eslint",
-                            "eslintplugin",
-                            "eslint-plugin",
-                            {
-                                // Fallback order
-                                order: { type: "asc" },
-                            },
-                        ],
-                        pathPattern: "^keywords$", // Hits the keywords property
-                    },
-                ],
-                "jsonc/sort-keys": [
-                    "error",
-                    // For example, a definition for package.json
-                    {
-                        order: [
-                            "name",
-                            "version",
-                            "private",
-                            "publishConfig",
-                            // ...
-                        ],
-                        pathPattern: "^$", // Hits the root properties
-                    },
-                    {
-                        order: { type: "asc" },
-                        pathPattern:
-                            "^(?:dev|peer|optional|bundled)?[Dd]ependencies$",
-                    },
-                    // ...
-                ],
-                "jsonc/space-unary-ops": "warn",
-                "jsonc/valid-json-number": "warn",
-                "jsonc/vue-custom-block/no-parsing-error": "warn",
+                ...JSONC_AND_JSON5_RULES,
             },
         },
         // #endregion 🐁 JSON5 Files
@@ -3570,18 +3459,22 @@ export const createConfig = (
         disabledPluginNames
     );
 };
-/* eslint-enable max-lines-per-function -- Re-enable after the shared config factory. */
+/* eslint-enable max-lines-per-function -- shared config factory boundary */
 // #endregion 🛠️ Config
 // #region 🆘 Helper Functions
 // ═══════════════════════════════════════════════════════════════════════════════
-/* eslint-disable @typescript-eslint/no-unsafe-type-assertion, @typescript-eslint/prefer-readonly-parameter-types -- ESLint exposes mutable, loosely typed flat-config shapes at this composition boundary. Keep the unavoidable assertions local to these private helpers. */
+/*
+ * ESLint exposes mutable, loosely typed flat-config shapes here.
+ * Keep the unavoidable assertions local to private helpers.
+ */
+/* eslint-disable @typescript-eslint/no-unsafe-type-assertion, @typescript-eslint/prefer-readonly-parameter-types -- helper boundary */
 type MutableEslintConfig = Except<EslintConfig, "plugins" | "rules"> & {
     plugins?: UnknownRecord;
     rules?: UnknownRecord;
 };
 
 function flattenConfigs(configs: readonly EslintConfigInput[]): EslintConfig[] {
-    // eslint-disable-next-line unicorn/no-array-reduce -- Clarity is more important than reduce's functional style here, and the array is expected to be small.
+    // eslint-disable-next-line unicorn/no-array-reduce -- Clearer for flattening nested config arrays.
     return configs.reduce<EslintConfig[]>((result, entry) => {
         if (Array.isArray(entry)) {
             result.push(...flattenConfigs(entry));
@@ -3702,7 +3595,7 @@ function withoutProjectServiceParserOption(config: EslintConfig): EslintConfig {
         },
     };
 }
-/* eslint-enable @typescript-eslint/no-unsafe-type-assertion, @typescript-eslint/prefer-readonly-parameter-types -- Re-enable after private config helper boundary. */
+/* eslint-enable @typescript-eslint/no-unsafe-type-assertion, @typescript-eslint/prefer-readonly-parameter-types -- helper boundary */
 // #endregion 🆘 Helper Functions
 // #region 📦 Preset Construction
 // ═══════════════════════════════════════════════════════════════════════════════

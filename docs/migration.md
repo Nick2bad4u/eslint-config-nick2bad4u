@@ -9,7 +9,7 @@ shared `eslint-config-nick2bad4u` package.
 - ESLint `^10.4.0`
 - TypeScript `^5.0.0 || ^6.0.3`
 - npm, pnpm, or yarn support for installing peer dependencies
-- A project-level `tsconfig.eslint.json` for type-aware linting
+- A project-level `tsconfig.json` for type-aware linting through project service
 
 Keep `eslint` and `typescript` installed in the consuming project. They are peer
 dependencies so each repository controls its own compiler and linter versions.
@@ -157,15 +157,14 @@ export default [
 ];
 ```
 
-Use `createConfig()` when the project needs explicit root or TypeScript project
-settings:
+Use `createConfig()` when the project needs an explicit root, import resolver
+project paths, or plugin overrides:
 
 ```js
 import { createConfig } from "eslint-config-nick2bad4u";
 
 export default createConfig({
  rootDirectory: import.meta.dirname,
- tsconfigPaths: ["./tsconfig.eslint.json"],
 });
 ```
 
@@ -192,15 +191,16 @@ export default createConfig({
 });
 ```
 
-## Step 4 — Create `tsconfig.eslint.json`
+## Step 4 — Check `tsconfig.json`
 
-The shared config uses type-aware rules. The lint tsconfig should include every
-file ESLint can visit, including JavaScript config files and dotfiles.
+The shared config uses type-aware rules through TypeScript ESLint's project
+service. The parser follows TypeScript's nearest-`tsconfig.json` lookup, so the
+project's `tsconfig.json` should include every TypeScript-aware file ESLint can
+visit, including JavaScript config files and dotfiles.
 
 ```json
 {
  "$schema": "https://www.schemastore.org/tsconfig.json",
- "extends": "./tsconfig.json",
  "compilerOptions": {
   "allowJs": true,
   "checkJs": true,
@@ -214,14 +214,37 @@ file ESLint can visit, including JavaScript config files and dotfiles.
 The `"**/.*"` include is required for dotfiles such as `.secretlintrc.cjs`.
 Extension globs such as `**/*.cjs` do not match those files.
 
-If TypeScript misses a specific config file because a sibling declaration file
-changes module detection, add that file explicitly:
+If the repo keeps a separate `tsconfig.eslint.json`, keep using it for import
+resolution through `tsconfigPaths` when needed, but do not rely on it to replace
+project-service discovery of `tsconfig.json`.
 
-```json
-{
- "files": ["stylelint.config.mjs"],
- "include": ["**/*", "**/.*"]
-}
+The packaged default already covers root `js`, `mjs`, and `cjs` files,
+including dotfiles. If TypeScript misses a different root config file, either
+include it in `tsconfig.json` or replace the default with a custom
+`allowDefaultProjectFilePatterns` list:
+
+```js
+import {
+ allowDefaultProjectFilePatternPresets,
+ createConfig,
+} from "eslint-config-nick2bad4u";
+
+export default createConfig({
+ allowDefaultProjectFilePatterns:
+  allowDefaultProjectFilePatternPresets.rootConfigFiles,
+ rootDirectory: import.meta.dirname,
+});
+```
+
+Use a custom array for one-off root files only:
+
+```js
+import { createConfig } from "eslint-config-nick2bad4u";
+
+export default createConfig({
+ allowDefaultProjectFilePatterns: ["stylelint.config.mjs"],
+ rootDirectory: import.meta.dirname,
+});
 ```
 
 ## Step 5 — Verify the migration
@@ -309,11 +332,12 @@ npm install --save-dev eslint@^10.4.0 typescript@^6.0.3
 TypeScript `^5.0.0` is also supported when the project has not migrated to
 TypeScript 6.
 
-### `parserOptions.project` file-not-found errors
+### Project service file-not-found errors
 
-The lint tsconfig does not include the file ESLint is checking. Add `"**/*"` and
-`"**/.*"` to `include`, then confirm the file is not excluded by the lint
-tsconfig or a parent config.
+The nearest `tsconfig.json` does not include the file ESLint is checking. Add
+`"**/*"` and `"**/.*"` to `include`, then confirm the file is not excluded by
+that tsconfig or a parent config. For a small number of root config files, use
+`allowDefaultProjectFilePatterns`; do not add broad default-project globs.
 
 ### Duplicate plugin or duplicate rule behavior
 
@@ -323,9 +347,9 @@ the same namespace twice in the final flat-config array.
 
 ### `Multiple projects found, consider using a single tsconfig`
 
-The default migration path uses one `tsconfig.eslint.json`. If this warning
-appears, review custom `tsconfigPaths` and merge them unless the extra project
-has required compiler settings that cannot live in the catch-all lint project.
+The default migration path relies on project service and a nearest
+`tsconfig.json`. If this warning appears, review custom `tsconfigPaths` and
+merge them unless the extra project is still needed for import resolution.
 
 ### `import-x/no-named-as-default-member` on `nick2bad4u.configs`
 
@@ -398,5 +422,5 @@ export default [
 
 npx eslint .
 
-Write-Host 'Migration complete. Review eslint.config.mjs, tsconfig.eslint.json, and any project-specific overrides.' -ForegroundColor Green
+Write-Host 'Migration complete. Review eslint.config.mjs, tsconfig.json, and any project-specific overrides.' -ForegroundColor Green
 ```
