@@ -797,6 +797,7 @@ export const createConfig = (
                 "unicorn/no-null": "off", // Noisy and low quality
                 "unicorn/no-useless-undefined": "off",
                 "unicorn/prevent-abbreviations": "off", // Noisy and low quality
+                "unicorn/try-complexity": ["error", { max: 3 }],
             },
         },
         {

@@ -504,7 +504,7 @@ describe("eslint-config-nick2bad4u presets", () => {
     });
 
     it("relaxes global low-value style and template-expression rules", () => {
-        expect.assertions(3);
+        expect.assertions(4);
 
         const globalConfig = findConfigByName(presets.all, "🌍 Global: Rules");
         const unicornConfig = findConfigByName(presets.all, "🦄 Unicorn: All");
@@ -526,6 +526,10 @@ describe("eslint-config-nick2bad4u presets", () => {
             },
         ]);
         expect(unicornConfig?.rules?.["unicorn/no-keyword-prefix"]).toBe("off");
+        expect(unicornConfig?.rules?.["unicorn/try-complexity"]).toStrictEqual([
+            "error",
+            { max: 3 },
+        ]);
     });
 
     it("keeps targeted shared false-positive overrides scoped", () => {
