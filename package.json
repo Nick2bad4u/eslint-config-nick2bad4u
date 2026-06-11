@@ -106,7 +106,7 @@
     "dependencies": {
         "@docusaurus/eslint-plugin": "^3.10.1",
         "@eslint-community/eslint-plugin-eslint-comments": "^4.7.2",
-        "@eslint-react/eslint-plugin": "^5.8.17",
+        "@eslint-react/eslint-plugin": "^5.8.18",
         "@eslint/config-helpers": "^0.6.0",
         "@eslint/css": "^1.3.0",
         "@eslint/js": "^10.0.1",
@@ -117,7 +117,7 @@
         "@next/eslint-plugin-next": "^16.2.9",
         "@stylistic/eslint-plugin": "^5.10.0",
         "@typpi/eslint-plugin-vite": "^1.0.17",
-        "@vitest/eslint-plugin": "^1.6.19",
+        "@vitest/eslint-plugin": "^1.6.20",
         "cross-env": "^10.1.0",
         "eslint-config-flat-gitignore": "^2.3.0",
         "eslint-config-prettier": "^10.1.8",
@@ -161,7 +161,7 @@
         "eslint-plugin-runtime-cleanup": "^1.2.10",
         "eslint-plugin-sdl-2": "^1.2.5",
         "eslint-plugin-security": "^4.0.0",
-        "eslint-plugin-storybook": "^10.4.3",
+        "eslint-plugin-storybook": "^10.4.4",
         "eslint-plugin-stylelint-2": "^1.1.3",
         "eslint-plugin-test-signal": "^1.2.10",
         "eslint-plugin-testing-library": "^7.16.2",
@@ -191,7 +191,7 @@
         "@arethetypeswrong/core": "^0.18.3",
         "@microsoft/tsdoc-config": "^0.18.1",
         "@types/eslint-plugin-security": "^3.0.1",
-        "@types/node": "^25.9.2",
+        "@types/node": "^25.9.3",
         "@vitest/coverage-v8": "^4.1.8",
         "eslint": "^10.4.1",
         "git-cliff": "^2.13.1",
@@ -227,7 +227,7 @@
             "optional": false
         }
     },
-    "packageManager": "npm@11.16.0",
+    "packageManager": "npm@11.17.0",
     "engines": {
         "node": ">=22.0.0"
     },
