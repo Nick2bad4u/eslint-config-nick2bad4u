@@ -100,6 +100,7 @@
         "typecheck": "npm run build:runtime && tsc -p tsconfig.json --noEmit && tsc -p tsconfig.eslint.json --noEmit && tsc -p tsconfig.js.json --noEmit && tsc -p tsconfig.vitest-typecheck.json --noEmit",
         "typecheck:all": "npm run typecheck",
         "types:update": "typesync",
+        "update-actions": "npx actions-up --yes --style sha",
         "update-deps": "npx ncu -i --install never && npm update --force && npm install --force && npm run sync:peer-eslint-range && npm run sync:node-version-files && npm run sync:peer-typescript-range",
         "verify": "npm run release:verify"
     },
