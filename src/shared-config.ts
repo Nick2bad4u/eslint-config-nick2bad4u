@@ -1059,6 +1059,7 @@ export const createConfig = (
             name: "🦑 GitHub Actions: All",
             rules: {
                 ...githubActions.configs.all.rules,
+                "github-actions/no-external-job": "off", // Noisy and low value (also inteferes with our dependabot merge workflow)
                 "github-actions/no-top-level-permissions": "off", // Noisy and low value
             },
         },
