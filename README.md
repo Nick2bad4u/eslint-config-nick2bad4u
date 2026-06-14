@@ -1,6 +1,6 @@
 # eslint-config-nick2bad4u
 
-[![npm license.](https://flat.badgen.net/npm/license/eslint-config-nick2bad4u?color=purple)](https://github.com/Nick2bad4u/eslint-config-nick2bad4u/blob/main/LICENSE) [![npm total downloads.](https://flat.badgen.net/npm/dt/eslint-config-nick2bad4u?color=pink)](https://www.npmjs.com/package/eslint-config-nick2bad4u) [![latest GitHub release.](https://flat.badgen.net/github/release/Nick2bad4u/eslint-config-nick2bad4u?color=cyan)](https://github.com/Nick2bad4u/eslint-config-nick2bad4u/releases) [![GitHub stars.](https://flat.badgen.net/github/stars/Nick2bad4u/eslint-config-nick2bad4u?color=yellow)](https://github.com/Nick2bad4u/eslint-config-nick2bad4u/stargazers) [![GitHub forks.](https://flat.badgen.net/github/forks/Nick2bad4u/eslint-config-nick2bad4u?color=green)](https://github.com/Nick2bad4u/eslint-config-nick2bad4u/forks) [![GitHub open issues.](https://flat.badgen.net/github/open-issues/Nick2bad4u/eslint-config-nick2bad4u?color=red)](https://github.com/Nick2bad4u/eslint-config-nick2bad4u/issues) [![codecov.](https://codecov.io/gh/Nick2bad4u/eslint-config-nick2bad4u/branch/main/graph/badge.svg)](https://codecov.io/gh/Nick2bad4u/eslint-config-nick2bad4u)
+[![NPM license.](https://flat.badgen.net/npm/license/eslint-config-nick2bad4u?color=purple)](https://github.com/Nick2bad4u/eslint-config-nick2bad4u/blob/main/LICENSE) [![NPM total downloads.](https://flat.badgen.net/npm/dt/eslint-config-nick2bad4u?color=pink)](https://www.npmjs.com/package/eslint-config-nick2bad4u) [![Latest GitHub release.](https://flat.badgen.net/github/release/Nick2bad4u/eslint-config-nick2bad4u?color=cyan)](https://github.com/Nick2bad4u/eslint-config-nick2bad4u/releases) [![GitHub stars.](https://flat.badgen.net/github/stars/Nick2bad4u/eslint-config-nick2bad4u?color=yellow)](https://github.com/Nick2bad4u/eslint-config-nick2bad4u/stargazers) [![GitHub forks.](https://flat.badgen.net/github/forks/Nick2bad4u/eslint-config-nick2bad4u?color=green)](https://github.com/Nick2bad4u/eslint-config-nick2bad4u/forks) [![GitHub open issues.](https://flat.badgen.net/github/open-issues/Nick2bad4u/eslint-config-nick2bad4u?color=red)](https://github.com/Nick2bad4u/eslint-config-nick2bad4u/issues) [![Codecov.](https://codecov.io/gh/Nick2bad4u/eslint-config-nick2bad4u/branch/main/graph/badge.svg)](https://codecov.io/gh/Nick2bad4u/eslint-config-nick2bad4u)
 
 Shared ESM-only [ESLint flat config](https://eslint.org/docs/latest/use/configure/configuration-files)
 for Nick2bad4u TypeScript/JavaScript repositories.
@@ -28,8 +28,8 @@ with whatever package manager their project supports.
 npm install --save-dev eslint-config-nick2bad4u eslint typescript
 ```
 
-Keep `eslint` and `typescript` installed in the consuming project so peer
-dependency resolution stays explicit and predictable.
+Keep `eslint` and `typescript` installed in the consuming project to keep peer
+dependency resolution explicit and predictable.
 
 ## Quick start
 
@@ -66,7 +66,7 @@ import { presets } from "eslint-config-nick2bad4u";
 export default [...presets.all];
 ```
 
-For migration steps from an existing hand-written config, see the
+For migration steps from an existing handwritten config, see the
 [migration guide](./docs/migration.md).
 
 ## Documentation
@@ -76,7 +76,7 @@ Long-form project documentation lives in [`docs/`](./docs/index.md).
 | Guide                                          | Use it for                                                                |
 | ---------------------------------------------- | ------------------------------------------------------------------------- |
 | [Configuration](./docs/configuration.md)       | `createConfig()`, presets, plugin replacement, and environment variables. |
-| [Migration](./docs/migration.md)               | Moving a project from a hand-written flat config to this package.         |
+| [Migration](./docs/migration.md)               | Moving a project from a handwritten flat config to this package.          |
 | [Contributing](./CONTRIBUTING.md)              | Local development workflow and pull request expectations.                 |
 | [Maintainer guide](./docs/maintainer-guide.md) | Rule, preset, dependency, and release maintenance.                        |
 | [Support](./SUPPORT.md)                        | Issue triage and reproduction details.                                    |
@@ -170,7 +170,7 @@ ESLint can lint: source, tests, scripts, dotfiles, examples, and docs tooling.
 If a repository keeps a separate `tsconfig.eslint.json`, that file can still be
 useful for `tsconfigPaths` and import resolution, but it does not make the
 parser project service pick that file instead of `tsconfig.json`. Put
-lint-visible files in a nearest `tsconfig.json`, or opt a small number of root
+lint-visible files in the nearest `tsconfig.json`, or opt the root
 files into `allowDefaultProjectFilePatterns`. The shared default already covers
 root-only `js`, `mjs`, and `cjs` files, including dotfiles.
 
@@ -205,7 +205,7 @@ environment instead of passing `rootDirectory` to `createConfig()`.
 ## Local plugin dogfooding
 
 Use the matching `without*` preset, then append the local plugin registration.
-For example, an `eslint-plugin-typefest` checkout can use its local plugin build
+For example, `eslint-plugin-typefest` checkout can use its local plugin build
 without also enabling the packaged Typefest rules:
 
 ```js
