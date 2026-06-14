@@ -101,7 +101,8 @@ import {
 import tseslint from "typescript-eslint";
 import * as yamlEslintParser from "yaml-eslint-parser";
 
-const processEnvironment = globalThis.process.env;
+// eslint-disable-next-line n/no-process-env -- Process environment is used for CI detection and opt-in features such as markdown code block linting and file-progress modes.
+const processEnvironment = process.env;
 
 // #region 📁 Markdown Code Block Processor
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -109,7 +110,7 @@ const processEnvironment = globalThis.process.env;
 // "lint extracted fenced code blocks". Keep it opt-in so remark/remark and the
 // markdown/gfm document rules remain the default Markdown path.
 // PowerShell one-shot:
-// $flag = "ENABLE_MARKDOWN_CODE_BLOCK_LINTING"; Set-Item "Env:$flag" 1; npx eslint .; Remove-Item "Env:$flag" -EA 0
+// `$flag = "ENABLE_MARKDOWN_CODE_BLOCK_LINTING"; Set-Item "Env:$flag" 1; npx eslint .; Remove-Item "Env:$flag" -EA 0`
 const enableMarkdownCodeBlockLinting =
     processEnvironment["ENABLE_MARKDOWN_CODE_BLOCK_LINTING"] === "1";
 
@@ -189,7 +190,7 @@ const JSONC_AND_JSON5_RULES = {
     "jsonc/array-bracket-newline": "off", // Handled by Prettier
     "jsonc/array-bracket-spacing": "off", // Handled by Prettier
     "jsonc/array-element-newline": "off", // Handled by Prettier
-    // Crashes when combined with @eslint/json language handling in
+    // Crashes when combined with `@eslint/json` language handling in
     // fixture/downstream flat-config runs.
     "jsonc/auto": "off",
     "jsonc/comma-dangle": "warn",
@@ -418,8 +419,8 @@ type PluginOverrides = Readonly<Record<string, PluginOverride>>;
  * - "off" / "0" / "false": disable progress
  */
 // PowerShell one-shots:
-// $env:ESLINT_PROGRESS="nofile"; npx eslint .; Remove-Item Env:ESLINT_PROGRESS -EA 0
-// $env:ESLINT_PROGRESS="off"; npx eslint .; Remove-Item Env:ESLINT_PROGRESS -EA 0
+// `$env:ESLINT_PROGRESS="nofile"; npx eslint .; Remove-Item Env:ESLINT_PROGRESS -EA 0`
+// `$env:ESLINT_PROGRESS="off"; npx eslint .; Remove-Item Env:ESLINT_PROGRESS -EA 0`
 const ESLINT_PROGRESS_MODE = (
     processEnvironment["ESLINT_PROGRESS"] ?? "on"
 ).toLowerCase();
@@ -594,6 +595,7 @@ export const createConfig = (
         //     experimental: true,
         //     // The following options are the default values
         //     indent: 4,
+        // eslint-disable-next-line unicorn/comment-content -- lowercase required
         //     jsx: true,
         //     pluginName: "@stylistic",
         //     quoteProps: "as-needed",
@@ -793,6 +795,7 @@ export const createConfig = (
                         },
                     },
                 ],
+                "unicorn/no-asterisk-prefix-in-documentation-comments": "off",
                 "unicorn/no-keyword-prefix": "off", // Too hostile for TypeScript/domain names like typeNode and errorMessage
                 "unicorn/no-null": "off", // Noisy and low quality
                 "unicorn/no-useless-undefined": "off",
@@ -1908,7 +1911,7 @@ export const createConfig = (
                     },
                 ],
                 // @see https://typescript-eslint.io/rules/no-redeclare/
-                // Covered by Typescript compiler
+                // Covered by TypeScript compiler
                 "@typescript-eslint/no-redeclare": "off",
                 "@typescript-eslint/no-restricted-imports": "warn",
                 "@typescript-eslint/no-restricted-types": [
@@ -2050,14 +2053,14 @@ export const createConfig = (
                 ],
                 // Use the TypeScript rule; it handles class properties and React components better.
                 "class-methods-use-this": "off",
-                "consistent-return": "off", // Use Typescript version
+                "consistent-return": "off", // Use TypeScript version
                 curly: "off",
                 "default-param-last": "off", // Use TypeScript version instead for better type awareness
                 "dot-notation": "off", // Use the TypeScript version instead
                 eqeqeq: "off", // Use the TypeScript version instead
                 "func-style": "off",
                 "id-length": "off",
-                "init-declarations": "off", // Use Typescript Version
+                "init-declarations": "off", // Use TypeScript Version
                 "max-lines": "off",
                 "max-lines-per-function": [
                     "error",
@@ -2074,14 +2077,14 @@ export const createConfig = (
                 "no-implied-eval": "off", // Use TypeScript version which can catch more cases with type information
                 "no-inline-comments": "off", // Allow inline comments for complex logic explanations
                 "no-invalid-this": "off", // Use TypeScript version which understands class properties and arrow functions
-                "no-loop-func": "off", // Use typescript version instead
-                "no-magic-numbers": "off", // Use Typescript Version instead
+                "no-loop-func": "off", // Use TypeScript version instead
+                "no-magic-numbers": "off", // Use TypeScript Version instead
                 "no-restricted-imports": "off", // Use the TypeScript-specific version for better type-aware handling
                 "no-shadow": "off", // Use the TypeScript-specific version for better type-aware handling
                 "no-ternary": "off",
                 "no-undefined": "off", // Use explicit `undefined` for clarity and type safety
-                "no-unused-private-class-members": "off", // Use typescript version instead
-                "no-use-before-define": "off", // Use typescript version instead
+                "no-unused-private-class-members": "off", // Use TypeScript version instead
+                "no-use-before-define": "off", // Use TypeScript version instead
                 "no-void": "off",
                 "object-shorthand": "off",
                 "one-var": "off",
@@ -2822,7 +2825,7 @@ export const createConfig = (
             name: "🐦‍🔥 TOML: **/*.TOML",
             plugins: { toml: toml },
             rules: {
-                // TOML Eslint Plugin Rules (toml/*)
+                // TOML ESLint Plugin Rules (toml/*)
                 "toml/array-bracket-newline": "warn",
                 "toml/array-bracket-spacing": "warn",
                 "toml/array-element-newline": "warn",
@@ -3035,7 +3038,7 @@ export const createConfig = (
             },
         },
         // #endregion 📖 Storybook Files
-        // #region 🖖 Vue Files
+        // #region 🖖 Vue.js Files
         // ═══════════════════════════════════════════════════════════════════════════════
         {
             ...vue.configs["flat/base"][1],
@@ -3172,7 +3175,7 @@ export const createConfig = (
                 "vue/v-on-handler-style": "warn",
             },
         },
-        // #endregion 🖖 Vue Files
+        // #endregion 🖖 Vue.js Files
         // #region 🚀 Astro Files
         // ═══════════════════════════════════════════════════════════════════════════════
         {

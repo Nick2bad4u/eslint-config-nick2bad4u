@@ -14,7 +14,7 @@ const isCiEnvironment = process.env["CI"] === "true",
     configuredMaxWorkers =
         process.env["MAX_THREADS"] ?? (isCiEnvironment ? "1" : "8"),
     /** Parsed integer worker count prior to validation. */
-    parsedMaxWorkers = Number.parseInt(configuredMaxWorkers, 10),
+    parsedMaxWorkers = Math.trunc(Number(configuredMaxWorkers)),
     /** Safe positive worker-count used by Vitest thread pool settings. */
     maxWorkerCount =
         Number.isFinite(parsedMaxWorkers) && parsedMaxWorkers > 0

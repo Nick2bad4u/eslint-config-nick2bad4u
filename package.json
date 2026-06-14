@@ -173,7 +173,7 @@
         "eslint-plugin-typedoc": "^1.3.4",
         "eslint-plugin-typefest": "^1.2.9",
         "eslint-plugin-undefined-css-classes": "^0.1.5",
-        "eslint-plugin-unicorn": "^65.0.1",
+        "eslint-plugin-unicorn": "^66.0.0",
         "eslint-plugin-vue": "^10.9.2",
         "eslint-plugin-write-good-comments-2": "^1.2.4",
         "eslint-plugin-yml": "^3.4.0",
