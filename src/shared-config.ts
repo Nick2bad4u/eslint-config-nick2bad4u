@@ -679,6 +679,7 @@ export const createConfig = (
                         max: 10,
                     },
                 ],
+                "import-x/named": "warn",
                 "import-x/newline-after-import": "warn",
                 "import-x/no-absolute-path": "warn",
                 "import-x/no-amd": "warn",
@@ -719,7 +720,16 @@ export const createConfig = (
                 "import-x/no-webpack-loader-syntax": "warn",
                 "import-x/order": "off",
                 "import-x/prefer-default-export": "off",
-                "import-x/prefer-namespace-import": "off",
+                "import-x/prefer-namespace-import": [
+                    "error",
+                    {
+                        patterns: [
+                            "react",
+                            "zod",
+                            "zod/mini",
+                        ],
+                    },
+                ],
                 "import-x/unambiguous": "warn",
             },
         },
@@ -1333,7 +1343,18 @@ export const createConfig = (
                 ...comments.recommended.rules,
                 "@eslint-community/eslint-comments/no-restricted-disable":
                     "warn",
-                "@eslint-community/eslint-comments/no-use": "off",
+                "@eslint-community/eslint-comments/no-use": [
+                    "error",
+                    {
+                        allow: [
+                            "eslint",
+                            "eslint-disable",
+                            "eslint-disable-line",
+                            "eslint-disable-next-line",
+                            "eslint-enable",
+                        ],
+                    },
+                ],
                 "@eslint-community/eslint-comments/require-description": "warn",
             },
         },
@@ -1878,18 +1899,11 @@ export const createConfig = (
                 "@typescript-eslint/method-signature-style": "warn",
                 "@typescript-eslint/naming-convention": "off",
                 "@typescript-eslint/no-dupe-class-members": "warn",
-                "@typescript-eslint/no-empty-function": [
-                    "error",
+                "@typescript-eslint/no-explicit-any": [
+                    "warn",
                     {
-                        allow: ["arrowFunctions"], // Allow empty arrow functions for React useEffect cleanup
-                    },
-                ],
-                // Advanced type-checked rules for async safety and runtime error prevention
-                "@typescript-eslint/no-floating-promises": [
-                    "error",
-                    {
-                        ignoreIIFE: false, // Catch floating IIFEs which can cause issues
-                        ignoreVoid: true, // Allow void for intentionally ignored promises
+                        fixToUnknown: false,
+                        ignoreRestArgs: true,
                     },
                 ],
                 // Keep enabled: Helps with bundle optimization and makes type vs runtime imports clearer.
@@ -1910,10 +1924,257 @@ export const createConfig = (
                         checksVoidReturn: true, // Critical for IPC handlers
                     },
                 ],
+                "@typescript-eslint/no-non-null-assertion": "warn",
                 // @see https://typescript-eslint.io/rules/no-redeclare/
                 // Covered by TypeScript compiler
                 "@typescript-eslint/no-redeclare": "off",
-                "@typescript-eslint/no-restricted-imports": "warn",
+                "@typescript-eslint/no-restricted-imports": [
+                    "warn",
+                    {
+                        paths: [
+                            {
+                                message:
+                                    "sys is deprecated. Use node:util instead.",
+                                name: "sys",
+                            },
+                            {
+                                message:
+                                    "node:sys is deprecated. Use node:util instead.",
+                                name: "node:sys",
+                            },
+                            {
+                                message:
+                                    "constants is deprecated. Use constants from the relevant module, e.g. node:fs.constants, node:os.constants, or node:crypto.constants.",
+                                name: "constants",
+                            },
+                            {
+                                message:
+                                    "node:constants is deprecated. Use constants from the relevant module, e.g. node:fs.constants, node:os.constants, or node:crypto.constants.",
+                                name: "node:constants",
+                            },
+                            {
+                                message:
+                                    "domain is legacy/pending deprecation. Use AsyncLocalStorage, AsyncResource, try/catch, promises, or explicit error handling instead.",
+                                name: "domain",
+                            },
+                            {
+                                message:
+                                    "node:domain is legacy/pending deprecation. Use AsyncLocalStorage, AsyncResource, try/catch, promises, or explicit error handling instead.",
+                                name: "node:domain",
+                            },
+                            {
+                                message:
+                                    "request is deprecated/maintenance-only. Use native fetch for ordinary HTTP, or undici/got when you need a dedicated client.",
+                                name: "request",
+                            },
+                            {
+                                message:
+                                    "request-promise depends on deprecated request. Use native fetch, undici, or got.",
+                                name: "request-promise",
+                            },
+                            {
+                                message:
+                                    "request-promise-native depends on deprecated request. Use native fetch, undici, or got.",
+                                name: "request-promise-native",
+                            },
+                            {
+                                message:
+                                    "Use URLSearchParams unless you specifically need Node's legacy querystring behavior.",
+                                name: "querystring",
+                            },
+                            {
+                                message:
+                                    "Use URLSearchParams unless you specifically need Node's legacy querystring behavior.",
+                                name: "node:querystring",
+                            },
+                            {
+                                importNames: ["parse", "resolve"],
+                                message:
+                                    "Avoid Node's legacy URL API. Use URL, URLSearchParams, fileURLToPath, pathToFileURL, domainToASCII, or domainToUnicode from node:url instead.",
+                                name: "url",
+                            },
+                            {
+                                importNames: ["parse", "resolve"],
+                                message:
+                                    "Avoid Node's legacy URL API. Use URL, URLSearchParams, fileURLToPath, pathToFileURL, domainToASCII, or domainToUnicode from node:url instead.",
+                                name: "node:url",
+                            },
+                            {
+                                importNames: [
+                                    "_extend",
+                                    "debug",
+                                    "error",
+                                    "isArray",
+                                    "isBoolean",
+                                    "isBuffer",
+                                    "isDate",
+                                    "isError",
+                                    "isFunction",
+                                    "isNull",
+                                    "isNullOrUndefined",
+                                    "isNumber",
+                                    "isObject",
+                                    "isPrimitive",
+                                    "isRegExp",
+                                    "isString",
+                                    "isSymbol",
+                                    "isUndefined",
+                                    "log",
+                                    "print",
+                                    "puts",
+                                    "toUSVString",
+                                ],
+                                message:
+                                    "Avoid deprecated/legacy util helpers. Use modern JS built-ins, Buffer.isBuffer(), Array.isArray(), util.types, Object.assign(), or a real logger.",
+                                name: "util",
+                            },
+                            {
+                                importNames: [
+                                    "_extend",
+                                    "debug",
+                                    "error",
+                                    "isArray",
+                                    "isBoolean",
+                                    "isBuffer",
+                                    "isDate",
+                                    "isError",
+                                    "isFunction",
+                                    "isNull",
+                                    "isNullOrUndefined",
+                                    "isNumber",
+                                    "isObject",
+                                    "isPrimitive",
+                                    "isRegExp",
+                                    "isString",
+                                    "isSymbol",
+                                    "isUndefined",
+                                    "log",
+                                    "print",
+                                    "puts",
+                                    "toUSVString",
+                                ],
+                                message:
+                                    "Avoid deprecated/legacy node:util helpers. Use modern JS built-ins, Buffer.isBuffer(), Array.isArray(), util.types, Object.assign(), or a real logger.",
+                                name: "node:util",
+                            },
+                            {
+                                message:
+                                    "node:punycode is deprecated. Use node:url domainToASCII/domainToUnicode for URL/domain work, or an explicit userland punycode package if you truly need raw Punycode.",
+                                name: "node:punycode",
+                            },
+                            {
+                                message:
+                                    "The bundled punycode module is deprecated. Use node:url domainToASCII/domainToUnicode, WHATWG URL APIs, or import an explicit userland punycode package if truly needed.",
+                                name: "punycode",
+                            },
+                            {
+                                importNames: [
+                                    "createCipher",
+                                    "createDecipher",
+                                    "pseudoRandomBytes",
+                                    "prng",
+                                    "rng",
+                                ],
+                                message:
+                                    "Avoid deprecated crypto APIs. Use createCipheriv/createDecipheriv with explicit IVs, or randomBytes/randomUUID as appropriate.",
+                                name: "crypto",
+                            },
+                            {
+                                importNames: [
+                                    "createCipher",
+                                    "createDecipher",
+                                    "pseudoRandomBytes",
+                                    "prng",
+                                    "rng",
+                                ],
+                                message:
+                                    "Avoid deprecated crypto APIs. Use createCipheriv/createDecipheriv with explicit IVs, or randomBytes/randomUUID as appropriate.",
+                                name: "node:crypto",
+                            },
+                            {
+                                importNames: [
+                                    "_unrefActive",
+                                    "active",
+                                    "enroll",
+                                    "unenroll",
+                                ],
+                                message:
+                                    "Avoid undocumented/deprecated timer internals. Use setTimeout, clearTimeout, setInterval, clearInterval, ref(), or unref().",
+                                name: "timers",
+                            },
+                            {
+                                importNames: [
+                                    "_unrefActive",
+                                    "active",
+                                    "enroll",
+                                    "unenroll",
+                                ],
+                                message:
+                                    "Avoid undocumented/deprecated timer internals. Use setTimeout, clearTimeout, setInterval, clearInterval, ref(), or unref().",
+                                name: "node:timers",
+                            },
+                            {
+                                message: "Use String.prototype.padStart().",
+                                name: "left-pad",
+                            },
+                            {
+                                message:
+                                    "node-uuid is obsolete. Use uuid named exports or crypto.randomUUID() for UUID v4.",
+                                name: "node-uuid",
+                            },
+                            {
+                                message:
+                                    "uuid deep imports are deprecated/unsupported in modern uuid. Use named exports from uuid, e.g. import { v4 as uuidv4 } from 'uuid'.",
+                                name: "uuid/v1",
+                            },
+                            {
+                                message:
+                                    "uuid deep imports are deprecated/unsupported in modern uuid. Use named exports from uuid, e.g. import { v4 as uuidv4 } from 'uuid'.",
+                                name: "uuid/v3",
+                            },
+                            {
+                                message:
+                                    "uuid deep imports are deprecated/unsupported in modern uuid. Use named exports from uuid, e.g. import { v4 as uuidv4 } from 'uuid'.",
+                                name: "uuid/v4",
+                            },
+                            {
+                                message:
+                                    "uuid deep imports are deprecated/unsupported in modern uuid. Use named exports from uuid, e.g. import { v5 as uuidv5 } from 'uuid'.",
+                                name: "uuid/v5",
+                            },
+                            {
+                                message:
+                                    "Use uuid named exports or crypto.randomUUID() instead.",
+                                name: "uuidv4",
+                            },
+                            {
+                                message:
+                                    "@babel/polyfill is deprecated. Use core-js/stable and regenerator-runtime/runtime directly if needed.",
+                                name: "@babel/polyfill",
+                            },
+                            {
+                                message:
+                                    "babel-polyfill is deprecated. Use core-js/stable and regenerator-runtime/runtime directly if needed.",
+                                name: "babel-polyfill",
+                            },
+                            {
+                                message:
+                                    "lodash.get is obsolete. Use optional chaining and nullish coalescing instead.",
+                                name: "lodash.get",
+                            },
+                            {
+                                message:
+                                    "object-assign is obsolete for modern runtimes. Use Object.assign().",
+                                name: "object-assign",
+                            },
+                            {
+                                message:
+                                    "isarray is obsolete. Use Array.isArray().",
+                                name: "isarray",
+                            },
+                        ],
+                    },
+                ],
                 "@typescript-eslint/no-restricted-types": [
                     "error",
                     {
@@ -1964,7 +2225,6 @@ export const createConfig = (
                     "error",
                     {
                         ignoreConditionalTests: false, // Check conditionals for nullish coalescing opportunities
-                        ignoreMixedLogicalExpressions: false, // Check complex logical expressions
                     },
                 ],
                 "@typescript-eslint/prefer-readonly": "warn", // Prefer readonly for service class properties
@@ -2122,6 +2382,7 @@ export const createConfig = (
                 "vitest/prefer-mock-return-shorthand": "warn",
                 "vitest/prefer-to-be-falsy": "off", // Allow explicit checks for false, 0, '', etc. for clarity in tests
                 "vitest/prefer-to-be-truthy": "off", // Allow explicit checks for true, non-empty strings, non-zero numbers, etc. for clarity in tests
+                "vitest/require-hook": "off",
                 "vitest/require-test-timeout": "off", // Allow flexibility in test timeouts, especially for integration tests or tests with external dependencies
                 "vitest/warn-todo": "warn",
             },
@@ -2149,10 +2410,13 @@ export const createConfig = (
                     },
                 ],
                 "testing-library/no-container": "warn",
-                "testing-library/no-debugging-utils": "off",
+                "testing-library/no-debugging-utils": "warn",
                 "testing-library/no-dom-import": "warn",
                 "testing-library/no-manual-cleanup": "warn",
-                "testing-library/no-node-access": "off",
+                "testing-library/no-node-access": [
+                    "warn",
+                    { allowContainerFirstChild: true },
+                ],
                 "testing-library/no-render-in-lifecycle": "warn",
                 "testing-library/no-test-id-queries": "warn",
                 "testing-library/no-unnecessary-act": "warn",
@@ -2228,7 +2492,6 @@ export const createConfig = (
                 "no-new": "off", // Allow new for class constructors
                 "no-plusplus": "off",
                 "no-promise-executor-return": "off", // Allow returning values from promise executors
-                "no-throw-literal": "off",
                 "no-undef-init": "off",
                 "no-underscore-dangle": "off",
                 "no-useless-assignment": "off",
@@ -2240,7 +2503,6 @@ export const createConfig = (
                 "unicorn/no-await-expression-member": "off", // Allow await in test expressions
                 "unicorn/prefer-at": "off",
                 "unicorn/prefer-spread": "off",
-                "vitest/require-hook": "off",
             },
             settings: {
                 "import-x/resolver": {
@@ -2330,7 +2592,7 @@ export const createConfig = (
                 "package-json/exports-subpaths-style": "warn",
                 "package-json/no-empty-fields": "warn",
                 "package-json/no-local-dependencies": "warn",
-                "package-json/no-redundant-files": "off",
+                "package-json/no-redundant-files": "warn",
                 "package-json/no-redundant-publishConfig": "warn",
                 "package-json/order-properties": "warn",
                 "package-json/repository-shorthand": "warn",

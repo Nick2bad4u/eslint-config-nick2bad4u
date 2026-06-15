@@ -573,7 +573,7 @@ describe("eslint-config-nick2bad4u presets", () => {
             "**/__snapshots__/**/*.{md,markdown,mdx}",
         ]);
         expect(markdownSnapshotConfig?.rules?.["remark/remark"]).toBe("off");
-        expect(testConfig?.rules?.["vitest/require-hook"]).toBe("off");
+        expect(testConfig?.rules?.["vitest/require-hook"]).toBeUndefined();
         expect(
             typeDeclarationConfig?.rules?.[
                 "@typescript-eslint/prefer-readonly-parameter-types"
