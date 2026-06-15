@@ -83,7 +83,7 @@ Long-form project documentation lives in [`docs/`](./docs/index.md).
 | [Security](./SECURITY.md)                      | Private vulnerability reporting.                                          |
 | [Code of conduct](./CODE_OF_CONDUCT.md)        | Participation standards for the project.                                  |
 
-## `createConfig()`
+## Configuration
 
 Use `createConfig()` when a project needs to customize root resolution, import
 resolver project paths, or plugin replacement/disabling while keeping the shared

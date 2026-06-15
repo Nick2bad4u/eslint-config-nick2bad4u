@@ -12,7 +12,7 @@ As GitHub Copilot, you are an expert in designing and optimizing CI/CD pipelines
 
 ## gh-fix-ci skill
 
-- There is a skill in the repo that allows you to automatically fix CI failures by analyzing logs and suggesting code changes. When you encounter a CI failure in a workflow, use the `gh-fix-ci` skill to:
+- The repo has a skill that automatically fixes CI failures by analyzing logs and suggesting code changes. When you encounter a CI failure in a workflow, use the `gh-fix-ci` skill to:
   - Analyze the failure logs and identify the root cause.
   - Generate a detailed explanation of the issue and how to fix it.
   - Propose specific code changes to the workflow or related files to resolve the issue.
@@ -39,7 +39,7 @@ As GitHub Copilot, you are an expert in designing and optimizing CI/CD pipelines
 - **Principle:** Jobs should represent distinct, independent phases of your CI/CD pipeline (e.g., build, typecheck, test, docs, release verification, security scan).
 - **Deeper Dive:**
   - **`runs-on`:** Choose appropriate runners. `ubuntu-latest` is common, but `windows-latest`, `macos-latest`, or `self-hosted` runners are available for specific needs.
-  - **`needs`:** Clearly define dependencies. If Job B `needs` Job A, Job B will only run after Job A successfully completes.
+  - **`needs`:** Define dependencies explicitly. If Job B `needs` Job A, Job B will only run after Job A successfully completes.
   - **`outputs`:** Pass data between jobs using `outputs`. This is crucial for separating concerns (e.g., build job outputs artifact path, deploy job consumes it).
   - **`if` Conditions:** Leverage `if` conditions extensively for conditional execution based on branch names, commit messages, event types, or previous job status (`if: success()`, `if: failure()`, `if: always()`).
   - **Job Grouping:** Consider breaking large workflows into smaller, more focused jobs that run in parallel or sequence.
@@ -48,58 +48,58 @@ As GitHub Copilot, you are an expert in designing and optimizing CI/CD pipelines
   - Use `needs` to define dependencies between jobs, ensuring sequential execution and logical flow.
   - Employ `outputs` to pass data between jobs efficiently, promoting modularity.
   - Utilize `if` conditions for conditional job execution (e.g., deploy only on `main` branch pushes, run E2E tests only for certain PRs, skip jobs based on file changes).
-- **Example (Package verification and publish artifact handoff):**
+    **Example (Package verification and publish artifact handoff):**
 
-```yaml
-jobs:
- verify-package:
-  runs-on: ubuntu-latest
-  outputs:
-   tarball_path: ${{ steps.pack.outputs.path }}
-  steps:
-   - name: Checkout code
-     uses: actions/checkout@v6
-   - name: Setup Node.js
-     uses: actions/setup-node@v6
-     with:
-      node-version-file: .node-version
-      cache: npm
-      cache-dependency-path: package-lock.json
-   - name: Install dependencies
-     run: |
-      npm ci --force
-   - name: Verify package
-     run: npm run release:check
-   - name: Pack tarball
-     id: pack
-     run: |
-      mkdir -p temp
-      npm pack --pack-destination temp
-      echo "path=$(ls temp/*.tgz | head -n 1)" >> "$GITHUB_OUTPUT"
-   - name: Upload packed artifact
-     uses: actions/upload-artifact@v4
-     with:
-      name: npm-package
-      path: ${{ steps.pack.outputs.path }}
+    ```yaml
+    jobs:
+     verify-package:
+      runs-on: ubuntu-latest
+      outputs:
+       tarball_path: ${{ steps.pack.outputs.path }}
+      steps:
+       - name: Checkout code
+         uses: actions/checkout@v6
+       - name: Setup Node.js
+         uses: actions/setup-node@v6
+         with:
+          node-version-file: .node-version
+          cache: npm
+          cache-dependency-path: package-lock.json
+       - name: Install dependencies
+         run: |
+          npm ci --force
+       - name: Verify package
+         run: npm run release:check
+       - name: Pack tarball
+         id: pack
+         run: |
+          mkdir -p temp
+          npm pack --pack-destination temp
+          echo "path=$(ls temp/*.tgz | head -n 1)" >> "$GITHUB_OUTPUT"
+       - name: Upload packed artifact
+         uses: actions/upload-artifact@v4
+         with:
+          name: npm-package
+          path: ${{ steps.pack.outputs.path }}
 
- publish:
-  runs-on: ubuntu-latest
-  needs: verify-package
-  if: startsWith(github.ref, 'refs/tags/v')
-  permissions:
-   contents: read
-   id-token: write
-  steps:
-   - name: Download packed artifact
-     uses: actions/download-artifact@v4
-     with:
-      name: npm-package
-      path: temp
-   - name: Publish to npm with provenance
-     run: npm publish temp/*.tgz --provenance --access public
-     env:
-      NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-```
+     publish:
+      runs-on: ubuntu-latest
+      needs: verify-package
+      if: startsWith(github.ref, 'refs/tags/v')
+      permissions:
+       contents: read
+       id-token: write
+      steps:
+       - name: Download packed artifact
+         uses: actions/download-artifact@v4
+         with:
+          name: npm-package
+          path: temp
+       - name: Publish to npm with provenance
+         run: npm publish temp/*.tgz --provenance --access public
+         env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+    ```
 
 ### **3. Steps and Actions**
 
@@ -132,33 +132,33 @@ jobs:
   - Access secrets via `secrets.<SECRET_NAME>` in workflows.
   - Recommend using environment-specific secrets for deployment environments to enforce stricter access controls and approvals.
   - Advise against constructing secrets dynamically or printing them to logs, even if masked.
-- **Example (Environment Secrets with Approval):**
+    **Example (Environment Secrets with Approval):**
 
-```yaml
-jobs:
- deploy:
-  runs-on: ubuntu-latest
-  environment:
-   name: production
-   url: https://prod.example.com
-  steps:
-   - name: Deploy to production
-     env:
-      PROD_API_KEY: ${{ secrets.PROD_API_KEY }}
-     run: ./deploy-script.sh
-```
+    ```yaml
+    jobs:
+     deploy:
+      runs-on: ubuntu-latest
+      environment:
+       name: production
+       url: https://prod.example.com
+      steps:
+       - name: Deploy to production
+         env:
+          PROD_API_KEY: ${{ secrets.PROD_API_KEY }}
+         run: ./deploy-script.sh
+    ```
 
 ### **2. OpenID Connect (OIDC) and npm Provenance**
 
 - **Principle:** Use OIDC-backed short-lived identity wherever supported. In this repository, the most relevant use is npm provenance during package publish (`id-token: write` + `npm publish --provenance`).
 - **Deeper Dive:**
-  - **Short-Lived Credentials:** OIDC exchanges a JWT token for temporary cloud credentials, significantly reducing the attack surface.
+  - **Short-Lived Credentials:** OIDC exchanges a JWT token for temporary cloud credentials, reducing the attack surface.
   - **Trust Policies:** Requires configuring identity providers and trust policies in your cloud environment to trust GitHub's OIDC provider.
   - **Federated Identity:** This is a key pattern for modern, secure cloud deployments.
 - **Guidance for Copilot:**
   - For npm releases, recommend `permissions: { id-token: write }` and `npm publish --provenance` instead of non-attested publishes.
   - If the repository later adds cloud deployment steps, prefer OIDC there too instead of long-lived static credentials.
-  - Explain when an `NPM_TOKEN` secret is still required, and keep its scope as narrow as possible.
+  - Explain when a `NPM_TOKEN` secret is still required, and keep its scope as narrow as possible.
 - **Pro Tip:** For package repositories, provenance-backed publishes are often the highest-value OIDC improvement.
 
 ### **3. Least Privilege for `GITHUB_TOKEN`**
@@ -171,30 +171,30 @@ jobs:
 - **Guidance for Copilot:**
   - Configure `permissions` at the workflow or job level to restrict access. Always prefer `contents: read` as the default.
   - Advise against using `contents: write` or `pull-requests: write` unless the workflow explicitly needs to modify the repository.
-  - Provide a clear mapping of common workflow needs to specific `GITHUB_TOKEN` permissions.
-- **Example (Least Privilege):**
+  - Provide a clear mapping of common workflow needs to the specific `GITHUB_TOKEN` permissions.
+    **Example (Least Privilege):**
 
-```yaml
-permissions:
- contents: read # Default is write, explicitly set to read-only for security
- pull-requests: write # Only if workflow needs to update PRs
- checks: write # For updating checks
+    ```yaml
+    permissions:
+     contents: read # Default is write, explicitly set to read-only for security
+     pull-requests: write # Only if workflow needs to update PRs
+     checks: write # For updating checks
 
-jobs:
- lint:
-  permissions:
-   contents: read # This job only needs to read code, override workflow default
-  steps:
-   - uses: actions/checkout@v6
-   - run: npm run lint
-```
+    jobs:
+     lint:
+      permissions:
+       contents: read # This job only needs to read code, override workflow default
+      steps:
+       - uses: actions/checkout@v6
+       - run: npm run lint
+    ```
 
 ### **4. Dependency Review and Software Composition Analysis (SCA)**
 
 - **Principle:** Continuously scan dependencies for known vulnerabilities and licensing issues.
 - **Deeper Dive:**
   - **Early Detection:** Integrate dependency checks early in the CI pipeline to catch issues before deployment.
-  - **Tools:** Use `dependency-review-action`, Snyk, Trivy, Mend (formerly WhiteSource).
+  - **Tools:** Use `dependency-review-action`, Snyk, Trivy, Mend, etc.
   - **Supply Chain Security:** This is a critical component of securing your software supply chain.
 - **Guidance for Copilot:**
   - Integrate `dependency-review-action` or other SCA tools into the CI pipeline.
@@ -234,13 +234,13 @@ jobs:
   - **Deployment Gate:** Enforce that only signed images can be deployed to production environments.
 - **Guidance for Copilot:**
   - Advocate for reproducible builds in Dockerfiles and build processes.
-  - Suggest integrating image signing into the CI pipeline and verification during deployment stages.
+  - Suggest integrating image signing in to the CI pipeline and verification during deployment stages.
 
 ## Optimization and Performance
 
 ### **1. Caching GitHub Actions**
 
-- **Principle:** Cache dependencies and build outputs to significantly speed up subsequent workflow runs.
+- **Principle:** Cache dependencies and build outputs to speed up subsequent workflow runs.
 - **Deeper Dive:**
   - **Cache Hit Ratio:** Aim for a high cache hit ratio by designing effective cache keys.
   - **Cache Keys:** Use a unique key based on file hashes (e.g., `hashFiles('**/package-lock.json')`, `hashFiles('**/requirements.txt')`) to invalidate the cache only when dependencies change.
@@ -249,18 +249,18 @@ jobs:
 - **Guidance for Copilot:**
   - In this npm repository, prefer `actions/setup-node` with `node-version-file: .node-version` and `cache: npm` before reaching for a custom `actions/cache` block.
   - Treat `.node-version` as the workflow source of truth and keep `.nvmrc` synchronized with the same exact version for local tooling compatibility.
-  - Design highly effective cache keys using `hashFiles` to ensure optimal cache hit rates.
+  - Design effective cache keys using `hashFiles` to ensure optimal cache hit rates.
   - Advise on using `restore-keys` to gracefully fall back to previous caches.
-- **Example (Repository-aligned npm caching):**
+    **Example (Repository-aligned npm caching):**
 
-```yaml
-- name: Setup Node.js
-  uses: actions/setup-node@v6
-  with:
-   node-version-file: .node-version
-   cache: npm
-   cache-dependency-path: package-lock.json
-```
+    ```yaml
+    - name: Setup Node.js
+      uses: actions/setup-node@v6
+      with:
+       node-version-file: .node-version
+       cache: npm
+       cache-dependency-path: package-lock.json
+    ```
 
 ### **2. Matrix Strategies for Parallelization**
 
@@ -269,54 +269,54 @@ jobs:
   - **`strategy.matrix`:** Define a matrix of variables.
   - **`include`/`exclude`:** Fine-tune combinations.
   - **`fail-fast`:** Control whether job failures in the matrix stop the entire strategy.
-  - **Maximizing Concurrency:** Ideal for running tests across various environments simultaneously.
+  - **Maximizing Concurrency:** Ideal for running tests across multiple environments simultaneously.
 - **Guidance for Copilot:**
   - Utilize `strategy.matrix` to test applications against different environments, programming language versions, or operating systems concurrently.
   - Suggest `include` and `exclude` for specific matrix combinations to optimize test coverage without unnecessary runs.
   - Advise on setting `fail-fast: true` (default) for quick feedback on critical failures, or `fail-fast: false` for comprehensive test reporting.
-- **Example (Repository-style compatibility matrix):**
+    **Example (Repository-style compatibility matrix):**
 
-```yaml
-jobs:
- compat:
-  runs-on: ${{ matrix.os }}
-  strategy:
-   fail-fast: false
-   matrix:
-    include:
-     - os: ubuntu-latest
-       eslint-version: "9.0.0"
-     - os: ubuntu-latest
-       eslint-version: "^9.39.1"
-     - os: windows-latest
-       eslint-version: "^9.39.1"
-  steps:
-   - name: Checkout code
-     uses: actions/checkout@v6
+    ```yaml
+    jobs:
+     compat:
+      runs-on: ${{ matrix.os }}
+      strategy:
+       fail-fast: false
+       matrix:
+        include:
+         - os: ubuntu-latest
+           eslint-version: "9.0.0"
+         - os: ubuntu-latest
+           eslint-version: "^9.39.1"
+         - os: windows-latest
+           eslint-version: "^9.39.1"
+      steps:
+       - name: Checkout code
+         uses: actions/checkout@v6
 
-   - name: Setup Node.js
-     uses: actions/setup-node@v6
-     with:
-      node-version-file: .node-version
-      cache: npm
-      cache-dependency-path: package-lock.json
+       - name: Setup Node.js
+         uses: actions/setup-node@v6
+         with:
+          node-version-file: .node-version
+          cache: npm
+          cache-dependency-path: package-lock.json
 
-   - name: Install dependencies
-     run: npm ci --force
+       - name: Install dependencies
+         run: npm ci --force
 
-   - name: Install ESLint
-     run: npm install --no-save --force eslint@${{ matrix.eslint-version }} @eslint/js@${{ matrix.eslint-version }}
+       - name: Install ESLint
+         run: npm install --no-save --force eslint@${{ matrix.eslint-version }} @eslint/js@${{ matrix.eslint-version }}
 
-   - name: Run compat lint
-     run: npm run lint:compat:eslint9 -- --expect-eslint-major=9
-```
+       - name: Run compat lint
+         run: npm run lint:compat:eslint9 -- --expect-eslint-major=9
+    ```
 
 ### **3. Self-Hosted Runners**
 
 - **Principle:** Use self-hosted runners for specialized hardware, network access to private resources, or environments where GitHub-hosted runners are cost-prohibitive.
 - **Deeper Dive:**
   - **Custom Environments:** Ideal for large build caches, specific hardware (GPUs), or access to on-premise resources.
-  - **Cost Optimization:** Can be more cost-effective for very high usage.
+  - **Cost Optimization:** Can be more cost-effective for heavy usage.
   - **Security Considerations:** Requires securing and maintaining your own infrastructure, network access, and updates. This includes proper hardening of the runner machines, managing access controls, and ensuring timely patching.
   - **Scalability:** Plan for how self-hosted runners will scale with demand, either manually or using auto-scaling solutions.
 - **Guidance for Copilot:**
@@ -328,12 +328,12 @@ jobs:
 
 - **Principle:** Optimize repository checkout time to reduce overall workflow duration, especially for large repositories.
 - **Deeper Dive:**
-  - **`fetch-depth`:** Controls how much of the Git history is fetched. `1` for most CI/CD builds is sufficient, as only the latest commit is usually needed. A `fetch-depth` of `0` fetches the entire history, which is rarely needed and can be very slow for large repos.
+  - **`fetch-depth`:** Controls how much of the Git history is fetched. `1` for most CI/CD builds is sufficient, as only the latest commit is usually needed. A `fetch-depth` of `0` fetches the entire history, which is rarely needed and can be slow for large repos.
   - **`submodules`:** Avoid checking out submodules if not required by the specific job. Fetching submodules adds significant overhead.
   - **`lfs`:** Manage Git LFS (Large File Storage) files efficiently. If not needed, set `lfs: false`.
-  - **Partial Clones:** Consider using Git's partial clone feature (`--filter=blob:none` or `--filter=tree:0`) for extremely large repositories, though this is often handled by specialized actions or Git client configurations.
+  - **Partial Clones:** Consider using Git's partial clone feature (`--filter=blob:none` or `--filter=tree:0`) for large repositories, though this is often handled by specialized actions or Git client configurations.
 - **Guidance for Copilot:**
-  - Use `actions/checkout@v6` with `fetch-depth: 1` as the default for most build and test jobs to significantly save time and bandwidth.
+  - Use `actions/checkout@v6` with `fetch-depth: 1` as the default for most build and test jobs to save time and bandwidth.
   - Only use `fetch-depth: 0` if the workflow explicitly requires full Git history (e.g., for release tagging, deep commit analysis, or `git blame` operations).
   - Advise against checking out submodules (`submodules: false`) if not strictly necessary for the workflow's purpose.
   - Suggest optimizing LFS usage if large binary files are present in the repository.
@@ -346,7 +346,7 @@ jobs:
   - **`actions/download-artifact`:** Used to download artifacts in subsequent jobs or workflows. You can download all artifacts or specific ones by name.
   - **`retention-days`:** Crucial for managing storage costs and compliance. Set an appropriate retention period based on the artifact's importance and regulatory requirements.
   - **Use Cases:** Build outputs (executables, compiled code, Docker images), test reports (JUnit XML, HTML reports), code coverage reports, security scan results, generated documentation, static website builds.
-  - **Limitations:** Artifacts are immutable once uploaded. Max size per artifact can be several gigabytes, but be mindful of storage costs.
+  - **Limitations:** Artifacts are immutable once uploaded. Max size per artifact can be multiple gigabytes, but be mindful of storage costs.
 - **Guidance for Copilot:**
   - Use `actions/upload-artifact@v4` and `actions/download-artifact@v4` to pass packed tarballs, test reports, coverage outputs, or generated docs between jobs when a workflow needs them.
   - Set appropriate `retention-days` for artifacts to manage storage costs and ensure old artifacts are pruned.
@@ -460,8 +460,8 @@ jobs:
 ### **3. Deployment Types (Beyond Basic Rolling Update)**
 
 - **Rolling Update (Default for Deployments):** Gradually replaces instances of the old version with new ones. Good for most cases, especially stateless applications.
-  - **Guidance:** Configure `maxSurge` (how many new instances can be created above the desired replica count) and `maxUnavailable` (how many old instances can be unavailable) for fine-grained control over rollout speed and availability.
-- **Blue/Green Deployment:** Deploy a new version (green) alongside the existing stable version (blue) in a separate environment, then switch traffic completely from blue to green.
+  - **Guidance:** Configure `maxSurge` (the number of new instances created above the desired replica count) and `maxUnavailable` (the number of old instances that can be unavailable) for fine-grained control over rollout speed and availability.
+- **Blue/Green Deployment:** Deploy a new version (green) alongside the existing stable version (blue) in a separate environment, then switch traffic from blue to green.
   - **Guidance:** Suggest for critical applications requiring zero-downtime releases and easy rollback. Requires managing two identical environments and a traffic router (load balancer, Ingress controller, DNS).
   - **Benefits:** Instantaneous rollback by switching traffic back to the blue environment.
 - **Canary Deployment:** Gradually roll out new versions to a small subset of users (e.g., 5-10%) before a full rollout. Monitor performance and error rates for the canary group.
@@ -502,12 +502,12 @@ This checklist provides a granular set of criteria for reviewing GitHub Actions 
   - Is the workflow organized logically with meaningful job and step names?
 
 - [ ] **Jobs and Steps Best Practices:**
-  - Are jobs clearly named and represent distinct phases (e.g., `build`, `lint`, `test`, `deploy`)?
+  - Are jobs named well and do they represent distinct phases (e.g., `build`, `lint`, `test`, `deploy`)?
   - Are `needs` dependencies correctly defined between jobs to ensure proper execution order?
   - Are `outputs` used efficiently for inter-job and inter-workflow communication?
   - Are `if` conditions used effectively for conditional job/step execution (e.g., environment-specific deployments, branch-specific actions)?
   - Are all `uses` actions securely versioned (pinned to a full commit SHA or specific major version tag like `@v4`)? Avoid `main` or `latest` tags.
-  - Are `run` commands efficient and clean (combined with `&&`, temporary files removed, multi-line scripts clearly formatted)?
+  - Are `run` commands efficient and clean (combined with `&&`, temporary files removed, multi-line scripts formatted for review)?
   - Are environment variables (`env`) defined at the appropriate scope (workflow, job, step) and never hardcoded sensitive data?
   - Is `timeout-minutes` set for long-running jobs to prevent hung workflows?
 
@@ -600,7 +600,7 @@ This section provides an expanded guide to diagnosing and resolving frequent pro
   - **Debug Cache Behavior:**
     - Use the `actions/cache/restore` action with `lookup-only: true` to inspect what keys are being tried and why a cache miss occurred without affecting the build.
     - Review workflow logs for `Cache hit` or `Cache miss` messages and associated keys.
-  - **Cache Size and Limits:** Be aware of GitHub Actions cache size limits per repository. If caches are very large, they might be evicted frequently.
+  - **Cache Size and Limits:** Be aware of GitHub Actions cache size limits per repository. If caches are large, they might be evicted frequently.
 
 ### **4. Long Running Workflows or Timeouts**
 
@@ -617,9 +617,9 @@ This section provides an expanded guide to diagnosing and resolving frequent pro
   - **Parallelize with Matrix Strategies:**
     - Break down tests or builds into smaller, parallelizable units using `strategy.matrix` to run them concurrently.
   - **Choose Appropriate Runners:**
-    - Review `runs-on`. For very resource-intensive tasks, consider using larger GitHub-hosted runners (if available) or self-hosted runners with more powerful specs.
+    - Review `runs-on`. For resource-intensive tasks, consider using larger GitHub-hosted runners (if available) or self-hosted runners with more powerful specs.
   - **Break Down Workflows:**
-    - For very complex or long workflows, consider breaking them into smaller, independent workflows that trigger each other or use reusable workflows.
+    - For complex or long workflows, consider breaking them into smaller, independent workflows that trigger each other or use reusable workflows.
 
 ### **5. Flaky Tests in CI (`Random failures`, `Passes locally, fails in CI`)**
 
