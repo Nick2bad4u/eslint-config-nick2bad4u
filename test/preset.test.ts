@@ -95,7 +95,9 @@ const getMissingEnabledRulePluginRegistrations = (
     }> = [];
 
     for (const [configIndex, configEntry] of configEntries.entries()) {
-        for (const pluginName of Object.keys(configEntry.plugins ?? {})) {
+        const configPluginNames = Object.keys(configEntry.plugins ?? {});
+
+        for (const pluginName of configPluginNames) {
             availablePluginNames.add(pluginName);
         }
 
@@ -529,6 +531,39 @@ describe("eslint-config-nick2bad4u presets", () => {
         expect(unicornConfig?.rules?.["unicorn/try-complexity"]).toStrictEqual([
             "error",
             { max: 3 },
+        ]);
+    });
+
+    it("keeps Unicorn boolean-name prefixes focused on common config flags", () => {
+        expect.assertions(1);
+
+        const unicornConfig = findConfigByName(presets.all, "🦄 Unicorn: All");
+
+        expect(
+            unicornConfig?.rules?.["unicorn/consistent-boolean-name"]
+        ).toStrictEqual([
+            "error",
+            {
+                prefixes: {
+                    allow: true,
+                    allows: true,
+                    are: true,
+                    disable: true,
+                    disallow: true,
+                    enable: true,
+                    exclude: true,
+                    hide: true,
+                    ignore: true,
+                    include: true,
+                    require: true,
+                    requires: true,
+                    show: true,
+                    skip: true,
+                    supports: true,
+                    use: true,
+                    without: true,
+                },
+            },
         ]);
     });
 

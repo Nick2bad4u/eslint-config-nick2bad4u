@@ -595,7 +595,6 @@ export const createConfig = (
         //     experimental: true,
         //     // The following options are the default values
         //     indent: 4,
-        // eslint-disable-next-line unicorn/comment-content -- lowercase required
         //     jsx: true,
         //     pluginName: "@stylistic",
         //     quoteProps: "as-needed",
@@ -746,6 +745,30 @@ export const createConfig = (
             name: "🦄 Unicorn: All",
             rules: {
                 ...unicorn.configs.all.rules,
+                "unicorn/consistent-boolean-name": [
+                    "error",
+                    {
+                        prefixes: {
+                            allow: true,
+                            allows: true,
+                            are: true,
+                            disable: true,
+                            disallow: true,
+                            enable: true,
+                            exclude: true,
+                            hide: true,
+                            ignore: true,
+                            include: true,
+                            require: true,
+                            requires: true,
+                            show: true,
+                            skip: true,
+                            supports: true,
+                            use: true,
+                            without: true,
+                        },
+                    },
+                ],
                 "unicorn/consistent-destructuring": "off",
                 "unicorn/import-style": [
                     "error",
