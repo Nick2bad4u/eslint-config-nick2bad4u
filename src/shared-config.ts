@@ -1086,7 +1086,9 @@ export const createConfig = (
         jsonSchemaValidator.configs.recommended,
         // #endregion ✅ JSON Schema Validator
         // MARK: 🤖 Copilot
-        copilot.configs.all,
+        copilot.configs.all.map((config) =>
+            withoutJsonPluginRegistration(config)
+        ),
         // MARK: 🛡️ SDL
         sdl.configs.required,
         {
@@ -2568,6 +2570,16 @@ export const createConfig = (
             },
         },
         // #endregion 🧪 Test Files
+        // #region 🔌 Data File Plugins
+        // ═══════════════════════════════════════════════════════════════════════════════
+        {
+            name: "🔌 Data File Plugins",
+            plugins: {
+                json: json,
+                jsonc: jsonc,
+            },
+        },
+        // #endregion 🔌 Data File Plugins
         // #region 📦 Package Metadata
         // ═══════════════════════════════════════════════════════════════════════════════
         {
@@ -2580,7 +2592,6 @@ export const createConfig = (
             name: "📦 Package: **/Package.json",
             plugins: {
                 depend: depend,
-                json: json,
                 "node-dependencies": nodeDepends,
                 "package-json": packageJson,
             },
@@ -3052,10 +3063,6 @@ export const createConfig = (
                 parserOptions: { jsonSyntax: "JSONC" },
             },
             name: "🐭 JSONC: **/*.JSONC",
-            plugins: {
-                json: json,
-                jsonc: jsonc,
-            },
             rules: {
                 ...JSONC_AND_JSON5_RULES,
             },
@@ -3070,9 +3077,6 @@ export const createConfig = (
             ignores: ["**/package.json"],
             language: "json/json",
             name: "🐀 JSON: **/*.JSON",
-            plugins: {
-                json: json,
-            },
             rules: {
                 ...json.configs.recommended.rules,
                 "json/sort-keys": ["warn"],
@@ -3086,10 +3090,6 @@ export const createConfig = (
             files: ["**/*.json5"],
             language: "json/json5",
             name: "🐁 JSON5: **/*.JSON5",
-            plugins: {
-                json: json,
-                jsonc: jsonc,
-            },
             rules: {
                 ...JSONC_AND_JSON5_RULES,
             },
@@ -3859,6 +3859,18 @@ function scopeTypeScriptEslintConfigToCodeFiles(
             ...scopedConfig.plugins,
             "@typescript-eslint": tseslint.plugin,
         },
+    };
+}
+
+function withoutJsonPluginRegistration(config: EslintConfig): EslintConfig {
+    if (!isDefined(config.plugins) || !keyIn(config.plugins, "json")) {
+        return config;
+    }
+    const plugins = { ...config.plugins };
+    Reflect.deleteProperty(plugins, "json");
+    return {
+        ...config,
+        plugins,
     };
 }
 
