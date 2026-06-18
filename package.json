@@ -1,6 +1,6 @@
 {
     "name": "eslint-config-nick2bad4u",
-    "version": "2.0.1",
+    "version": "2.0.2",
     "private": false,
     "description": "Shared flat ESLint config for Nick2bad4u Typescript/JS repos.",
     "keywords": [
