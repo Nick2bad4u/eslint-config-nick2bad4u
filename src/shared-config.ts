@@ -2571,7 +2571,6 @@ export const createConfig = (
         // #region 📦 Package Metadata
         // ═══════════════════════════════════════════════════════════════════════════════
         {
-            ...json.configs.recommended,
             files: ["**/package.json"],
             language: "json/json",
             languageOptions: {
@@ -3065,7 +3064,6 @@ export const createConfig = (
         // #region 🐀 JSON Files
         // ═══════════════════════════════════════════════════════════════════════════════
         {
-            ...json.configs.recommended,
             files: ["**/*.json"],
             // Package.json has a dedicated config block above that uses jsonc-eslint-parser
             // (needed for some package.json-specific tooling rules).
