@@ -1,8 +1,4 @@
 # yaml-language-server: $schema=https://www.schemastore.org/pull-request-labeler.json
-# Label bootstrap (PowerShell / gh):
-# Copy and paste the following command into a PowerShell terminal with the GitHub CLI installed and authenticated to create the labels defined in this file:
-# Make sure you are in the root directory of the repository when running this command.
-# yaml-language-server: $schema=https://www.schemastore.org/pull-request-labeler.json
 #
 # =============================================================================
 # PR Labeler Configuration + Label Bootstrap Helper
@@ -14,24 +10,8 @@
 # -----------------------------------------------------------------------------
 # Bootstrap labels (GitHub CLI)
 # -----------------------------------------------------------------------------
-# Quick start (embedded standard label set, create/update):
-#   pwsh ./scripts/bootstrap-labels.ps1
-#
-# Use this file's top-level keys as the label *name* list:
-#   pwsh ./scripts/bootstrap-labels.ps1 -FromLabelerYml
-#
-# Enforce that every key in this file exists in the embedded label definitions:
-#   pwsh ./scripts/bootstrap-labels.ps1 -FromLabelerYml -Strict
-#
-# Safety switches:
-#   -WhatIf    : preview commands without changes
-#   -AuditOnly : report missing/extra/different labels without changes
-#   -NoForce   : create-only (do not update existing labels)
-#   -Repo      : target a specific repo: -Repo "OWNER/REPO"
-#
-# Important:
-# - labeler.yml does NOT contain colors/descriptions. The script uses embedded
-#   defaults for known labels, and (unless -Strict) a fallback for unknown labels.
+# Sync-GitHub-Label.ps1 -SourceRepo "Nick2bad4u/eslint-plugin-typefest"
+# Script is in: $PSScriptRoot\Sync-GitHub-Label.ps1
 # =============================================================================
 CI/CD:
     - changed-files:

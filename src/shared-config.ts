@@ -3647,10 +3647,11 @@ export const createConfig = (
         // #region 🎯 Targeted ⛔️ Overrides
         // ═══════════════════════════════════════════════════════════════════════════════
         {
-            files: ["**/.github/workflows/auto-merge-dependabot-caller.yml"],
-            name: "🎯 Targeted: ⛔ GitHub Action: Auto Merge Workflow",
+            files: ["**/.github/workflows/*caller.yml"],
+            name: "🎯 Targeted: ⛔ GitHub Action: My Reusable Workflows",
             rules: {
                 "github-actions/pin-action-shas": "off",
+                "github-actions/require-dependency-review-action": "off",
             },
         },
         // #endregion 🎯 Targeted ⛔️ Overrides
