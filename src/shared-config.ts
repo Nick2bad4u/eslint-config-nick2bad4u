@@ -828,11 +828,11 @@ export const createConfig = (
                         },
                     },
                 ],
+                "unicorn/name-replacements": "off", // Noisy and low quality
                 "unicorn/no-asterisk-prefix-in-documentation-comments": "off",
                 "unicorn/no-keyword-prefix": "off", // Too hostile for TypeScript/domain names like typeNode and errorMessage
                 "unicorn/no-null": "off", // Noisy and low quality
                 "unicorn/no-useless-undefined": "off",
-                "unicorn/prevent-abbreviations": "off", // Noisy and low quality
                 "unicorn/try-complexity": ["error", { max: 3 }],
             },
         },
@@ -2339,9 +2339,7 @@ export const createConfig = (
                 // Use the TypeScript rule; it handles class properties and React components better.
                 "class-methods-use-this": "off",
                 "consistent-return": "off", // Use TypeScript version
-                curly: "off",
                 "default-param-last": "off", // Use TypeScript version instead for better type awareness
-                "dot-notation": "off", // Use the TypeScript version instead
                 eqeqeq: "off", // Use the TypeScript version instead
                 "func-style": "off",
                 "id-length": "off",
@@ -2359,7 +2357,6 @@ export const createConfig = (
                 "max-params": "off", // Use TypeScript version which can be configured to ignore `this` parameters and is more aware of function overloads.
                 "max-statements": "off",
                 "no-continue": "off",
-                "no-implied-eval": "off", // Use TypeScript version which can catch more cases with type information
                 "no-inline-comments": "off", // Allow inline comments for complex logic explanations
                 "no-invalid-this": "off", // Use TypeScript version which understands class properties and arrow functions
                 "no-loop-func": "off", // Use TypeScript version instead
@@ -3649,12 +3646,13 @@ export const createConfig = (
         // #endregion 🤖 GitHub Workflow Files ⛔ Overrides
         // #region 🎯 Targeted ⛔️ Overrides
         // ═══════════════════════════════════════════════════════════════════════════════
-        // {
-        //     files: ["**/EXAMPLE-OVERRIDE-FILE/**"],
-        //     name: "🎯 Targeted: ⛔ Overrides 1",
-        //     rules: {
-        //     },
-        // },
+        {
+            files: ["**/.github/workflows/auto-merge-dependabot-caller.yml"],
+            name: "🎯 Targeted: ⛔ GitHub Action: Auto Merge Workflow",
+            rules: {
+                "github-actions/pin-action-shas": "off",
+            },
+        },
         // #endregion 🎯 Targeted ⛔️ Overrides
         // #region 🎨 Stylistic ⛔️ Overrides
         // ═══════════════════════════════════════════════════════════════════════════════
