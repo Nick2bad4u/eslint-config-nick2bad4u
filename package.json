@@ -106,7 +106,7 @@
     "dependencies": {
         "@docusaurus/eslint-plugin": "^3.10.1",
         "@eslint-community/eslint-plugin-eslint-comments": "^4.7.2",
-        "@eslint-react/eslint-plugin": "^5.9.1",
+        "@eslint-react/eslint-plugin": "^5.9.2",
         "@eslint/config-helpers": "^0.6.0",
         "@eslint/css": "^1.3.0",
         "@eslint/js": "^10.0.1",
@@ -130,7 +130,7 @@
         "eslint-import-resolver-node": "^0.4.0",
         "eslint-import-resolver-typescript": "^4.4.5",
         "eslint-plugin-array-func": "^5.1.1",
-        "eslint-plugin-astro": "^1.7.0",
+        "eslint-plugin-astro": "^2.0.0",
         "eslint-plugin-canonical": "^5.1.3",
         "eslint-plugin-case-police": "^2.2.1",
         "eslint-plugin-comment-length": "^2.3.1",
@@ -142,10 +142,10 @@
         "eslint-plugin-eslint-plugin": "^7.4.0",
         "eslint-plugin-etc-misc": "^1.1.7",
         "eslint-plugin-file-progress-2": "^5.1.5",
-        "eslint-plugin-github-actions-2": "^1.1.7",
+        "eslint-plugin-github-actions-2": "^1.2.0",
         "eslint-plugin-immutable-2": "^1.2.4",
-        "eslint-plugin-import-x": "^4.16.2",
-        "eslint-plugin-jsdoc": "^63.0.6",
+        "eslint-plugin-import-x": "^4.17.0",
+        "eslint-plugin-jsdoc": "^63.0.7",
         "eslint-plugin-json-schema-validator-2": "^7.0.7",
         "eslint-plugin-jsonc": "^3.2.0",
         "eslint-plugin-listeners": "^1.5.1",
@@ -156,7 +156,7 @@
         "eslint-plugin-no-barrel-files": "^1.3.1",
         "eslint-plugin-no-unsanitized": "^4.1.5",
         "eslint-plugin-node-dependencies": "^2.2.0",
-        "eslint-plugin-package-json": "^1.4.0",
+        "eslint-plugin-package-json": "^1.5.0",
         "eslint-plugin-perfectionist": "^5.9.1",
         "eslint-plugin-playwright": "^2.10.4",
         "eslint-plugin-prettier": "^5.5.6",
@@ -182,19 +182,19 @@
         "eslint-plugin-vue": "^10.9.2",
         "eslint-plugin-write-good-comments-2": "^1.2.5",
         "eslint-plugin-yml": "^3.4.0",
-        "globals": "^17.6.0",
+        "globals": "^17.7.0",
         "jsonc-eslint-parser": "^3.1.0",
         "toml-eslint-parser": "^1.0.3",
         "ts-extras": "^1.0.0",
         "type-fest": "^5.7.0",
-        "typescript-eslint": "^8.61.1",
+        "typescript-eslint": "^8.62.0",
         "vue-eslint-parser": "^10.4.1",
         "yaml-eslint-parser": "^2.0.0"
     },
     "devDependencies": {
         "@andrewbranch/untar.js": "^1.0.3",
-        "@arethetypeswrong/cli": "^0.18.3",
-        "@arethetypeswrong/core": "^0.18.3",
+        "@arethetypeswrong/cli": "^0.18.4",
+        "@arethetypeswrong/core": "^0.18.4",
         "@microsoft/tsdoc-config": "^0.18.1",
         "@types/eslint-plugin-security": "^3.0.1",
         "@types/node": "^26.0.0",
@@ -209,7 +209,7 @@
         "prettier": "^3.8.4",
         "prettier-config-nick2bad4u": "^1.0.17",
         "publint": "^0.3.21",
-        "remark-config-nick2bad4u": "^1.0.9",
+        "remark-config-nick2bad4u": "^1.0.10",
         "secretlint": "^13.0.2",
         "secretlint-config-nick2bad4u": "^1.1.0",
         "sort-package-json": "^4.0.0",
@@ -218,7 +218,7 @@
         "stylelint-define-config": "^17.11.0",
         "tsdoc-config-nick2bad4u": "^1.0.5",
         "typescript": "^6.0.3",
-        "vite": "^8.0.16",
+        "vite": "^8.1.0",
         "vitest": "^4.1.9",
         "yamllint-config-nick2bad4u": "^1.0.2"
     },
@@ -236,12 +236,12 @@
     },
     "packageManager": "npm@11.17.0",
     "engines": {
-        "node": ">=22.0.0"
+        "node": "^22.22.3 || ^24.16.0 || >=26.3.0"
     },
     "devEngines": {
         "runtime": {
             "name": "node",
-            "version": ">=22.0.0",
+            "version": "^22.22.3 || ^24.16.0 || >=26.3.0",
             "onFail": "error"
         },
         "packageManager": {
