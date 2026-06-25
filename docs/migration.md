@@ -5,7 +5,7 @@ shared `eslint-config-nick2bad4u` package.
 
 ## Prerequisites
 
-- Node.js `>=22.0.0`
+- Node.js `^22.22.3 || ^24.16.0 || >=26.3.0`
 - ESLint `^10.5.0`
 - TypeScript `^5.0.0 || ^6.0.3`
 - npm, pnpm, or yarn support for installing peer dependencies
