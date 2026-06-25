@@ -401,9 +401,9 @@ export interface Nick2Bad4UEslintConfigPresets {
 // heavy integrations with withoutX presets or inject a local plugin build while
 // keeping the rest of the shared config unchanged.
 interface ConfigurablePlugin {
-    readonly configs?: object;
-    readonly flat?: object;
-    readonly rules?: UnknownRecord;
+    readonly configs?: object | undefined;
+    readonly flat?: object | undefined;
+    readonly rules?: undefined | UnknownRecord;
 }
 
 type EslintConfig = Linter.Config;
@@ -504,25 +504,95 @@ export const createConfig = (
         "actionlint",
         actionlint
     );
+    const copilotPlugin = resolveTypedPlugin(
+        pluginOverrideEntries,
+        "copilot",
+        copilot
+    );
+    const docusaurus2Plugin = resolveTypedPlugin(
+        pluginOverrideEntries,
+        "docusaurus-2",
+        docusaurus2
+    );
     const etcMisc = resolveTypedPlugin(
         pluginOverrideEntries,
         "etc-misc",
         etcMiscPlugin
+    );
+    const fileProgressPlugin = resolveTypedPluginByAlias(
+        pluginOverrideEntries,
+        ["file-progress", "file-progress-2"],
+        progress
+    );
+    const githubActionsPlugin = resolveTypedPluginByAlias(
+        pluginOverrideEntries,
+        ["github-actions", "github-actions-2"],
+        githubActions
+    );
+    const immutablePlugin = resolveTypedPluginByAlias(
+        pluginOverrideEntries,
+        ["immutable", "immutable-2"],
+        immutable
+    );
+    const jsonSchemaValidatorPlugin = resolveTypedPluginByAlias(
+        pluginOverrideEntries,
+        ["json-schema-validator", "json-schema-validator-2"],
+        jsonSchemaValidator
+    );
+    const remarkPlugin = resolveTypedPlugin(
+        pluginOverrideEntries,
+        "remark",
+        remark
+    );
+    const repoPlugin = resolveTypedPluginByAlias(
+        pluginOverrideEntries,
+        ["repo-compliance", "repo"],
+        repo
     );
     const runtimeCleanupPlugin = resolveTypedPlugin(
         pluginOverrideEntries,
         "runtime-cleanup",
         runtimeCleanup
     );
+    const sdlPlugin = resolveTypedPluginByAlias(
+        pluginOverrideEntries,
+        ["sdl", "sdl-2"],
+        sdl
+    );
     const secretlintPlugin = resolveTypedPlugin(
         pluginOverrideEntries,
         "secretlint",
         secretlint
     );
+    const stylelint2Plugin = resolveTypedPlugin(
+        pluginOverrideEntries,
+        "stylelint-2",
+        stylelint2
+    );
     const testSignalPlugin = resolveTypedPlugin(
         pluginOverrideEntries,
         "test-signal",
         testSignal
+    );
+    const tsconfigPlugin = resolveTypedPlugin(
+        pluginOverrideEntries,
+        "tsconfig",
+        tsconfig
+    );
+    const tsdocRequirePlugin = resolveTypedPlugin(
+        pluginOverrideEntries,
+        "tsdoc-require-2",
+        tsdocRequire
+    );
+    const typedocPlugin = resolveTypedPlugin(
+        pluginOverrideEntries,
+        "typedoc",
+        typedoc
+    );
+    const writeGoodCommentsPlugin = resolveTypedPluginByAlias(
+        pluginOverrideEntries,
+        ["write-good-comments", "write-good-comments-2"],
+        writeGoodComments
     );
     const yamllintPlugin = resolveTypedPlugin(
         pluginOverrideEntries,
@@ -1046,84 +1116,106 @@ export const createConfig = (
         },
         // #region 🦖 Docusaurus 2 Configs
         // ═══════════════════════════════════════════════════════════════════════════════
-        {
-            ...docusaurus2.configs.experimental,
-            files: [...DOCUSAURUS_CODE_FILE_PATTERNS],
-            ignores: [...DOCUSAURUS_IGNORES],
-            name: "🦖 Docusaurus 2: Experimental: Includes All + Extra Rules",
-            rules: {
-                ...docusaurus2.configs.experimental.rules,
-                "docusaurus-2/local-search-will-not-work-in-dev": "off",
-            },
-        },
-        {
-            ...docusaurus2.configs.content,
-            files: [...DOCUSAURUS_CONTENT_FILE_PATTERNS],
-            ignores: [...DOCUSAURUS_IGNORES],
-            name: "🦖 Docusaurus 2: Content",
-        },
+        ...(docusaurus2Plugin === null
+            ? []
+            : [
+                  {
+                      ...docusaurus2Plugin.configs.experimental,
+                      files: [...DOCUSAURUS_CODE_FILE_PATTERNS],
+                      ignores: [...DOCUSAURUS_IGNORES],
+                      name: "🦖 Docusaurus 2: Experimental: Includes All + Extra Rules",
+                      rules: {
+                          ...docusaurus2Plugin.configs.experimental.rules,
+                          "docusaurus-2/local-search-will-not-work-in-dev":
+                              "off",
+                      },
+                  },
+                  {
+                      ...docusaurus2Plugin.configs.content,
+                      files: [...DOCUSAURUS_CONTENT_FILE_PATTERNS],
+                      ignores: [...DOCUSAURUS_IGNORES],
+                      name: "🦖 Docusaurus 2: Content",
+                  },
+              ]),
         // ═══════════════════════════════════════════════════════════════════════════════
         // #endregion 🦖 Docusaurus 2 Configs
-        {
-            // MARK: 🗂️ TSConfig
-            ...tsconfig.configs.all,
-            name: "🗂️ TSConfig: All",
-        },
+        // MARK: 🗂️ TSConfig
+        ...(tsconfigPlugin === null
+            ? []
+            : [
+                  {
+                      ...tsconfigPlugin.configs.all,
+                      name: "🗂️ TSConfig: All",
+                  },
+              ]),
         // MARK: 📝 Remark
-        remark.configs.all,
+        ...(remarkPlugin === null ? [] : [remarkPlugin.configs.all]),
         {
             // MARK: 🧼 No Unsanitized
             files: [...GLOBAL_FILE_PATTERNS],
             name: "🧼 No Unsanitized: Recommended",
             ...noUnsanitized.configs["recommended"],
         },
-        {
-            // MARK: ⏱️ File Progress
-            ...progress.configs["recommended-ci"],
-            name: "⏱️ File Progress: Recommended CI",
-            rules: {
-                ...progress.configs["recommended-ci"].rules,
-                // The preset already auto-hides on CI, but we also support
-                // explicit local toggles.
-                "file-progress/activate": DISABLE_PROGRESS ? 0 : 1,
-            },
-            settings: {
-                ...progress.configs["recommended-ci"].settings,
-                progress: {
-                    detailedSuccess: false, // Show multi-line final summary (duration, file count, exit code)
-                    failureMark: "✖", // Custom mark used for failure completion
-                    fileNameOnNewLine: true, // Show file names on a new line for better readability
-                    hide: IS_CI || DISABLE_PROGRESS, // Hide progress output (useful in CI)
-                    hideDirectoryNames: false, // Show only the filename (no directory path segments)
-                    hideFileName: HIDE_PROGRESS_FILENAMES, // Show generic "Linting..." instead of file names
-                    hidePrefix: false, // Hide plugin prefix text before progress/summary output
-                    prefixMark: "•", // Marker after plugin name prefix in progress lines
-                    spinnerStyle: "dots", // Line | dots | arc | bounce | clock
-                    successMark: "✔", // Custom mark used for success completion
-                    successMessage: "Linting complete!", // Custom message on successful completion
-                },
-            },
-        },
+        // MARK: ⏱️ File Progress
+        ...(fileProgressPlugin === null
+            ? []
+            : [
+                  {
+                      ...fileProgressPlugin.configs["recommended-ci"],
+                      name: "⏱️ File Progress: Recommended CI",
+                      rules: {
+                          ...fileProgressPlugin.configs["recommended-ci"].rules,
+                          // The preset already auto-hides on CI, but we also support
+                          // explicit local toggles.
+                          "file-progress/activate": DISABLE_PROGRESS ? 0 : 1,
+                      },
+                      settings: {
+                          ...fileProgressPlugin.configs["recommended-ci"]
+                              .settings,
+                          progress: {
+                              detailedSuccess: false, // Show multi-line final summary (duration, file count, exit code)
+                              failureMark: "✖", // Custom mark used for failure completion
+                              fileNameOnNewLine: true, // Show file names on a new line for better readability
+                              hide: IS_CI || DISABLE_PROGRESS, // Hide progress output (useful in CI)
+                              hideDirectoryNames: false, // Show only the filename (no directory path segments)
+                              hideFileName: HIDE_PROGRESS_FILENAMES, // Show generic "Linting..." instead of file names
+                              hidePrefix: false, // Hide plugin prefix text before progress/summary output
+                              prefixMark: "•", // Marker after plugin name prefix text in progress lines
+                              spinnerStyle: "dots", // Line | dots | arc | bounce | clock
+                              successMark: "✔", // Custom mark used for success completion
+                              successMessage: "Linting complete!", // Custom message on successful completion
+                          },
+                      },
+                  },
+              ]),
         // #region ✅ JSON Schema Validator
         // ═══════════════════════════════════════════════════════════════════════════════
-        jsonSchemaValidator.configs.recommended,
+        ...(jsonSchemaValidatorPlugin === null
+            ? []
+            : [jsonSchemaValidatorPlugin.configs.recommended]),
         // #endregion ✅ JSON Schema Validator
         // MARK: 🤖 Copilot
-        copilot.configs.all.map((config) =>
-            withoutJsonPluginRegistration(config)
-        ),
+        ...(copilotPlugin === null
+            ? []
+            : copilotPlugin.configs.all.map((config) =>
+                  withoutJsonPluginRegistration(config)
+              )),
         // MARK: 🛡️ SDL
-        sdl.configs.required,
-        {
-            // MARK: 🦑 GitHub Actions
-            ...githubActions.configs.all,
-            name: "🦑 GitHub Actions: All",
-            rules: {
-                ...githubActions.configs.all.rules,
-                "github-actions/no-external-job": "off", // Noisy and low value (also inteferes with our dependabot merge workflow)
-                "github-actions/no-top-level-permissions": "off", // Noisy and low value
-            },
-        },
+        ...(sdlPlugin === null ? [] : [sdlPlugin.configs.required]),
+        // MARK: 🦑 GitHub Actions
+        ...(githubActionsPlugin === null
+            ? []
+            : [
+                  {
+                      ...githubActionsPlugin.configs.all,
+                      name: "🦑 GitHub Actions: All",
+                      rules: {
+                          ...githubActionsPlugin.configs.all.rules,
+                          "github-actions/no-external-job": "off", // Noisy and low value (also inteferes with our dependabot merge workflow)
+                          "github-actions/no-top-level-permissions": "off", // Noisy and low value
+                      },
+                  },
+              ]),
         // MARK: 🦑 Actionlint
         ...(actionlintPlugin === null ? [] : [actionlintPlugin.configs.all]),
         {
@@ -1220,158 +1312,177 @@ export const createConfig = (
         // MARK: ⚡ Vite
         vite.configs.all,
         // MARK: 🎨 Stylelint
-        stylelint2.configs.all,
-        {
-            // MARK: 🐲 Repo Compliance
-            ...repo.configs.recommended,
-            name: "🐲 Repo Compliance: Recommended",
-            plugins: {
-                ...repo.configs.recommended.plugins,
-            },
-            // prettier-ignore
-            rules: {
-                ...repo.configs.recommended.rules,
-                ...repo.configs.github.rules,
-                ...repo.configs.dependabot.rules,
-                ...repo.configs.node.rules,
-                "repo-compliance/require-aws-amplify-artifacts-base-directory": "off",
-                "repo-compliance/require-aws-amplify-artifacts-base-directory-relative-path": "off",
-                "repo-compliance/require-aws-amplify-artifacts-files": "off",
-                "repo-compliance/require-aws-amplify-artifacts-files-non-empty": "off",
-                "repo-compliance/require-aws-amplify-build-commands": "off",
-                "repo-compliance/require-aws-amplify-config-file": "off",
-                "repo-compliance/require-aws-amplify-version": "off",
-                "repo-compliance/require-aws-amplify-version-value": "off",
-                "repo-compliance/require-azure-pipelines-config-file": "off",
-                "repo-compliance/require-azure-pipelines-execution-plan": "off",
-                "repo-compliance/require-azure-pipelines-name": "off",
-                "repo-compliance/require-azure-pipelines-pr-branches": "off",
-                "repo-compliance/require-azure-pipelines-pr-trigger": "off",
-                "repo-compliance/require-azure-pipelines-trigger": "off",
-                "repo-compliance/require-azure-pipelines-trigger-branches": "off",
-                "repo-compliance/require-azure-pipelines-trigger-include-branches": "off",
-                "repo-compliance/require-bitbucket-pipelines-clone-depth": "off",
-                "repo-compliance/require-bitbucket-pipelines-config-file": "off",
-                "repo-compliance/require-bitbucket-pipelines-default-pipeline": "off",
-                "repo-compliance/require-bitbucket-pipelines-image-pinned-tag": "off",
-                "repo-compliance/require-bitbucket-pipelines-max-time": "off",
-                "repo-compliance/require-bitbucket-pipelines-pull-requests": "off",
-                "repo-compliance/require-bitbucket-pipelines-pull-requests-target-branches": "off",
-                "repo-compliance/require-bitbucket-pipelines-step-name": "off",
-                "repo-compliance/require-copilot-instructions-file": "off",
-                "repo-compliance/require-digitalocean-app-spec-component": "off",
-                "repo-compliance/require-digitalocean-app-spec-file": "off",
-                "repo-compliance/require-digitalocean-app-spec-name": "off",
-                "repo-compliance/require-digitalocean-app-spec-name-value": "off",
-                "repo-compliance/require-digitalocean-app-spec-region": "off",
-                "repo-compliance/require-digitalocean-app-spec-region-lowercase": "off",
-                "repo-compliance/require-digitalocean-app-spec-region-value": "off",
-                "repo-compliance/require-dockerfile": "off",
-                "repo-compliance/require-dockerfile-base-image-tag": "off",
-                "repo-compliance/require-dockerfile-cmd-or-entrypoint": "off",
-                "repo-compliance/require-dockerfile-first-instruction-from": "off",
-                "repo-compliance/require-dockerfile-from-instruction": "off",
-                "repo-compliance/require-dockerfile-user": "off",
-                "repo-compliance/require-dockerfile-workdir": "off",
-                "repo-compliance/require-dockerignore-file": "off",
-                "repo-compliance/require-forgejo-actions-concurrency": "off",
-                "repo-compliance/require-forgejo-actions-job-timeout-minutes": "off",
-                "repo-compliance/require-forgejo-actions-no-write-all-permissions": "off",
-                "repo-compliance/require-forgejo-actions-pinned-sha": "off",
-                "repo-compliance/require-forgejo-actions-workflow-dispatch": "off",
-                "repo-compliance/require-forgejo-actions-workflow-file": "off",
-                "repo-compliance/require-forgejo-actions-workflow-name": "off",
-                "repo-compliance/require-forgejo-actions-workflow-permissions": "off",
-                "repo-compliance/require-forgejo-actions-workflow-trigger-coverage": "off",
-                "repo-compliance/require-gitlab-ci-cache-policy": "off",
-                "repo-compliance/require-gitlab-ci-config-file": "off",
-                "repo-compliance/require-gitlab-ci-default-timeout": "off",
-                "repo-compliance/require-gitlab-ci-interruptible": "off",
-                "repo-compliance/require-gitlab-ci-merge-request-pipelines": "off",
-                "repo-compliance/require-gitlab-ci-needs-dag": "off",
-                "repo-compliance/require-gitlab-ci-rules-over-only-except": "off",
-                "repo-compliance/require-gitlab-ci-security-scanning": "off",
-                "repo-compliance/require-gitlab-ci-stages": "off",
-                "repo-compliance/require-gitlab-ci-workflow-rules": "off",
-                "repo-compliance/require-gitlab-issue-template-file": "off",
-                "repo-compliance/require-gitlab-merge-request-template-file": "off",
-                "repo-compliance/require-google-cloud-build-config-file": "off",
-                "repo-compliance/require-google-cloud-build-step-name": "off",
-                "repo-compliance/require-google-cloud-build-steps": "off",
-                "repo-compliance/require-google-cloud-build-steps-non-empty": "off",
-                "repo-compliance/require-google-cloud-build-timeout": "off",
-                "repo-compliance/require-google-cloud-build-timeout-format": "off",
-                "repo-compliance/require-google-cloud-build-timeout-max": "off",
-                "repo-compliance/require-google-cloud-build-timeout-positive": "off",
-                "repo-compliance/require-netlify-build-command": "off",
-                "repo-compliance/require-netlify-build-command-non-empty": "off",
-                "repo-compliance/require-netlify-build-publish-directory": "off",
-                "repo-compliance/require-netlify-build-section": "off",
-                "repo-compliance/require-netlify-config-file": "off",
-                "repo-compliance/require-netlify-publish-directory-no-trailing-slash": "off",
-                "repo-compliance/require-netlify-publish-directory-non-empty": "off",
-                "repo-compliance/require-netlify-publish-relative-path": "off",
-                "repo-compliance/require-pr-template-checklist-items": "warn",
-                "repo-compliance/require-readme-badges": "warn",
-                "repo-compliance/require-readme-sections": "off",
-                "repo-compliance/require-vercel-build-command": "off",
-                "repo-compliance/require-vercel-config-file": "off",
-                "repo-compliance/require-vercel-config-object": "off",
-                "repo-compliance/require-vercel-schema": "off",
-                "repo-compliance/require-vercel-schema-url": "off",
-                "repo-compliance/require-vercel-valid-json": "off",
-                "repo-compliance/require-vercel-version-value": "off",
-            },
-        },
-        {
-            ...typedoc.configs.recommended,
-            files: [...TYPEDOC_API_FILE_PATTERNS],
-            ignores: [...TYPEDOC_API_IGNORES],
-            name: "⌨️ TypeDoc: Recommended",
-            rules: {
-                ...typedoc.configs.recommended.rules,
-                "typedoc/no-empty-private-remarks-tag": "warn",
-                "typedoc/no-extra-type-param-tags": "warn",
-                "typedoc/no-unknown-tags": "warn",
-                "typedoc/require-code-fence-language": "warn",
-                "typedoc/require-default-value-tag": "off",
-                "typedoc/require-example-tag": "off",
-                "typedoc/require-package-documentation": "off",
-                "typedoc/require-package-documentation-description": "off",
-                "typedoc/require-param-tag-description": "off",
-                "typedoc/require-param-tags": "off",
-                "typedoc/require-returns-description": "off",
-                "typedoc/require-returns-tag": "off",
-                "typedoc/require-see-tag-link": "warn",
-                "typedoc/require-since-tag-description": "off",
-                "typedoc/require-throws-description": "off",
-                "typedoc/require-throws-tag": "warn",
-                "typedoc/require-type-param-tag-description": "off",
-                "typedoc/require-type-param-tags": "off",
-            },
-        },
-        {
-            // MARK: 🌲 Immutable
-            ...immutable.configs.all,
-            files: ["functional/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}"],
-            name: "🌲 Immutable: functional (not used in this repo)",
-        },
-        {
-            // MARK: 🍀 Write Good Comments
-            ...writeGoodComments.configs.all,
-            files: [...SOURCE_FILE_PATTERNS],
-            name: "🍀 Write Good Comments: (not used in this repo)",
-            // Placeholder only: keep the plugin visible without enabling its
-            // prose checks for this config package's source.
-            rules: {
-                "write-good-comments/inclusive-language-comments": "off",
-                "write-good-comments/no-profane-comments": "off",
-                "write-good-comments/readability-comments": "off",
-                "write-good-comments/spellcheck-comments": "off",
-                "write-good-comments/task-comment-format": "off",
-                "write-good-comments/write-good-comments": "off",
-            },
-        },
+        ...(stylelint2Plugin === null ? [] : [stylelint2Plugin.configs.all]),
+        // MARK: 🐲 Repo Compliance
+        ...(repoPlugin === null
+            ? []
+            : [
+                  {
+                      ...repoPlugin.configs.recommended,
+                      name: "🐲 Repo Compliance: Recommended",
+                      plugins: {
+                          ...repoPlugin.configs.recommended.plugins,
+                      },
+                      // prettier-ignore
+                      rules: {
+                          ...repoPlugin.configs.recommended.rules,
+                          ...repoPlugin.configs.github.rules,
+                          ...repoPlugin.configs.dependabot.rules,
+                          ...repoPlugin.configs.node.rules,
+                          "repo-compliance/require-aws-amplify-artifacts-base-directory": "off",
+                          "repo-compliance/require-aws-amplify-artifacts-base-directory-relative-path": "off",
+                          "repo-compliance/require-aws-amplify-artifacts-files": "off",
+                          "repo-compliance/require-aws-amplify-artifacts-files-non-empty": "off",
+                          "repo-compliance/require-aws-amplify-build-commands": "off",
+                          "repo-compliance/require-aws-amplify-config-file": "off",
+                          "repo-compliance/require-aws-amplify-version": "off",
+                          "repo-compliance/require-aws-amplify-version-value": "off",
+                          "repo-compliance/require-azure-pipelines-config-file": "off",
+                          "repo-compliance/require-azure-pipelines-execution-plan": "off",
+                          "repo-compliance/require-azure-pipelines-name": "off",
+                          "repo-compliance/require-azure-pipelines-pr-branches": "off",
+                          "repo-compliance/require-azure-pipelines-pr-trigger": "off",
+                          "repo-compliance/require-azure-pipelines-trigger": "off",
+                          "repo-compliance/require-azure-pipelines-trigger-branches": "off",
+                          "repo-compliance/require-azure-pipelines-trigger-include-branches": "off",
+                          "repo-compliance/require-bitbucket-pipelines-clone-depth": "off",
+                          "repo-compliance/require-bitbucket-pipelines-config-file": "off",
+                          "repo-compliance/require-bitbucket-pipelines-default-pipeline": "off",
+                          "repo-compliance/require-bitbucket-pipelines-image-pinned-tag": "off",
+                          "repo-compliance/require-bitbucket-pipelines-max-time": "off",
+                          "repo-compliance/require-bitbucket-pipelines-pull-requests": "off",
+                          "repo-compliance/require-bitbucket-pipelines-pull-requests-target-branches": "off",
+                          "repo-compliance/require-bitbucket-pipelines-step-name": "off",
+                          "repo-compliance/require-copilot-instructions-file": "off",
+                          "repo-compliance/require-digitalocean-app-spec-component": "off",
+                          "repo-compliance/require-digitalocean-app-spec-file": "off",
+                          "repo-compliance/require-digitalocean-app-spec-name": "off",
+                          "repo-compliance/require-digitalocean-app-spec-name-value": "off",
+                          "repo-compliance/require-digitalocean-app-spec-region": "off",
+                          "repo-compliance/require-digitalocean-app-spec-region-lowercase": "off",
+                          "repo-compliance/require-digitalocean-app-spec-region-value": "off",
+                          "repo-compliance/require-dockerfile": "off",
+                          "repo-compliance/require-dockerfile-base-image-tag": "off",
+                          "repo-compliance/require-dockerfile-cmd-or-entrypoint": "off",
+                          "repo-compliance/require-dockerfile-first-instruction-from": "off",
+                          "repo-compliance/require-dockerfile-from-instruction": "off",
+                          "repo-compliance/require-dockerfile-user": "off",
+                          "repo-compliance/require-dockerfile-workdir": "off",
+                          "repo-compliance/require-dockerignore-file": "off",
+                          "repo-compliance/require-forgejo-actions-concurrency": "off",
+                          "repo-compliance/require-forgejo-actions-job-timeout-minutes": "off",
+                          "repo-compliance/require-forgejo-actions-no-write-all-permissions": "off",
+                          "repo-compliance/require-forgejo-actions-pinned-sha": "off",
+                          "repo-compliance/require-forgejo-actions-workflow-dispatch": "off",
+                          "repo-compliance/require-forgejo-actions-workflow-file": "off",
+                          "repo-compliance/require-forgejo-actions-workflow-name": "off",
+                          "repo-compliance/require-forgejo-actions-workflow-permissions": "off",
+                          "repo-compliance/require-forgejo-actions-workflow-trigger-coverage": "off",
+                          "repo-compliance/require-gitlab-ci-cache-policy": "off",
+                          "repo-compliance/require-gitlab-ci-config-file": "off",
+                          "repo-compliance/require-gitlab-ci-default-timeout": "off",
+                          "repo-compliance/require-gitlab-ci-interruptible": "off",
+                          "repo-compliance/require-gitlab-ci-merge-request-pipelines": "off",
+                          "repo-compliance/require-gitlab-ci-needs-dag": "off",
+                          "repo-compliance/require-gitlab-ci-rules-over-only-except": "off",
+                          "repo-compliance/require-gitlab-ci-security-scanning": "off",
+                          "repo-compliance/require-gitlab-ci-stages": "off",
+                          "repo-compliance/require-gitlab-ci-workflow-rules": "off",
+                          "repo-compliance/require-gitlab-issue-template-file": "off",
+                          "repo-compliance/require-gitlab-merge-request-template-file": "off",
+                          "repo-compliance/require-google-cloud-build-config-file": "off",
+                          "repo-compliance/require-google-cloud-build-step-name": "off",
+                          "repo-compliance/require-google-cloud-build-steps": "off",
+                          "repo-compliance/require-google-cloud-build-steps-non-empty": "off",
+                          "repo-compliance/require-google-cloud-build-timeout": "off",
+                          "repo-compliance/require-google-cloud-build-timeout-format": "off",
+                          "repo-compliance/require-google-cloud-build-timeout-max": "off",
+                          "repo-compliance/require-google-cloud-build-timeout-positive": "off",
+                          "repo-compliance/require-netlify-build-command": "off",
+                          "repo-compliance/require-netlify-build-command-non-empty": "off",
+                          "repo-compliance/require-netlify-build-publish-directory": "off",
+                          "repo-compliance/require-netlify-build-section": "off",
+                          "repo-compliance/require-netlify-config-file": "off",
+                          "repo-compliance/require-netlify-publish-directory-no-trailing-slash": "off",
+                          "repo-compliance/require-netlify-publish-directory-non-empty": "off",
+                          "repo-compliance/require-netlify-publish-relative-path": "off",
+                          "repo-compliance/require-pr-template-checklist-items": "warn",
+                          "repo-compliance/require-readme-badges": "warn",
+                          "repo-compliance/require-readme-sections": "off",
+                          "repo-compliance/require-vercel-build-command": "off",
+                          "repo-compliance/require-vercel-config-file": "off",
+                          "repo-compliance/require-vercel-config-object": "off",
+                          "repo-compliance/require-vercel-schema": "off",
+                          "repo-compliance/require-vercel-schema-url": "off",
+                          "repo-compliance/require-vercel-valid-json": "off",
+                          "repo-compliance/require-vercel-version-value": "off",
+                      },
+                  },
+              ]),
+        // MARK: ⌨️ TypeDoc
+        ...(typedocPlugin === null
+            ? []
+            : [
+                  {
+                      ...typedocPlugin.configs.recommended,
+                      files: [...TYPEDOC_API_FILE_PATTERNS],
+                      ignores: [...TYPEDOC_API_IGNORES],
+                      name: "⌨️ TypeDoc: Recommended",
+                      rules: {
+                          ...typedocPlugin.configs.recommended.rules,
+                          "typedoc/no-empty-private-remarks-tag": "warn",
+                          "typedoc/no-extra-type-param-tags": "warn",
+                          "typedoc/no-unknown-tags": "warn",
+                          "typedoc/require-code-fence-language": "warn",
+                          "typedoc/require-default-value-tag": "off",
+                          "typedoc/require-example-tag": "off",
+                          "typedoc/require-package-documentation": "off",
+                          "typedoc/require-package-documentation-description":
+                              "off",
+                          "typedoc/require-param-tag-description": "off",
+                          "typedoc/require-param-tags": "off",
+                          "typedoc/require-returns-description": "off",
+                          "typedoc/require-returns-tag": "off",
+                          "typedoc/require-see-tag-link": "warn",
+                          "typedoc/require-since-tag-description": "off",
+                          "typedoc/require-throws-description": "off",
+                          "typedoc/require-throws-tag": "warn",
+                          "typedoc/require-type-param-tag-description": "off",
+                          "typedoc/require-type-param-tags": "off",
+                      },
+                  },
+              ]),
+        // MARK: 🌲 Immutable
+        ...(immutablePlugin === null
+            ? []
+            : [
+                  {
+                      ...immutablePlugin.configs.all,
+                      files: ["functional/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}"],
+                      name: "🌲 Immutable: functional (not used in this repo)",
+                  },
+              ]),
+        // MARK: 🍀 Write Good Comments
+        ...(writeGoodCommentsPlugin === null
+            ? []
+            : [
+                  {
+                      ...writeGoodCommentsPlugin.configs.all,
+                      files: [...SOURCE_FILE_PATTERNS],
+                      name: "🍀 Write Good Comments: (not used in this repo)",
+                      // Placeholder only: keep the plugin visible without enabling its
+                      // prose checks for this config package's source.
+                      rules: {
+                          "write-good-comments/inclusive-language-comments":
+                              "off",
+                          "write-good-comments/no-profane-comments": "off",
+                          "write-good-comments/readability-comments": "off",
+                          "write-good-comments/spellcheck-comments": "off",
+                          "write-good-comments/task-comment-format": "off",
+                          "write-good-comments/write-good-comments": "off",
+                      },
+                  },
+              ]),
         {
             // MARK: 🛢️ No Barrel Files
             ...noBarrelFiles.flat,
@@ -1487,73 +1598,78 @@ export const createConfig = (
                 "tsdoc/syntax": "warn",
             },
         },
-        {
-            files: ["src/**/*.{ts,mts,cts,tsx}"],
-            name: "⌨️ TSDoc Require 2: source docs",
-            plugins: {
-                "tsdoc-require-2": tsdocRequire,
-            },
-            rules: {
-                "tsdoc-require-2/require": "warn",
-                "tsdoc-require-2/require-abstract": "off",
-                "tsdoc-require-2/require-alpha": "off",
-                "tsdoc-require-2/require-author": "off",
-                "tsdoc-require-2/require-beta": "off",
-                "tsdoc-require-2/require-category": "off",
-                "tsdoc-require-2/require-class": "off",
-                "tsdoc-require-2/require-decorator": "off",
-                "tsdoc-require-2/require-default-value": "off",
-                "tsdoc-require-2/require-deprecated": "off",
-                "tsdoc-require-2/require-document": "off",
-                "tsdoc-require-2/require-enum": "off",
-                "tsdoc-require-2/require-event": "off",
-                "tsdoc-require-2/require-event-property": "off",
-                "tsdoc-require-2/require-example": "off",
-                "tsdoc-require-2/require-expand": "off",
-                "tsdoc-require-2/require-experimental": "off",
-                "tsdoc-require-2/require-function": "off",
-                "tsdoc-require-2/require-group": "off",
-                "tsdoc-require-2/require-hidden": "off",
-                "tsdoc-require-2/require-hideconstructor": "off",
-                "tsdoc-require-2/require-ignore": "off",
-                "tsdoc-require-2/require-import": "off",
-                "tsdoc-require-2/require-include": "off",
-                "tsdoc-require-2/require-inherit-doc": "off",
-                "tsdoc-require-2/require-inline": "off",
-                "tsdoc-require-2/require-interface": "off",
-                "tsdoc-require-2/require-internal": "off",
-                "tsdoc-require-2/require-label": "off",
-                "tsdoc-require-2/require-license": "off",
-                "tsdoc-require-2/require-link": "off",
-                "tsdoc-require-2/require-merge-module-with": "off",
-                "tsdoc-require-2/require-module": "off",
-                "tsdoc-require-2/require-namespace": "off",
-                "tsdoc-require-2/require-overload": "off",
-                "tsdoc-require-2/require-override": "off",
-                "tsdoc-require-2/require-package-documentation": "off",
-                "tsdoc-require-2/require-param": "off",
-                "tsdoc-require-2/require-primary-export": "off",
-                "tsdoc-require-2/require-private": "off",
-                "tsdoc-require-2/require-private-remarks": "off",
-                "tsdoc-require-2/require-property": "off",
-                "tsdoc-require-2/require-protected": "off",
-                "tsdoc-require-2/require-public": "off",
-                "tsdoc-require-2/require-readonly": "off",
-                "tsdoc-require-2/require-remarks": "off",
-                "tsdoc-require-2/require-returns": "off",
-                "tsdoc-require-2/require-sealed": "off",
-                "tsdoc-require-2/require-see": "off",
-                "tsdoc-require-2/require-since": "off",
-                "tsdoc-require-2/require-sort-strategy": "off",
-                "tsdoc-require-2/require-summary": "off",
-                "tsdoc-require-2/require-template": "off",
-                "tsdoc-require-2/require-throws": "off",
-                "tsdoc-require-2/require-type-param": "off",
-                "tsdoc-require-2/require-use-declared-type": "off",
-                "tsdoc-require-2/require-virtual": "off",
-                "tsdoc-require-2/restrict-tags": "off",
-            },
-        },
+        ...(tsdocRequirePlugin === null
+            ? []
+            : [
+                  {
+                      files: ["src/**/*.{ts,mts,cts,tsx}"],
+                      name: "⌨️ TSDoc Require 2: source docs",
+                      plugins: {
+                          "tsdoc-require-2": tsdocRequirePlugin,
+                      },
+                      rules: {
+                          "tsdoc-require-2/require": "warn",
+                          "tsdoc-require-2/require-abstract": "off",
+                          "tsdoc-require-2/require-alpha": "off",
+                          "tsdoc-require-2/require-author": "off",
+                          "tsdoc-require-2/require-beta": "off",
+                          "tsdoc-require-2/require-category": "off",
+                          "tsdoc-require-2/require-class": "off",
+                          "tsdoc-require-2/require-decorator": "off",
+                          "tsdoc-require-2/require-default-value": "off",
+                          "tsdoc-require-2/require-deprecated": "off",
+                          "tsdoc-require-2/require-document": "off",
+                          "tsdoc-require-2/require-enum": "off",
+                          "tsdoc-require-2/require-event": "off",
+                          "tsdoc-require-2/require-event-property": "off",
+                          "tsdoc-require-2/require-example": "off",
+                          "tsdoc-require-2/require-expand": "off",
+                          "tsdoc-require-2/require-experimental": "off",
+                          "tsdoc-require-2/require-function": "off",
+                          "tsdoc-require-2/require-group": "off",
+                          "tsdoc-require-2/require-hidden": "off",
+                          "tsdoc-require-2/require-hideconstructor": "off",
+                          "tsdoc-require-2/require-ignore": "off",
+                          "tsdoc-require-2/require-import": "off",
+                          "tsdoc-require-2/require-include": "off",
+                          "tsdoc-require-2/require-inherit-doc": "off",
+                          "tsdoc-require-2/require-inline": "off",
+                          "tsdoc-require-2/require-interface": "off",
+                          "tsdoc-require-2/require-internal": "off",
+                          "tsdoc-require-2/require-label": "off",
+                          "tsdoc-require-2/require-license": "off",
+                          "tsdoc-require-2/require-link": "off",
+                          "tsdoc-require-2/require-merge-module-with": "off",
+                          "tsdoc-require-2/require-module": "off",
+                          "tsdoc-require-2/require-namespace": "off",
+                          "tsdoc-require-2/require-overload": "off",
+                          "tsdoc-require-2/require-override": "off",
+                          "tsdoc-require-2/require-package-documentation":
+                              "off",
+                          "tsdoc-require-2/require-param": "off",
+                          "tsdoc-require-2/require-primary-export": "off",
+                          "tsdoc-require-2/require-private": "off",
+                          "tsdoc-require-2/require-private-remarks": "off",
+                          "tsdoc-require-2/require-property": "off",
+                          "tsdoc-require-2/require-protected": "off",
+                          "tsdoc-require-2/require-public": "off",
+                          "tsdoc-require-2/require-readonly": "off",
+                          "tsdoc-require-2/require-remarks": "off",
+                          "tsdoc-require-2/require-returns": "off",
+                          "tsdoc-require-2/require-sealed": "off",
+                          "tsdoc-require-2/require-see": "off",
+                          "tsdoc-require-2/require-since": "off",
+                          "tsdoc-require-2/require-sort-strategy": "off",
+                          "tsdoc-require-2/require-summary": "off",
+                          "tsdoc-require-2/require-template": "off",
+                          "tsdoc-require-2/require-throws": "off",
+                          "tsdoc-require-2/require-type-param": "off",
+                          "tsdoc-require-2/require-use-declared-type": "off",
+                          "tsdoc-require-2/require-virtual": "off",
+                          "tsdoc-require-2/restrict-tags": "off",
+                      },
+                  },
+              ]),
         // #endregion 🦬 TSDoc Rules
         // #region 🎨 CSS Files
         // ═══════════════════════════════════════════════════════════════════════════════
@@ -3862,6 +3978,26 @@ function resolveTypedPlugin<TPlugin extends ConfigurablePlugin>(
         fallbackPlugin
     );
     return resolvedPlugin === null ? null : (resolvedPlugin as TPlugin);
+}
+
+function resolveTypedPluginByAlias<TPlugin extends ConfigurablePlugin>(
+    pluginOverrideEntries: ReadonlyMap<string, PluginOverride>,
+    pluginNames: readonly string[],
+    fallbackPlugin: TPlugin
+): null | TPlugin {
+    for (const pluginName of pluginNames) {
+        if (!pluginOverrideEntries.has(pluginName)) {
+            continue;
+        }
+        const configuredPlugin = pluginOverrideEntries.get(pluginName);
+        if (configuredPlugin === false || configuredPlugin === null) {
+            return null;
+        }
+        if (isDefined(configuredPlugin)) {
+            return configuredPlugin as TPlugin;
+        }
+    }
+    return fallbackPlugin;
 }
 
 function scopeConfigToCodeFiles(config: EslintConfig): EslintConfig {

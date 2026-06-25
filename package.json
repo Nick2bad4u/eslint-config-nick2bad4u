@@ -167,7 +167,7 @@
         "eslint-plugin-repo": "^1.0.8",
         "eslint-plugin-runtime-cleanup": "^1.2.11",
         "eslint-plugin-sdl-2": "^1.2.6",
-        "eslint-plugin-secretlint": "^1.0.0",
+        "eslint-plugin-secretlint": "^2.0.0",
         "eslint-plugin-security": "^4.0.1",
         "eslint-plugin-storybook": "^10.4.6",
         "eslint-plugin-stylelint-2": "^1.1.4",

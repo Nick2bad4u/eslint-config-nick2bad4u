@@ -11,6 +11,7 @@ const fixtureWorkspaceRoot = fileURLToPath(
 
 const fixturePaths = [
     ".github/actions/cache/action.yml",
+    ".github/agents/fixture.agent.md",
     ".github/workflow-templates/reusable.properties.json",
     ".github/workflows/ci.yml",
     ".pre-commit-config.yaml",
@@ -18,6 +19,7 @@ const fixturePaths = [
     ".spellcheck.yml",
     ".storybook/main.ts",
     ".vscode/settings.json",
+    "AGENTS.md",
     "app/page.tsx",
     "assets/js/site.js",
     "benchmarks/throughput.bench.ts",
@@ -128,21 +130,47 @@ const fixtureTypeScriptProject = {
 const normalizeFixturePath = (filePath: string): string =>
     path.relative(fixtureWorkspaceRoot, filePath).replaceAll("\\", "/");
 
+const getConfiguredPluginNames = (
+    configEntries: readonly Linter.Config[]
+): Set<string> => {
+    const pluginNames = new Set<string>();
+
+    for (const configEntry of configEntries) {
+        const configPluginNames = Object.keys(configEntry.plugins ?? {});
+
+        for (const pluginName of configPluginNames) {
+            pluginNames.add(pluginName);
+        }
+    }
+
+    return pluginNames;
+};
+
+const getMissingPluginNames = (
+    expectedPluginNames: ReadonlySet<string>,
+    actualPluginNames: ReadonlySet<string>
+): string[] =>
+    [...expectedPluginNames]
+        .filter((pluginName) => !actualPluginNames.has(pluginName))
+        .toSorted((left, right) => left.localeCompare(right));
+
 const FIXTURE_SMOKE_TEST_TIMEOUT = 60_000;
 
 describe("fixture smoke matrix", () => {
     it(
         "lints every configured fixture surface without parser or rule-loading failures",
         async () => {
-            expect.assertions(2);
+            expect.assertions(3);
+
+            const sharedConfig = createConfig({
+                rootDirectory: fixtureWorkspaceRoot,
+                tsconfigPaths: ["./tsconfig.json"],
+            });
 
             const eslint = new ESLint({
                 cwd: fixtureWorkspaceRoot,
                 overrideConfig: [
-                    ...createConfig({
-                        rootDirectory: fixtureWorkspaceRoot,
-                        tsconfigPaths: ["./tsconfig.json"],
-                    }),
+                    ...sharedConfig,
                     forcedOptionalFrameworkRules,
                     forcedOptionalDocusaurusRules,
                     fixtureTypeScriptProject,
@@ -154,6 +182,21 @@ describe("fixture smoke matrix", () => {
             const lintedPaths = results.map((result) =>
                 normalizeFixturePath(result.filePath)
             );
+            const activePluginNames = new Set<string>();
+
+            for (const fixturePath of fixturePaths) {
+                const config = (await eslint.calculateConfigForFile(
+                    fixturePath
+                )) as Linter.Config | undefined;
+                const configPluginNames = getConfiguredPluginNames(
+                    config === undefined ? [] : [config]
+                );
+
+                for (const pluginName of configPluginNames) {
+                    activePluginNames.add(pluginName);
+                }
+            }
+
             const fatalMessages = results.flatMap((result) =>
                 result.messages
                     .filter((message) => message.fatal === true)
@@ -164,6 +207,12 @@ describe("fixture smoke matrix", () => {
             );
 
             expect(new Set(lintedPaths)).toStrictEqual(new Set(fixturePaths));
+            expect(
+                getMissingPluginNames(
+                    getConfiguredPluginNames(sharedConfig),
+                    activePluginNames
+                )
+            ).toStrictEqual([]);
             expect(fatalMessages).toStrictEqual([]);
         },
         FIXTURE_SMOKE_TEST_TIMEOUT

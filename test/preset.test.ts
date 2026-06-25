@@ -205,6 +205,31 @@ const findConfigByName = (
 ): Linter.Config | undefined =>
     configEntries.find((configEntry) => configEntry.name === configName);
 
+const createLocalConfig = (
+    pluginName: string,
+    ruleName: string
+): Linter.Config => ({
+    plugins: {
+        [pluginName]: {
+            rules: {},
+        },
+    },
+    rules: {
+        [ruleName]: "error",
+    },
+});
+
+const createSingleConfigLocalPlugin = (
+    configName: string,
+    pluginName: string,
+    ruleName: string
+) => ({
+    configs: {
+        [configName]: createLocalConfig(pluginName, ruleName),
+    },
+    rules: {},
+});
+
 const presetEntriesByName: Readonly<Record<string, readonly Linter.Config[]>> =
     {
         all: presets.all,
@@ -656,41 +681,209 @@ describe("eslint-config-nick2bad4u presets", () => {
         );
     });
 
-    it.each([
-        ["actionlint", "actionlint/local-only"],
-        ["runtime-cleanup", "runtime-cleanup/local-only"],
-        ["secretlint", "secretlint/local-only"],
-        ["test-signal", "test-signal/local-only"],
-        ["yamllint", "yamllint/local-only"],
-    ] as const)(
-        "supports %s plugin replacement via createConfig",
-        (pluginName, ruleName) => {
-            expect.assertions(2);
+    it("supports owned plugin replacement via createConfig", () => {
+        expect.assertions(34);
 
-            const localPlugin = {
-                configs: {
-                    all: {
-                        plugins: {
-                            [pluginName]: {
-                                rules: {},
-                            },
-                        },
-                        rules: {
-                            [ruleName]: "error" as const,
-                        },
+        // eslint-disable perfectionist/sort-arrays -- Keep cases grouped by config shape and plugin family to make fixture setup easier to audit.
+        const ownedPluginReplacementCases = [
+            {
+                createPlugin: () => ({
+                    configs: {
+                        all: [
+                            createLocalConfig("copilot", "copilot/local-only"),
+                        ],
                     },
-                },
-                rules: {},
-            };
+                    rules: {},
+                }),
+                overrideName: "copilot",
+                ruleName: "copilot/local-only",
+            },
+            {
+                createPlugin: () => ({
+                    configs: {
+                        content: {},
+                        experimental: createLocalConfig(
+                            "docusaurus-2",
+                            "docusaurus-2/local-only"
+                        ),
+                    },
+                    rules: {},
+                }),
+                overrideName: "docusaurus-2",
+                ruleName: "docusaurus-2/local-only",
+            },
+            {
+                createPlugin: () => ({
+                    configs: {
+                        dependabot: { rules: {} },
+                        github: { rules: {} },
+                        node: { rules: {} },
+                        recommended: createLocalConfig(
+                            "repo-compliance",
+                            "repo-compliance/local-only"
+                        ),
+                    },
+                    rules: {},
+                }),
+                overrideName: "repo",
+                ruleName: "repo-compliance/local-only",
+            },
+            {
+                createPlugin: () =>
+                    createSingleConfigLocalPlugin(
+                        "all",
+                        "actionlint",
+                        "actionlint/local-only"
+                    ),
+                overrideName: "actionlint",
+                ruleName: "actionlint/local-only",
+            },
+            {
+                createPlugin: () =>
+                    createSingleConfigLocalPlugin(
+                        "all",
+                        "github-actions",
+                        "github-actions/local-only"
+                    ),
+                overrideName: "github-actions-2",
+                ruleName: "github-actions/local-only",
+            },
+            {
+                createPlugin: () =>
+                    createSingleConfigLocalPlugin(
+                        "all",
+                        "immutable",
+                        "immutable/local-only"
+                    ),
+                overrideName: "immutable-2",
+                ruleName: "immutable/local-only",
+            },
+            {
+                createPlugin: () =>
+                    createSingleConfigLocalPlugin(
+                        "all",
+                        "remark",
+                        "remark/local-only"
+                    ),
+                overrideName: "remark",
+                ruleName: "remark/local-only",
+            },
+            {
+                createPlugin: () =>
+                    createSingleConfigLocalPlugin(
+                        "all",
+                        "runtime-cleanup",
+                        "runtime-cleanup/local-only"
+                    ),
+                overrideName: "runtime-cleanup",
+                ruleName: "runtime-cleanup/local-only",
+            },
+            {
+                createPlugin: () =>
+                    createSingleConfigLocalPlugin(
+                        "all",
+                        "secretlint",
+                        "secretlint/local-only"
+                    ),
+                overrideName: "secretlint",
+                ruleName: "secretlint/local-only",
+            },
+            {
+                createPlugin: () =>
+                    createSingleConfigLocalPlugin(
+                        "all",
+                        "stylelint-2",
+                        "stylelint-2/local-only"
+                    ),
+                overrideName: "stylelint-2",
+                ruleName: "stylelint-2/local-only",
+            },
+            {
+                createPlugin: () =>
+                    createSingleConfigLocalPlugin(
+                        "all",
+                        "test-signal",
+                        "test-signal/local-only"
+                    ),
+                overrideName: "test-signal",
+                ruleName: "test-signal/local-only",
+            },
+            {
+                createPlugin: () =>
+                    createSingleConfigLocalPlugin(
+                        "all",
+                        "tsconfig",
+                        "tsconfig/local-only"
+                    ),
+                overrideName: "tsconfig",
+                ruleName: "tsconfig/local-only",
+            },
+            {
+                createPlugin: () =>
+                    createSingleConfigLocalPlugin(
+                        "all",
+                        "yamllint",
+                        "yamllint/local-only"
+                    ),
+                overrideName: "yamllint",
+                ruleName: "yamllint/local-only",
+            },
+            {
+                createPlugin: () =>
+                    createSingleConfigLocalPlugin(
+                        "recommended",
+                        "json-schema-validator",
+                        "json-schema-validator/local-only"
+                    ),
+                overrideName: "json-schema-validator-2",
+                ruleName: "json-schema-validator/local-only",
+            },
+            {
+                createPlugin: () =>
+                    createSingleConfigLocalPlugin(
+                        "recommended",
+                        "typedoc",
+                        "typedoc/local-only"
+                    ),
+                overrideName: "typedoc",
+                ruleName: "typedoc/local-only",
+            },
+            {
+                createPlugin: () =>
+                    createSingleConfigLocalPlugin(
+                        "recommended-ci",
+                        "file-progress",
+                        "file-progress/local-only"
+                    ),
+                overrideName: "file-progress-2",
+                ruleName: "file-progress/local-only",
+            },
+            {
+                createPlugin: () =>
+                    createSingleConfigLocalPlugin(
+                        "required",
+                        "sdl",
+                        "sdl/local-only"
+                    ),
+                overrideName: "sdl-2",
+                ruleName: "sdl/local-only",
+            },
+        ] as const;
+        // eslint-enable perfectionist/sort-arrays -- Re-enable after intentionally grouped fixture cases.
 
+        for (const {
+            createPlugin,
+            overrideName,
+            ruleName,
+        } of ownedPluginReplacementCases) {
             const configEntries = createConfig({
                 plugins: {
-                    [pluginName]: localPlugin,
+                    [overrideName]: createPlugin(),
                 },
             }) as readonly Linter.Config[];
             const disabledConfigEntries = createConfig({
                 plugins: {
-                    [pluginName]: false,
+                    [overrideName]: false,
                 },
             }) as readonly Linter.Config[];
 
@@ -699,5 +892,49 @@ describe("eslint-config-nick2bad4u presets", () => {
                 ruleName
             );
         }
-    );
+    });
+
+    it("uses local plugins in owned manual-rule sections", () => {
+        expect.assertions(3);
+
+        const localEtcMiscPlugin = { configs: {}, rules: {} };
+        const localTsdocRequirePlugin = { configs: {}, rules: {} };
+        const localWriteGoodCommentsPlugin = {
+            configs: {
+                all: {
+                    plugins: {
+                        "write-good-comments": {
+                            rules: {},
+                        },
+                    },
+                    settings: {
+                        localWriteGoodComments: true,
+                    },
+                },
+            },
+            rules: {},
+        };
+        const configEntries = createConfig({
+            plugins: {
+                "etc-misc": localEtcMiscPlugin,
+                "tsdoc-require-2": localTsdocRequirePlugin,
+                "write-good-comments-2": localWriteGoodCommentsPlugin,
+            },
+        }) as readonly Linter.Config[];
+
+        expect(
+            findConfigByName(configEntries, "⌨️ Etc-Misc: Rules for Source")
+                ?.plugins?.["etc-misc"]
+        ).toBe(localEtcMiscPlugin);
+        expect(
+            findConfigByName(configEntries, "⌨️ TSDoc Require 2: source docs")
+                ?.plugins?.["tsdoc-require-2"]
+        ).toBe(localTsdocRequirePlugin);
+        expect(
+            findConfigByName(
+                configEntries,
+                "🍀 Write Good Comments: (not used in this repo)"
+            )?.settings?.["localWriteGoodComments"]
+        ).toBe(true);
+    });
 });
