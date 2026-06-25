@@ -124,6 +124,7 @@ from the named `presets` export.
 | `all`                       | Full shared config, including packaged Typefest and Etc-Misc source-rule sections. |
 | `recommended`               | Alias for `all`; provided for familiar preset naming.                              |
 | `base`                      | Shared config without explicit source-rule plugin sections.                        |
+| `withoutActionlint`         | Full shared config without Actionlint rules.                                       |
 | `withoutCopilot`            | Full shared config without Copilot rules.                                          |
 | `withoutDocusaurus2`        | Full shared config without Docusaurus 2 plugin rules.                              |
 | `withoutEtcMisc`            | Full shared config without the Etc-Misc source-rule section.                       |
@@ -135,6 +136,7 @@ from the named `presets` export.
 | `withoutRepo`               | Full shared config without Repo plugin rules.                                      |
 | `withoutRuntimeCleanup`     | Full shared config without Runtime Cleanup plugin rules.                           |
 | `withoutSdl2`               | Full shared config without SDL 2 rules.                                            |
+| `withoutSecretlint`         | Full shared config without Secretlint plugin rules.                                |
 | `withoutStylelint2`         | Full shared config without Stylelint 2 rules.                                      |
 | `withoutTestSignal`         | Full shared config without Test Signal plugin rules.                               |
 | `withoutTsconfig`           | Full shared config without tsconfig-validation rules.                              |
@@ -143,6 +145,7 @@ from the named `presets` export.
 | `withoutTypefest`           | Full shared config without the Typefest source-rule section.                       |
 | `withoutVite`               | Full shared config without Vite plugin rules.                                      |
 | `withoutWriteGoodComments2` | Full shared config without Write Good Comments 2 rules.                            |
+| `withoutYamllint`           | Full shared config without Yamllint plugin rules.                                  |
 
 Use a `without*` preset when a repository does not use that surface or when it
 needs to provide a local build of that plugin for dogfooding.

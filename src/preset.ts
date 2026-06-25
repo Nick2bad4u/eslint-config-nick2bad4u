@@ -29,6 +29,7 @@ export const presets: Nick2Bad4UEslintConfigPresets = Object.freeze({
     all: sharedConfigs.all,
     base: sharedConfigs.base,
     recommended: sharedConfigs.recommended,
+    withoutActionlint: sharedConfigs.withoutActionlint,
     withoutCopilot: sharedConfigs.withoutCopilot,
     withoutDocusaurus2: sharedConfigs.withoutDocusaurus2,
     withoutEtcMisc: sharedConfigs.withoutEtcMisc,
@@ -40,6 +41,7 @@ export const presets: Nick2Bad4UEslintConfigPresets = Object.freeze({
     withoutRepo: sharedConfigs.withoutRepo,
     withoutRuntimeCleanup: sharedConfigs.withoutRuntimeCleanup,
     withoutSdl2: sharedConfigs.withoutSdl2,
+    withoutSecretlint: sharedConfigs.withoutSecretlint,
     withoutStylelint2: sharedConfigs.withoutStylelint2,
     withoutTestSignal: sharedConfigs.withoutTestSignal,
     withoutTsconfig: sharedConfigs.withoutTsconfig,
@@ -48,6 +50,7 @@ export const presets: Nick2Bad4UEslintConfigPresets = Object.freeze({
     withoutTypefest: sharedConfigs.withoutTypefest,
     withoutVite: sharedConfigs.withoutVite,
     withoutWriteGoodComments2: sharedConfigs.withoutWriteGoodComments2,
+    withoutYamllint: sharedConfigs.withoutYamllint,
 });
 
 /** Create the shared Nick2Bad4U ESLint flat config. */

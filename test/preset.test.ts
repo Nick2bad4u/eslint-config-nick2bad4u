@@ -172,6 +172,7 @@ const getParserOptionsGlobalsEntries = (
     });
 
 const presetByName: Readonly<Record<string, readonly Linter.Config[]>> = {
+    withoutActionlint: presets.withoutActionlint,
     withoutCopilot: presets.withoutCopilot,
     withoutDocusaurus2: presets.withoutDocusaurus2,
     withoutEtcMisc: presets.withoutEtcMisc,
@@ -183,6 +184,7 @@ const presetByName: Readonly<Record<string, readonly Linter.Config[]>> = {
     withoutRepo: presets.withoutRepo,
     withoutRuntimeCleanup: presets.withoutRuntimeCleanup,
     withoutSdl2: presets.withoutSdl2,
+    withoutSecretlint: presets.withoutSecretlint,
     withoutStylelint2: presets.withoutStylelint2,
     withoutTestSignal: presets.withoutTestSignal,
     withoutTsconfig: presets.withoutTsconfig,
@@ -191,6 +193,7 @@ const presetByName: Readonly<Record<string, readonly Linter.Config[]>> = {
     withoutTypefest: presets.withoutTypefest,
     withoutVite: presets.withoutVite,
     withoutWriteGoodComments2: presets.withoutWriteGoodComments2,
+    withoutYamllint: presets.withoutYamllint,
 };
 
 const getPresetByName = (presetName: string): readonly Linter.Config[] =>
@@ -234,6 +237,7 @@ describe("eslint-config-nick2bad4u presets", () => {
     });
 
     it.each([
+        ["withoutActionlint", ["actionlint"]],
         ["withoutCopilot", ["copilot"]],
         ["withoutDocusaurus2", ["docusaurus-2"]],
         ["withoutEtcMisc", ["etc-misc"]],
@@ -245,6 +249,7 @@ describe("eslint-config-nick2bad4u presets", () => {
         ["withoutRepo", ["repo", "repo-compliance"]],
         ["withoutRuntimeCleanup", ["runtime-cleanup"]],
         ["withoutSdl2", ["sdl", "sdl-2"]],
+        ["withoutSecretlint", ["secretlint"]],
         ["withoutStylelint2", ["stylelint-2"]],
         ["withoutTestSignal", ["test-signal"]],
         ["withoutTsconfig", ["tsconfig"]],
@@ -256,6 +261,7 @@ describe("eslint-config-nick2bad4u presets", () => {
             "withoutWriteGoodComments2",
             ["write-good-comments", "write-good-comments-2"],
         ],
+        ["withoutYamllint", ["yamllint"]],
     ] as const)(
         "removes %s plugin rules from the preset",
         (presetName, pluginNames) => {
@@ -284,10 +290,13 @@ describe("eslint-config-nick2bad4u presets", () => {
     );
 
     it("keeps full preset rules in the all preset", () => {
-        expect.assertions(4);
+        expect.assertions(7);
 
         const allPreset = presets.all as readonly Linter.Config[];
 
+        expect(
+            getRuleNamesForPlugin(allPreset, "actionlint").length
+        ).toBeGreaterThan(0);
         expect(
             getRuleNamesForPlugin(allPreset, "copilot").length
         ).toBeGreaterThan(0);
@@ -299,6 +308,12 @@ describe("eslint-config-nick2bad4u presets", () => {
         ).toBeGreaterThan(0);
         expect(
             getRuleNamesForPlugin(allPreset, "typefest").length
+        ).toBeGreaterThan(0);
+        expect(
+            getRuleNamesForPlugin(allPreset, "secretlint").length
+        ).toBeGreaterThan(0);
+        expect(
+            getRuleNamesForPlugin(allPreset, "yamllint").length
         ).toBeGreaterThan(0);
     });
 
@@ -642,8 +657,11 @@ describe("eslint-config-nick2bad4u presets", () => {
     });
 
     it.each([
+        ["actionlint", "actionlint/local-only"],
         ["runtime-cleanup", "runtime-cleanup/local-only"],
+        ["secretlint", "secretlint/local-only"],
         ["test-signal", "test-signal/local-only"],
+        ["yamllint", "yamllint/local-only"],
     ] as const)(
         "supports %s plugin replacement via createConfig",
         (pluginName, ruleName) => {

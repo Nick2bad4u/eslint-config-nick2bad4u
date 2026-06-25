@@ -272,6 +272,7 @@ All presets are exposed on the default export as `.configs` and as the named
 | `all`                       | Full shared config, including packaged Typefest and Etc-Misc source-rule sections. |
 | `recommended`               | Alias for `all`.                                                                   |
 | `base`                      | Shared config without explicit source-rule plugin sections.                        |
+| `withoutActionlint`         | Full shared config without Actionlint rules.                                       |
 | `withoutCopilot`            | Full shared config without Copilot rules.                                          |
 | `withoutDocusaurus2`        | Full shared config without Docusaurus 2 plugin rules.                              |
 | `withoutEtcMisc`            | Full shared config without the Etc-Misc source-rule section.                       |
@@ -283,6 +284,7 @@ All presets are exposed on the default export as `.configs` and as the named
 | `withoutRepo`               | Full shared config without Repo plugin rules.                                      |
 | `withoutRuntimeCleanup`     | Full shared config without Runtime Cleanup plugin rules.                           |
 | `withoutSdl2`               | Full shared config without SDL 2 rules.                                            |
+| `withoutSecretlint`         | Full shared config without Secretlint plugin rules.                                |
 | `withoutStylelint2`         | Full shared config without Stylelint 2 rules.                                      |
 | `withoutTestSignal`         | Full shared config without Test Signal plugin rules.                               |
 | `withoutTsconfig`           | Full shared config without tsconfig-validation rules.                              |
@@ -291,6 +293,7 @@ All presets are exposed on the default export as `.configs` and as the named
 | `withoutTypefest`           | Full shared config without the Typefest source-rule section.                       |
 | `withoutVite`               | Full shared config without Vite plugin rules.                                      |
 | `withoutWriteGoodComments2` | Full shared config without Write Good Comments 2 rules.                            |
+| `withoutYamllint`           | Full shared config without Yamllint plugin rules.                                  |
 
 ## Local plugin dogfooding
 

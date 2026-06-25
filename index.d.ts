@@ -84,6 +84,9 @@ export interface Nick2Bad4UEslintConfigPresets {
     /** Alias for `all`; kept for familiar preset naming. */
     readonly recommended: Linter.Config[];
 
+    /** Full shared config without Actionlint rules. */
+    readonly withoutActionlint: Linter.Config[];
+
     /** Full shared config without the Copilot rules. */
     readonly withoutCopilot: Linter.Config[];
 
@@ -121,6 +124,9 @@ export interface Nick2Bad4UEslintConfigPresets {
     /** Full shared config without SDL 2 rules. */
     readonly withoutSdl2: Linter.Config[];
 
+    /** Full shared config without Secretlint plugin rules. */
+    readonly withoutSecretlint: Linter.Config[];
+
     /** Full shared config without Stylelint 2 rules. */
     readonly withoutStylelint2: Linter.Config[];
 
@@ -144,6 +150,9 @@ export interface Nick2Bad4UEslintConfigPresets {
 
     /** Full shared config without Write Good Comments 2 rules. */
     readonly withoutWriteGoodComments2: Linter.Config[];
+
+    /** Full shared config without Yamllint plugin rules. */
+    readonly withoutYamllint: Linter.Config[];
 }
 
 /** Create the shared Nick2Bad4U ESLint flat config. */

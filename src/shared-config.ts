@@ -27,6 +27,7 @@ import vitest from "@vitest/eslint-plugin";
 import gitignore from "eslint-config-flat-gitignore";
 import prettierOverrides from "eslint-config-prettier";
 import { createTypeScriptImportResolver } from "eslint-import-resolver-typescript";
+import actionlint from "eslint-plugin-actionlint";
 import arrayFunc from "eslint-plugin-array-func";
 import astro from "eslint-plugin-astro";
 import canonical from "eslint-plugin-canonical";
@@ -63,6 +64,7 @@ import remark from "eslint-plugin-remark";
 import repo from "eslint-plugin-repo";
 import runtimeCleanup from "eslint-plugin-runtime-cleanup";
 import sdl from "eslint-plugin-sdl-2";
+import secretlint from "eslint-plugin-secretlint";
 import security from "eslint-plugin-security";
 import storybook from "eslint-plugin-storybook";
 import stylelint2 from "eslint-plugin-stylelint-2";
@@ -78,6 +80,7 @@ import undefinedCSS from "eslint-plugin-undefined-css-classes";
 import unicorn from "eslint-plugin-unicorn";
 import vue from "eslint-plugin-vue";
 import writeGoodComments from "eslint-plugin-write-good-comments-2";
+import yamllint from "eslint-plugin-yamllint";
 import yml from "eslint-plugin-yml";
 import globals from "globals";
 import * as jsoncEslintParser from "jsonc-eslint-parser";
@@ -369,6 +372,7 @@ export interface Nick2Bad4UEslintConfigPresets {
     readonly all: EslintConfig[];
     readonly base: EslintConfig[];
     readonly recommended: EslintConfig[];
+    readonly withoutActionlint: EslintConfig[];
     readonly withoutCopilot: EslintConfig[];
     readonly withoutDocusaurus2: EslintConfig[];
     readonly withoutEtcMisc: EslintConfig[];
@@ -381,6 +385,7 @@ export interface Nick2Bad4UEslintConfigPresets {
     readonly withoutRepo: EslintConfig[];
     readonly withoutRuntimeCleanup: EslintConfig[];
     readonly withoutSdl2: EslintConfig[];
+    readonly withoutSecretlint: EslintConfig[];
     readonly withoutStylelint2: EslintConfig[];
     readonly withoutTestSignal: EslintConfig[];
     readonly withoutTsconfig: EslintConfig[];
@@ -389,6 +394,7 @@ export interface Nick2Bad4UEslintConfigPresets {
     readonly withoutTypefest: EslintConfig[];
     readonly withoutVite: EslintConfig[];
     readonly withoutWriteGoodComments2: EslintConfig[];
+    readonly withoutYamllint: EslintConfig[];
 }
 
 // The public factory accepts plugin overrides so downstream repos can disable
@@ -455,7 +461,7 @@ const storybookRecommendedStoriesRules =
 // #endregion 🏗️ Setup and Public Types
 // #region 🛠️ Config
 // ═══════════════════════════════════════════════════════════════════════════════
-/* eslint-disable max-lines-per-function -- Keep shared flat-config composition centralized. */
+/* eslint-disable complexity, max-lines-per-function -- Keep shared flat-config composition centralized and easy to scan. */
 /**
  * Create the shared Nick2Bad4U ESLint flat config.
  *
@@ -493,6 +499,11 @@ export const createConfig = (
         "typefest",
         typefestPlugin
     );
+    const actionlintPlugin = resolveTypedPlugin(
+        pluginOverrideEntries,
+        "actionlint",
+        actionlint
+    );
     const etcMisc = resolveTypedPlugin(
         pluginOverrideEntries,
         "etc-misc",
@@ -503,10 +514,20 @@ export const createConfig = (
         "runtime-cleanup",
         runtimeCleanup
     );
+    const secretlintPlugin = resolveTypedPlugin(
+        pluginOverrideEntries,
+        "secretlint",
+        secretlint
+    );
     const testSignalPlugin = resolveTypedPlugin(
         pluginOverrideEntries,
         "test-signal",
         testSignal
+    );
+    const yamllintPlugin = resolveTypedPlugin(
+        pluginOverrideEntries,
+        "yamllint",
+        yamllint
     );
 
     // #region ⚙️ Global Settings
@@ -587,6 +608,8 @@ export const createConfig = (
             root: true,
             strict: false,
         }),
+        // MARK: 🔐 Secretlint
+        ...(secretlintPlugin === null ? [] : [secretlintPlugin.configs.all]),
         // Stylistic.configs.customize({
         //     arrowParens: true,
         //     blockSpacing: true,
@@ -1101,6 +1124,8 @@ export const createConfig = (
                 "github-actions/no-top-level-permissions": "off", // Noisy and low value
             },
         },
+        // MARK: 🦑 Actionlint
+        ...(actionlintPlugin === null ? [] : [actionlintPlugin.configs.all]),
         {
             // MARK: 👮 Security
             ...security.configs.recommended,
@@ -3033,6 +3058,8 @@ export const createConfig = (
                 "yml/vue-custom-block/no-parsing-error": "warn",
             },
         },
+        // MARK: 🏝️ Yamllint
+        ...(yamllintPlugin === null ? [] : [yamllintPlugin.configs.all]),
         // #endregion 🏝️ YAML Files
         // #region 🌐 HTML Files
         // ═══════════════════════════════════════════════════════════════════════════════
@@ -3748,7 +3775,7 @@ export const createConfig = (
         disabledPluginNames
     );
 };
-/* eslint-enable max-lines-per-function -- shared config factory boundary */
+/* eslint-enable complexity, max-lines-per-function -- shared config factory boundary */
 // #endregion 🛠️ Config
 // #region 🆘 Helper Functions
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -3932,6 +3959,11 @@ const sharedConfigs: Nick2Bad4UEslintConfigPresets = {
     // Some packages register shorter runtime namespaces than their package
     // names. Disable both the real namespace and the package-family alias so
     // consumers can choose the obvious withoutX preset name.
+    withoutActionlint: createConfig({
+        plugins: {
+            actionlint: false,
+        },
+    }),
     withoutCopilot: createConfig({
         plugins: {
             copilot: false,
@@ -3988,6 +4020,11 @@ const sharedConfigs: Nick2Bad4UEslintConfigPresets = {
               },
               ...withoutSdl2BaseConfigs,
           ],
+    withoutSecretlint: createConfig({
+        plugins: {
+            secretlint: false,
+        },
+    }),
     withoutStylelint2: createConfig({
         plugins: {
             "stylelint-2": false,
@@ -4027,6 +4064,11 @@ const sharedConfigs: Nick2Bad4UEslintConfigPresets = {
         plugins: {
             "write-good-comments": false,
             "write-good-comments-2": false,
+        },
+    }),
+    withoutYamllint: createConfig({
+        plugins: {
+            yamllint: false,
         },
     }),
 };
