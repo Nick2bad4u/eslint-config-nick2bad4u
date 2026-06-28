@@ -1,3 +1,12 @@
 {
-    "extends": "npm-package-json-lint-config-nick2bad4u"
+    "extends": "npm-package-json-lint-config-nick2bad4u",
+    "overrides": [
+        {
+            "patterns": ["./package.json"],
+            "rules": {
+                "no-tilde-version-devDependencies": "off",
+                "prefer-caret-version-devDependencies": "off"
+            }
+        }
+    ]
 }

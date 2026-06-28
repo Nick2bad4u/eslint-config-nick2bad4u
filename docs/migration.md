@@ -6,7 +6,7 @@ shared `eslint-config-nick2bad4u` package.
 ## Prerequisites
 
 - Node.js `^22.22.3 || ^24.16.0 || >=26.3.0`
-- ESLint `^10.5.0`
+- ESLint `^10.0.0`
 - TypeScript `^5.0.0 || ^6.0.3`
 - npm, pnpm, or yarn support for installing peer dependencies
 - A project-level `tsconfig.json` for type-aware linting through project service
@@ -329,7 +329,7 @@ The same pattern applies to other namespaces with matching `without*` presets.
 Install or update the peer dependencies in the consuming project:
 
 ```powershell
-npm install --save-dev eslint@^10.5.0 typescript@^6.0.3
+npm install --save-dev eslint@^10.0.0 typescript@^6.0.3
 ```
 
 TypeScript `^5.0.0` is also supported when the project has not migrated to

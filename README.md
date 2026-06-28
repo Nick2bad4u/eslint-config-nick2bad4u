@@ -16,7 +16,7 @@ plugins and parsers that the shared config enables.
 | Tool       | Supported range                        | Why it is required                                              |
 | ---------- | -------------------------------------- | --------------------------------------------------------------- |
 | Node.js    | `^22.22.3 \|\| ^24.16.0 \|\| >=26.3.0` | Runtime for ESLint, the config package, and repository scripts. |
-| ESLint     | `^10.5.0`                              | Peer dependency supplied by each consuming project.             |
+| ESLint     | `^10.0.0`                              | Peer dependency supplied by each consuming project.             |
 | TypeScript | `^5.0.0 \|\| ^6.0.3`                   | Peer dependency used by TypeScript-aware lint rules.            |
 
 Repository development also expects npm `>=11.0.0`; consumers can use the package

@@ -1,12 +1,13 @@
 #!/usr/bin/env node
 
 /**
- * Keep `peerDependencies.eslint` aligned with the currently installed
- * `devDependencies.eslint` upper range.
+ * Keep `peerDependencies.eslint` aligned with the supported ESLint major
+ * ranges.
  *
  * Why: npm does not support `$eslint` indirection in `peerDependencies` (that
- * syntax is supported for `overrides` only), so we synchronize the top-end
- * range explicitly after dependency updates.
+ * syntax is supported for `overrides` only). We keep the established support
+ * floor broad for consumers, then append a newer devDependency major when the
+ * development dependency moves to a new ESLint major.
  */
 
 import { readFile, writeFile } from "node:fs/promises";
@@ -27,6 +28,17 @@ import { fileURLToPath } from "node:url";
 const packageJsonPath = fileURLToPath(
     new URL("../package.json", import.meta.url)
 );
+/**
+ * The minimum supported ESLint peer range. Patch/minor development dependency
+ * bumps inside ESLint 10 must not narrow consumer support to the exact current
+ * development floor.
+ *
+ * @type {string}
+ *
+ * @see resolvePeerFloorRange
+ */
+const minimumSupportedEslintRange = "^10.0.0";
+
 /**
  * Read and parse package.json.
  *
@@ -54,6 +66,89 @@ const readPackageJson = async () => {
             { cause: error }
         );
     }
+};
+
+/**
+ * Extract the major version from a simple npm caret range such as `^10.6.0`.
+ *
+ * @type {(range: string) => number | undefined}
+ *
+ * @param {string} range
+ *
+ * @returns {number | undefined}
+ */
+const getCaretRangeMajor = (range) => {
+    const match = /^\^(\d+)\./u.exec(range.trim());
+    const major = match?.[1];
+
+    return major === undefined ? undefined : Number.parseInt(major, 10);
+};
+
+/**
+ * Resolve the broad lower support floor from the existing peer range when it is
+ * meaningful. Falls back to the repository baseline.
+ *
+ * @type {(existingPeerRange: unknown) => string}
+ *
+ * @param {unknown} existingPeerRange
+ *
+ * @returns {string}
+ */
+const resolvePeerFloorRange = (existingPeerRange) => {
+    if (typeof existingPeerRange !== "string") {
+        return minimumSupportedEslintRange;
+    }
+
+    const [floorCandidate] = existingPeerRange
+        .split("||")
+        .map((part) => part.trim());
+
+    if (!floorCandidate) {
+        return minimumSupportedEslintRange;
+    }
+
+    const floorCandidateMajor = getCaretRangeMajor(floorCandidate);
+    const minimumSupportedMajor = getCaretRangeMajor(
+        minimumSupportedEslintRange
+    );
+
+    if (
+        floorCandidateMajor !== undefined &&
+        floorCandidateMajor === minimumSupportedMajor
+    ) {
+        return minimumSupportedEslintRange;
+    }
+
+    return floorCandidate;
+};
+
+/**
+ * Append the development dependency range only when it covers a different major
+ * than the floor range. `^10.0.0 || ^10.6.0` is redundant and should stay
+ * collapsed to `^10.0.0`.
+ *
+ * @type {(peerFloorRange: string, devDependencyRange: string) => string}
+ *
+ * @param {string} peerFloorRange
+ * @param {string} devDependencyRange
+ *
+ * @returns {string}
+ */
+const createPeerRange = (peerFloorRange, devDependencyRange) => {
+    const peerFloorMajor = getCaretRangeMajor(peerFloorRange);
+    const devDependencyMajor = getCaretRangeMajor(devDependencyRange);
+
+    if (
+        peerFloorMajor !== undefined &&
+        devDependencyMajor !== undefined &&
+        peerFloorMajor === devDependencyMajor
+    ) {
+        return peerFloorRange;
+    }
+
+    return peerFloorRange === devDependencyRange
+        ? peerFloorRange
+        : `${peerFloorRange} || ${devDependencyRange}`;
 };
 
 /**
@@ -99,7 +194,12 @@ const main = async () => {
     }
 
     /** @type {string} */
-    const nextPeerEslintRange = `${devDependencyEslintRange}`;
+    const peerFloorRange = resolvePeerFloorRange(peerDependencies["eslint"]);
+    /** @type {string} */
+    const nextPeerEslintRange = createPeerRange(
+        peerFloorRange,
+        devDependencyEslintRange
+    );
 
     /** @type {string} */
     if (peerDependencies["eslint"] === nextPeerEslintRange) {
@@ -150,6 +250,8 @@ const main = async () => {
  * @see writeFile
  * @see readPackageJson
  * @see isRecord
+ * @see resolvePeerFloorRange
+ * @see createPeerRange
  * @see main
  */
 try {
