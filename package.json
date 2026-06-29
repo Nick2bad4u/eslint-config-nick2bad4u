@@ -211,7 +211,7 @@
         "npm-package-json-lint-config-nick2bad4u": "^1.0.3",
         "picocolors": "^1.1.1",
         "prettier": "~3.8.5",
-        "prettier-config-nick2bad4u": "^1.0.19",
+        "prettier-config-nick2bad4u": "^1.0.20",
         "publint": "^0.3.21",
         "remark-config-nick2bad4u": "^1.1.2",
         "secretlint": "^13.0.2",
