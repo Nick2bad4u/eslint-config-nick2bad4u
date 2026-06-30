@@ -99,7 +99,7 @@
         "typecheck": "npm run build:runtime && npx tsc -p tsconfig.json --noEmit && npx tsc -p tsconfig.eslint.json --noEmit && npx tsc -p tsconfig.js.json --noEmit && npx tsc -p tsconfig.vitest-typecheck.json --noEmit",
         "typecheck:all": "npm run typecheck",
         "types:update": "npx typesync",
-        "update-actions": "npx actions-up --yes --style sha",
+        "update-actions": "npx actions-up --yes --style sha --quiet",
         "update-all": "npm run update-deps && npm run update-actions",
         "update-deps": "npx ncu -i --install never && npm update --force && npm install --force && npm run sync:peer-eslint-range && npm run sync:node-version-files && npm run sync:peer-typescript-range",
         "verify": "npm run release:verify"
@@ -174,6 +174,7 @@
         "eslint-plugin-stylelint-2": "^1.1.4",
         "eslint-plugin-test-signal": "^1.2.11",
         "eslint-plugin-testing-library": "^7.16.2",
+        "eslint-plugin-tombi": "^1.0.3",
         "eslint-plugin-toml": "^1.4.0",
         "eslint-plugin-tsconfig": "^1.3.4",
         "eslint-plugin-tsdoc": "^0.5.2",
@@ -191,7 +192,7 @@
         "toml-eslint-parser": "^1.0.3",
         "ts-extras": "^1.1.0",
         "type-fest": "^5.7.0",
-        "typescript-eslint": "^8.62.0",
+        "typescript-eslint": "^8.62.1",
         "vue-eslint-parser": "^10.4.1",
         "yaml-eslint-parser": "^2.0.0"
     },
@@ -203,6 +204,7 @@
         "@types/eslint-plugin-security": "^3.0.1",
         "@types/node": "^26.0.1",
         "@vitest/coverage-v8": "^4.1.9",
+        "actions-up": "^1.15.0",
         "eslint": "^10.6.0",
         "eslint-formatter-mo": "^2.4.1",
         "git-cliff": "^2.13.1",
@@ -238,7 +240,7 @@
             "optional": false
         }
     },
-    "packageManager": "npm@11.17.0",
+    "packageManager": "npm@11.18.0",
     "engines": {
         "node": "^22.22.3 || ^24.16.0 || >=26.3.0"
     },

@@ -1,0 +1,79 @@
+#:schema https://www.schemastore.org/tombi.json
+
+toml-version = "v1.1.0"
+
+[files]
+    include = [ "**/*.toml", "**/Cargo.lock" ]
+    exclude = [
+        "**/node_modules/**",
+        "**/.git/**",
+        "**/.svn/**",
+        "**/.hg/**",
+        "**/.idea/**",
+        "**/.cache/**",
+        "**/dist/**",
+        "**/build/**",
+        "**/temp/**",
+        "**/coverage/**",
+        "**/libs/**",
+        "**/target/**"
+    ]
+
+[format.rules]
+    array-bracket-space-width         = 1
+    array-comma-space-width           = 1
+    date-time-delimiter               = "T"
+    indent-style                      = "space"
+    indent-sub-tables                 = true
+    indent-table-key-value-pairs      = true
+    indent-width                      = 4
+    inline-table-brace-space-width    = 1
+    inline-table-comma-space-width    = 1
+    key-value-equals-sign-alignment   = true
+    key-value-equals-sign-space-width = 1
+    line-ending                       = "lf"
+    line-width                        = 120
+    string-quote-style                = "double"
+    trailing-comment-alignment        = true
+    trailing-comment-space-width      = 1
+
+[lint.rules]
+    dotted-keys-out-of-order = "warn"
+    key-empty                = "warn"
+    tables-out-of-order      = "warn"
+
+[lsp]
+    code-action          = { enabled = true }
+    completion           = { enabled = true }
+    diagnostic           = { enabled = true }
+    document-link        = { enabled = true }
+    formatting           = { enabled = true }
+    goto-declaration     = { enabled = true }
+    goto-definition      = { enabled = true }
+    goto-type-definition = { enabled = true }
+    hover                = { enabled = true }
+    workspace-diagnostic = { enabled = true }
+
+[schema]
+    enabled = true
+    strict  = false
+
+    [schema.catalog]
+        paths = [ "tombi://www.schemastore.org/api/json/catalog.json" ]
+
+[[schemas]]
+    path                                    = "tombi://www.schemastore.org/cargo.json"
+    include                                 = [ "Cargo.toml" ]
+    format.rules.array-values-order.enabled = false
+    format.rules.table-keys-order.enabled   = false
+
+[[schemas]]
+    path                                    = "tombi://www.schemastore.org/pyproject.json"
+    include                                 = [ "pyproject.toml" ]
+    format.rules.array-values-order.enabled = false
+    format.rules.table-keys-order.enabled   = false
+
+[extensions]
+    "tombi-toml/cargo"     = { enabled = true }
+    "tombi-toml/pyproject" = { enabled = true }
+    "tombi-toml/tombi"     = { enabled = true }

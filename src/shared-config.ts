@@ -70,6 +70,7 @@ import storybook from "eslint-plugin-storybook";
 import stylelint2 from "eslint-plugin-stylelint-2";
 import testSignal from "eslint-plugin-test-signal";
 import testingLibrary from "eslint-plugin-testing-library";
+import tombi from "eslint-plugin-tombi";
 import toml from "eslint-plugin-toml";
 import tsconfig from "eslint-plugin-tsconfig";
 import tsdoc from "eslint-plugin-tsdoc";
@@ -388,6 +389,7 @@ export interface Nick2Bad4UEslintConfigPresets {
     readonly withoutSecretlint: EslintConfig[];
     readonly withoutStylelint2: EslintConfig[];
     readonly withoutTestSignal: EslintConfig[];
+    readonly withoutTombi: EslintConfig[];
     readonly withoutTsconfig: EslintConfig[];
     readonly withoutTsdocRequire2: EslintConfig[];
     readonly withoutTypedoc: EslintConfig[];
@@ -573,6 +575,11 @@ export const createConfig = (
         pluginOverrideEntries,
         "test-signal",
         testSignal
+    );
+    const tombiPlugin = resolveTypedPlugin(
+        pluginOverrideEntries,
+        "tombi",
+        tombi
     );
     const tsconfigPlugin = resolveTypedPlugin(
         pluginOverrideEntries,
@@ -3244,37 +3251,43 @@ export const createConfig = (
             language: "toml/toml",
             languageOptions: {
                 parser: tomlEslintParser,
-                parserOptions: { tomlVersion: "1.0.0" },
+                parserOptions: { tomlVersion: "1.1.0" },
             },
             name: "🐦‍🔥 TOML: **/*.TOML",
             plugins: { toml: toml },
             rules: {
+                "@stylistic/spaced-comment": "off",
                 // TOML ESLint Plugin Rules (toml/*)
                 "toml/array-bracket-newline": "warn",
                 "toml/array-bracket-spacing": "warn",
-                "toml/array-element-newline": "warn",
+                "toml/array-element-newline": "off",
                 "toml/comma-style": "warn",
                 "toml/indent": "off",
                 "toml/inline-table-curly-newline": "warn",
                 "toml/inline-table-curly-spacing": "warn",
                 "toml/inline-table-key-value-newline": "warn",
                 "toml/key-spacing": "off",
-                "toml/keys-order": "warn",
+                "toml/keys-order": "off",
                 "toml/no-mixed-type-in-array": "warn",
                 "toml/no-non-decimal-integer": "warn",
                 "toml/no-space-dots": "warn",
                 "toml/no-unreadable-number-separator": "warn",
-                "toml/padding-line-between-pairs": "warn",
+                "toml/padding-line-between-pairs": "off",
                 "toml/padding-line-between-tables": "warn",
                 "toml/precision-of-fractional-seconds": "warn",
                 "toml/precision-of-integer": "warn",
                 "toml/quoted-keys": "warn",
-                "toml/spaced-comment": "warn",
+                "toml/spaced-comment": [
+                    "warn",
+                    "always",
+                    { markers: [":schema"] },
+                ],
                 "toml/table-bracket-spacing": "warn",
-                "toml/tables-order": "warn",
+                "toml/tables-order": "off",
                 "toml/vue-custom-block/no-parsing-error": "warn",
             },
         },
+        ...(tombiPlugin === null ? [] : [tombiPlugin.configs.all]),
         // #endregion 🐦‍🔥 TOML Files
         // #region 📁 Markdown Code Block Final Overrides
         // ═══════════════════════════════════════════════════════════════════════════════
@@ -3828,6 +3841,13 @@ export const createConfig = (
             },
         },
         // #endregion 🎨 Stylistic ⛔️ Overrides
+        {
+            files: ["**/*.toml"],
+            name: "🐦‍🔥 TOML: Stylistic ⛔ Overrides",
+            rules: {
+                "@stylistic/spaced-comment": "off",
+            },
+        },
         // #region 🌍 Global ⛔️ Overrides
         // ═══════════════════════════════════════════════════════════════════════════════
         {
@@ -4169,6 +4189,11 @@ const sharedConfigs: Nick2Bad4UEslintConfigPresets = {
     withoutTestSignal: createConfig({
         plugins: {
             "test-signal": false,
+        },
+    }),
+    withoutTombi: createConfig({
+        plugins: {
+            tombi: false,
         },
     }),
     withoutTsconfig: createConfig({

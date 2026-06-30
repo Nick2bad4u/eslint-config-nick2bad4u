@@ -1,0 +1,12 @@
+# This fixture is intentionally shaped around the overlap between Tombi format
+# output and eslint-plugin-toml rules that remain enabled.
+description = "Tombi and eslint-plugin-toml compatibility fixture"
+enabled     = true
+features    = [ "format", "lint", "schema" ]
+metadata    = { owner = "shared-config", stable = true }
+retries     = 1_000
+timestamp   = 2026-06-30T00:00:00Z
+
+[settings]
+    mode  = "strict"
+    paths = [ "src", "test" ]

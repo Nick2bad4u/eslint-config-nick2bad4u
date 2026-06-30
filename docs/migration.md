@@ -287,6 +287,7 @@ All presets are exposed on the default export as `.configs` and as the named
 | `withoutSecretlint`         | Full shared config without Secretlint plugin rules.                                |
 | `withoutStylelint2`         | Full shared config without Stylelint 2 rules.                                      |
 | `withoutTestSignal`         | Full shared config without Test Signal plugin rules.                               |
+| `withoutTombi`              | Full shared config without Tombi plugin rules.                                     |
 | `withoutTsconfig`           | Full shared config without tsconfig-validation rules.                              |
 | `withoutTsdocRequire2`      | Full shared config without TSDoc Require 2 rules.                                  |
 | `withoutTypedoc`            | Full shared config without TypeDoc rules.                                          |

@@ -187,6 +187,7 @@ const presetByName: Readonly<Record<string, readonly Linter.Config[]>> = {
     withoutSecretlint: presets.withoutSecretlint,
     withoutStylelint2: presets.withoutStylelint2,
     withoutTestSignal: presets.withoutTestSignal,
+    withoutTombi: presets.withoutTombi,
     withoutTsconfig: presets.withoutTsconfig,
     withoutTsdocRequire2: presets.withoutTsdocRequire2,
     withoutTypedoc: presets.withoutTypedoc,
@@ -277,6 +278,7 @@ describe("eslint-config-nick2bad4u presets", () => {
         ["withoutSecretlint", ["secretlint"]],
         ["withoutStylelint2", ["stylelint-2"]],
         ["withoutTestSignal", ["test-signal"]],
+        ["withoutTombi", ["tombi"]],
         ["withoutTsconfig", ["tsconfig"]],
         ["withoutTsdocRequire2", ["tsdoc-require-2"]],
         ["withoutTypedoc", ["typedoc"]],
@@ -807,6 +809,16 @@ describe("eslint-config-nick2bad4u presets", () => {
                     ),
                 overrideName: "test-signal",
                 ruleName: "test-signal/local-only",
+            },
+            {
+                createPlugin: () =>
+                    createSingleConfigLocalPlugin(
+                        "all",
+                        "tombi",
+                        "tombi/local-only"
+                    ),
+                overrideName: "tombi",
+                ruleName: "tombi/local-only",
             },
             {
                 createPlugin: () =>
