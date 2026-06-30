@@ -77,43 +77,72 @@ This project is licensed under the [MIT License](https://github.com/{{ remote.gi
 """
     # Remove leading and trailing whitespace from the changelog content
     trim                     = true
-    # postprocessors
-    postprocessors           = [
-        # { pattern = 'your-package-name', replace = "[your-package-name](https://github.com/${remote.github.owner}/${remote.github.repo})" }, # example repository URL replacement
-        { pattern = "Merge branch", replace = "[chore] Merge Branch" },                                                                                                                                                                                                                                                                                                                                  # replace merge branch commit messages
-        { pattern = '\[dependency\]', replace = "test" },
-        { pattern = "merge branch", replace = "[chore] Merge Branch" },                                                                                                                                                                                                                                                                                                                                  # replace merge branch commit messages
-        # Clean up Dependabot messages - remove verbose table content
-        {
-            pattern = 'Bump the.*?group with \d+ updates.*?(\n\n|\|.*?\|.*?\n)*',
-            replace = "[dependency] Update dependency group"
-        },
-        {
-            pattern = 'Bumps the npm-all group.*?with \d+ updates.*?(\n\n|\|.*?\|.*?\n)*',
-            replace = "[dependency] Update npm dependencies"
-        },
-        {
-            pattern = '\[dependency\] \[chore\] Bump the.*?with \d+ updates.*?(\n\n|\|.*?\|.*?\n)*',
-            replace = "[dependency] Update dependencies"
-        },
-
-        # Clean up individual package bump messages
-        { pattern = 'Bump ([a-zA-Z0-9@\-\/]+) from.*?to.*?(\n\n.*?)*', replace = "[dependency] Update $1" },
-        { pattern = 'Bump ([a-zA-Z0-9@\-\/]+) from.*?to.*?(\n\n.*?)*', replace = "[dependency] Update $1" },
-        { pattern = 'Bump ([a-zA-Z0-9@\-\/]+) to.*?(\n\n.*?)*', replace = "[dependency] Update $1" },
-        { pattern = 'Bump ([a-zA-Z0-9@\-\/]+) to.*?(\n\n.*?)*', replace = "[dependency] Update $1" },
-        { pattern = 'Bumps \[([^\]]+)\].*?from.*?to.*?(\n\n.*?)*', replace = "[dependency] Update $1" },
-        # Generic bump message cleanup
-        { pattern = "Bump", replace = "[dependency] Update" },
-        # Remove git trailers that look noisy in rendered changelog entries
-        { pattern = '\n\nSigned-off-by:.*', replace = "" },
-    ]
     protect_breaking_commits = false
     render_always            = true
     # render body even when there are no releases to process
     # render_always = true
     # output file path
     # output = "test.md"
+
+    # postprocessors
+    # { pattern = 'your-package-name', replace = "[your-package-name](https://github.com/${remote.github.owner}/${remote.github.repo})" }, # example repository URL replacement
+    # replace merge branch commit messages
+    [[changelog.postprocessors]]
+        pattern = "Merge branch"
+        replace = "[chore] Merge Branch"
+
+    [[changelog.postprocessors]]
+        pattern = '\[dependency\]'
+        replace = "test"
+
+    # replace merge branch commit messages
+    [[changelog.postprocessors]]
+        pattern = "merge branch"
+        replace = "[chore] Merge Branch"
+
+    # Clean up Dependabot messages - remove verbose table content
+    [[changelog.postprocessors]]
+        pattern = 'Bump the.*?group with \d+ updates.*?(\n\n|\|.*?\|.*?\n)*'
+        replace = "[dependency] Update dependency group"
+
+    [[changelog.postprocessors]]
+        pattern = 'Bumps the npm-all group.*?with \d+ updates.*?(\n\n|\|.*?\|.*?\n)*'
+        replace = "[dependency] Update npm dependencies"
+
+    [[changelog.postprocessors]]
+        pattern = '\[dependency\] \[chore\] Bump the.*?with \d+ updates.*?(\n\n|\|.*?\|.*?\n)*'
+        replace = "[dependency] Update dependencies"
+
+    # Clean up individual package bump messages
+    [[changelog.postprocessors]]
+        pattern = 'Bump ([a-zA-Z0-9@\-\/]+) from.*?to.*?(\n\n.*?)*'
+        replace = "[dependency] Update $1"
+
+    [[changelog.postprocessors]]
+        pattern = 'Bump ([a-zA-Z0-9@\-\/]+) from.*?to.*?(\n\n.*?)*'
+        replace = "[dependency] Update $1"
+
+    [[changelog.postprocessors]]
+        pattern = 'Bump ([a-zA-Z0-9@\-\/]+) to.*?(\n\n.*?)*'
+        replace = "[dependency] Update $1"
+
+    [[changelog.postprocessors]]
+        pattern = 'Bump ([a-zA-Z0-9@\-\/]+) to.*?(\n\n.*?)*'
+        replace = "[dependency] Update $1"
+
+    [[changelog.postprocessors]]
+        pattern = 'Bumps \[([^\]]+)\].*?from.*?to.*?(\n\n.*?)*'
+        replace = "[dependency] Update $1"
+
+    # Generic bump message cleanup
+    [[changelog.postprocessors]]
+        pattern = "Bump"
+        replace = "[dependency] Update"
+
+    # Remove git trailers that look noisy in rendered changelog entries
+    [[changelog.postprocessors]]
+        pattern = '\n\nSigned-off-by:.*'
+        replace = ""
 
 [git]
     # parse the commits based on https://www.conventionalcommits.org
@@ -139,118 +168,6 @@ This project is licensed under the [MIT License](https://github.com/{{ remote.gi
     #   # If the spelling is incorrect, it will be automatically fixed.
     #   { pattern = '.*', replace_command = 'typos --write-changes -' },
     # ]
-    # regex for parsing and grouping commits
-    # Commit parsers support both raw Unicode Gitmojis and :shortcode: forms
-    # from .github/copilot-commit-message-instructions.md.
-    commit_parsers        = [
-        # Skip noisy commit types
-        { message = "^Merge branch", skip = true },
-        { message = "^Merge pull request", skip = true },
-        { message = "^merge branch", skip = true },
-        { message = "^chore\\(pr\\)", skip = true },
-        { message = "^chore\\(pull\\)", skip = true },
-        { message = "^chore\\(release\\): prepare for", skip = true },
-
-        # Security-related (keep separate from general dependencies)
-        {
-            message = "^(🔒️|🔒|🔐|🛂|:lock:|:closed_lock_with_key:|:passport_control:)",
-            group   = "<!-- 12 -->🛡️ Security"
-        },
-        { body = ".*security.*", group = "<!-- 12 -->🛡️ Security" },
-        { message = ".*security.*", group = "<!-- 12 -->🛡️ Security" },
-
-        # Dependency-related commits (emoji and bot/fallback patterns)
-        {
-            message = "^(⬆️|⬆|⬇️|⬇|📌|➕|➖|:arrow_up:|:arrow_down:|:pushpin:|:heavy_plus_sign:|:heavy_minus_sign:)",
-            group   = "<!-- 11 -->📦 Dependencies"
-        },
-        { message = "^chore\\(deps.*\\)", group = "<!-- 11 -->📦 Dependencies" },
-        { message = ".*dependabot.*", group = "<!-- 11 -->📦 Dependencies" },
-        { message = ".*npm-all.*", group = "<!-- 11 -->📦 Dependencies" },
-        { message = "^Bump [a-zA-Z0-9@\\-\\/]+", group = "<!-- 11 -->📦 Dependencies" },
-        { message = "^Bump the.*group with \\d+ updates", group = "<!-- 11 -->📦 Dependencies" },
-        { message = "^Bumps \\[.*\\]", group = "<!-- 11 -->📦 Dependencies" },
-        { message = "^Bumps the.*group with \\d+ updates", group = "<!-- 11 -->📦 Dependencies" },
-        { message = "^\\[dependency\\]", group = "<!-- 11 -->📦 Dependencies" },
-
-        # Revert commits
-        { message = "^(⏪️|⏪|:rewind:)", group = "<!-- 10 -->⏪ Reverts" },
-        { message = "^revert", group = "<!-- 10 -->⏪ Reverts" },
-
-        # Commit-type tags (accept any leading emoji/shortcode)
-        { message = "^.*\\[feat\\]", group = "<!-- 0 -->✨ Features" },
-        { message = "^.*\\[fix\\]", group = "<!-- 1 -->🛠️ Bug Fixes" },
-        { message = "^.*\\[refactor\\]", group = "<!-- 2 -->🚜 Refactor" },
-        { message = "^.*\\[docs\\]", group = "<!-- 3 -->📝 Documentation" },
-        { message = "^.*\\[perf\\]", group = "<!-- 4 -->⚡ Performance" },
-        { message = "^.*\\[style\\]", group = "<!-- 5 -->🎨 Styling" },
-        { message = "^.*\\[test\\]", group = "<!-- 6 -->🧪 Testing" },
-        { message = "^.*\\[chore\\]", group = "<!-- 7 -->🧹 Chores" },
-        { message = "^.*\\[ci\\]", group = "<!-- 8 -->👷 CI/CD" },
-        { message = "^.*\\[build\\]", group = "<!-- 9 -->🔧 Build System" },
-        { message = "^.*\\[revert\\]", group = "<!-- 10 -->⏪ Reverts" },
-
-        # Full Gitmoji mapping fallbacks (for commits without explicit [type])
-        {
-            message = "^(✨|🎉|🌱|🥚|🚩|👔|💥|:sparkles:|:tada:|:seedling:|:egg:|:triangular_flag_on_post:|:necktie:|:boom:)",
-            group   = "<!-- 0 -->✨ Features"
-        },
-        {
-            message = "^(🐛|🚑️|🚑|🥅|🩹|:bug:|:ambulance:|:goal_net:|:adhesive_bandage:)",
-            group   = "<!-- 1 -->🛠️ Bug Fixes"
-        },
-        {
-            message = "^(🚜|♻️|♻|🚚|🏗️|🏗|🧱|:tractor:|:recycle:|:truck:|:building_construction:|:bricks:)",
-            group   = "<!-- 2 -->🚜 Refactor"
-        },
-        {
-            message = "^(📝|✏️|✏|💡|💬|📄|:memo:|:pencil2:|:bulb:|:speech_balloon:|:page_facing_up:)",
-            group   = "<!-- 3 -->📝 Documentation"
-        },
-        { message = "^(⚡️|⚡|🧵|:zap:|:thread:)", group = "<!-- 4 -->⚡ Performance" },
-        {
-            message = "^(🎨|💄|💫|📱|♿️|♿|:art:|:artist_palette:|:lipstick:|:dizzy:|:iphone:|:wheelchair:)",
-            group   = "<!-- 5 -->🎨 Styling"
-        },
-        {
-            message = "^(🧪|✅|🤡|📸|🦺|:test_tube:|:white_check_mark:|:clown_face:|:camera_flash:|:safety_vest:)",
-            group   = "<!-- 6 -->🧪 Testing"
-        },
-        {
-            message = "^(🧹|🔥|🚨|🙈|🗑️|🗑|⚰️|🔊|🔇|🍱|🍻|👽️|👽|🔀|💩|:broom:|:fire:|:rotating_light:|:see_no_evil:|:wastebasket:|:coffin:|:loud_sound:|:mute:|:bento:|:beers:|:alien:|:twisted_rightwards_arrows:|:poop:)",
-            group   = "<!-- 7 -->🧹 Chores"
-        },
-        {
-            message = "^(👷|💚|🚧|🚀|🩺|:construction_worker:|:green_heart:|:construction:|:rocket:|:stethoscope:)",
-            group   = "<!-- 8 -->👷 CI/CD"
-        },
-        { message = "^(🔧|🔨|📦️|📦|:wrench:|:hammer:|:package:)", group = "<!-- 9 -->🔧 Build System" },
-
-        # Remaining supported Gitmojis that are best treated as miscellaneous
-        {
-            message = "^(🔖|🌐|📈|🗃️|🗃|👥|🚸|⚗️|⚗|🔍️|🔍|🏷️|🏷|🧐|🧑‍💻|💸|✈️|✈|🦖|:bookmark:|:globe_with_meridians:|:chart_with_upwards_trend:|:card_file_box:|:busts_in_silhouette:|:children_crossing:|:alembic:|:mag:|:label:|:monocle_face:|:technologist:|:money_with_wings:|:airplane:|:t-rex:)",
-            group   = "<!-- 13 -->🛠️ Other Changes"
-        },
-
-        # Fallback patterns for conventional commits without emojis
-        { message = "^build", group = "<!-- 9 -->🔧 Build System" },
-        { message = "^ci", group = "<!-- 8 -->👷 CI/CD" },
-        { message = "^docs?", group = "<!-- 3 -->📝 Documentation" },
-        { message = "^feat", group = "<!-- 0 -->✨ Features" },
-        { message = "^fix", group = "<!-- 1 -->🛠️ Bug Fixes" },
-        { message = "^perf", group = "<!-- 4 -->⚡ Performance" },
-        { message = "^refactor", group = "<!-- 2 -->🚜 Refactor" },
-        { message = "^style", group = "<!-- 5 -->🎨 Styling" },
-        { message = "^test", group = "<!-- 6 -->🧪 Testing" },
-        { message = "^chore", group = "<!-- 7 -->🧹 Chores" },
-
-        # CI/CD file changes
-        { message = ".*\\.ya?ml", group = "<!-- 8 -->👷 CI/CD" },
-        { message = ".*workflow.*", group = "<!-- 8 -->👷 CI/CD" },
-
-        # Catch-all for miscellaneous changes
-        { message = ".*", group = "<!-- 13 -->🛠️ Other Changes" },
-    ]
     # filter out the commits that are not matched by commit parsers
     filter_commits        = false
     # sort the tags topologically
@@ -258,6 +175,239 @@ This project is licensed under the [MIT License](https://github.com/{{ remote.gi
     # sort the commits inside sections by oldest/newest order
     # possible values: "oldest" (chronological order) or "newest" (reverse chronological order)
     sort_commits          = "newest"
+
+    # regex for parsing and grouping commits
+    # Commit parsers support both raw Unicode Gitmojis and :shortcode: forms
+    # from .github/copilot-commit-message-instructions.md.
+    # Skip noisy commit types
+    [[git.commit_parsers]]
+        message = "^Merge branch"
+        skip    = true
+
+    [[git.commit_parsers]]
+        message = "^Merge pull request"
+        skip    = true
+
+    [[git.commit_parsers]]
+        message = "^merge branch"
+        skip    = true
+
+    [[git.commit_parsers]]
+        message = "^chore\\(pr\\)"
+        skip    = true
+
+    [[git.commit_parsers]]
+        message = "^chore\\(pull\\)"
+        skip    = true
+
+    [[git.commit_parsers]]
+        message = "^chore\\(release\\): prepare for"
+        skip    = true
+
+    # Security-related (keep separate from general dependencies)
+    [[git.commit_parsers]]
+        message = "^(🔒️|🔒|🔐|🛂|:lock:|:closed_lock_with_key:|:passport_control:)"
+        group   = "<!-- 12 -->🛡️ Security"
+
+    [[git.commit_parsers]]
+        body  = ".*security.*"
+        group = "<!-- 12 -->🛡️ Security"
+
+    [[git.commit_parsers]]
+        message = ".*security.*"
+        group   = "<!-- 12 -->🛡️ Security"
+
+    # Dependency-related commits (emoji and bot/fallback patterns)
+    [[git.commit_parsers]]
+        message = "^(⬆️|⬆|⬇️|⬇|📌|➕|➖|:arrow_up:|:arrow_down:|:pushpin:|:heavy_plus_sign:|:heavy_minus_sign:)"
+        group   = "<!-- 11 -->📦 Dependencies"
+
+    [[git.commit_parsers]]
+        message = "^chore\\(deps.*\\)"
+        group   = "<!-- 11 -->📦 Dependencies"
+
+    [[git.commit_parsers]]
+        message = ".*dependabot.*"
+        group   = "<!-- 11 -->📦 Dependencies"
+
+    [[git.commit_parsers]]
+        message = ".*npm-all.*"
+        group   = "<!-- 11 -->📦 Dependencies"
+
+    [[git.commit_parsers]]
+        message = "^Bump [a-zA-Z0-9@\\-\\/]+"
+        group   = "<!-- 11 -->📦 Dependencies"
+
+    [[git.commit_parsers]]
+        message = "^Bump the.*group with \\d+ updates"
+        group   = "<!-- 11 -->📦 Dependencies"
+
+    [[git.commit_parsers]]
+        message = "^Bumps \\[.*\\]"
+        group   = "<!-- 11 -->📦 Dependencies"
+
+    [[git.commit_parsers]]
+        message = "^Bumps the.*group with \\d+ updates"
+        group   = "<!-- 11 -->📦 Dependencies"
+
+    [[git.commit_parsers]]
+        message = "^\\[dependency\\]"
+        group   = "<!-- 11 -->📦 Dependencies"
+
+    # Revert commits
+    [[git.commit_parsers]]
+        message = "^(⏪️|⏪|:rewind:)"
+        group   = "<!-- 10 -->⏪ Reverts"
+
+    [[git.commit_parsers]]
+        message = "^revert"
+        group   = "<!-- 10 -->⏪ Reverts"
+
+    # Commit-type tags (accept any leading emoji/shortcode)
+    [[git.commit_parsers]]
+        message = "^.*\\[feat\\]"
+        group   = "<!-- 0 -->✨ Features"
+
+    [[git.commit_parsers]]
+        message = "^.*\\[fix\\]"
+        group   = "<!-- 1 -->🛠️ Bug Fixes"
+
+    [[git.commit_parsers]]
+        message = "^.*\\[refactor\\]"
+        group   = "<!-- 2 -->🚜 Refactor"
+
+    [[git.commit_parsers]]
+        message = "^.*\\[docs\\]"
+        group   = "<!-- 3 -->📝 Documentation"
+
+    [[git.commit_parsers]]
+        message = "^.*\\[perf\\]"
+        group   = "<!-- 4 -->⚡ Performance"
+
+    [[git.commit_parsers]]
+        message = "^.*\\[style\\]"
+        group   = "<!-- 5 -->🎨 Styling"
+
+    [[git.commit_parsers]]
+        message = "^.*\\[test\\]"
+        group   = "<!-- 6 -->🧪 Testing"
+
+    [[git.commit_parsers]]
+        message = "^.*\\[chore\\]"
+        group   = "<!-- 7 -->🧹 Chores"
+
+    [[git.commit_parsers]]
+        message = "^.*\\[ci\\]"
+        group   = "<!-- 8 -->👷 CI/CD"
+
+    [[git.commit_parsers]]
+        message = "^.*\\[build\\]"
+        group   = "<!-- 9 -->🔧 Build System"
+
+    [[git.commit_parsers]]
+        message = "^.*\\[revert\\]"
+        group   = "<!-- 10 -->⏪ Reverts"
+
+    # Full Gitmoji mapping fallbacks (for commits without explicit [type])
+    [[git.commit_parsers]]
+        message = "^(✨|🎉|🌱|🥚|🚩|👔|💥|:sparkles:|:tada:|:seedling:|:egg:|:triangular_flag_on_post:|:necktie:|:boom:)"
+        group   = "<!-- 0 -->✨ Features"
+
+    [[git.commit_parsers]]
+        message = "^(🐛|🚑️|🚑|🥅|🩹|:bug:|:ambulance:|:goal_net:|:adhesive_bandage:)"
+        group   = "<!-- 1 -->🛠️ Bug Fixes"
+
+    [[git.commit_parsers]]
+        message = "^(🚜|♻️|♻|🚚|🏗️|🏗|🧱|:tractor:|:recycle:|:truck:|:building_construction:|:bricks:)"
+        group   = "<!-- 2 -->🚜 Refactor"
+
+    [[git.commit_parsers]]
+        message = "^(📝|✏️|✏|💡|💬|📄|:memo:|:pencil2:|:bulb:|:speech_balloon:|:page_facing_up:)"
+        group   = "<!-- 3 -->📝 Documentation"
+
+    [[git.commit_parsers]]
+        message = "^(⚡️|⚡|🧵|:zap:|:thread:)"
+        group   = "<!-- 4 -->⚡ Performance"
+
+    [[git.commit_parsers]]
+        message = "^(🎨|💄|💫|📱|♿️|♿|:art:|:artist_palette:|:lipstick:|:dizzy:|:iphone:|:wheelchair:)"
+        group   = "<!-- 5 -->🎨 Styling"
+
+    [[git.commit_parsers]]
+        message = "^(🧪|✅|🤡|📸|🦺|:test_tube:|:white_check_mark:|:clown_face:|:camera_flash:|:safety_vest:)"
+        group   = "<!-- 6 -->🧪 Testing"
+
+    [[git.commit_parsers]]
+        message = "^(🧹|🔥|🚨|🙈|🗑️|🗑|⚰️|🔊|🔇|🍱|🍻|👽️|👽|🔀|💩|:broom:|:fire:|:rotating_light:|:see_no_evil:|:wastebasket:|:coffin:|:loud_sound:|:mute:|:bento:|:beers:|:alien:|:twisted_rightwards_arrows:|:poop:)"
+        group   = "<!-- 7 -->🧹 Chores"
+
+    [[git.commit_parsers]]
+        message = "^(👷|💚|🚧|🚀|🩺|:construction_worker:|:green_heart:|:construction:|:rocket:|:stethoscope:)"
+        group   = "<!-- 8 -->👷 CI/CD"
+
+    [[git.commit_parsers]]
+        message = "^(🔧|🔨|📦️|📦|:wrench:|:hammer:|:package:)"
+        group   = "<!-- 9 -->🔧 Build System"
+
+    # Remaining supported Gitmojis that are best treated as miscellaneous
+    [[git.commit_parsers]]
+        message = "^(🔖|🌐|📈|🗃️|🗃|👥|🚸|⚗️|⚗|🔍️|🔍|🏷️|🏷|🧐|🧑‍💻|💸|✈️|✈|🦖|:bookmark:|:globe_with_meridians:|:chart_with_upwards_trend:|:card_file_box:|:busts_in_silhouette:|:children_crossing:|:alembic:|:mag:|:label:|:monocle_face:|:technologist:|:money_with_wings:|:airplane:|:t-rex:)"
+        group   = "<!-- 13 -->🛠️ Other Changes"
+
+    # Fallback patterns for conventional commits without emojis
+    [[git.commit_parsers]]
+        message = "^build"
+        group   = "<!-- 9 -->🔧 Build System"
+
+    [[git.commit_parsers]]
+        message = "^ci"
+        group   = "<!-- 8 -->👷 CI/CD"
+
+    [[git.commit_parsers]]
+        message = "^docs?"
+        group   = "<!-- 3 -->📝 Documentation"
+
+    [[git.commit_parsers]]
+        message = "^feat"
+        group   = "<!-- 0 -->✨ Features"
+
+    [[git.commit_parsers]]
+        message = "^fix"
+        group   = "<!-- 1 -->🛠️ Bug Fixes"
+
+    [[git.commit_parsers]]
+        message = "^perf"
+        group   = "<!-- 4 -->⚡ Performance"
+
+    [[git.commit_parsers]]
+        message = "^refactor"
+        group   = "<!-- 2 -->🚜 Refactor"
+
+    [[git.commit_parsers]]
+        message = "^style"
+        group   = "<!-- 5 -->🎨 Styling"
+
+    [[git.commit_parsers]]
+        message = "^test"
+        group   = "<!-- 6 -->🧪 Testing"
+
+    [[git.commit_parsers]]
+        message = "^chore"
+        group   = "<!-- 7 -->🧹 Chores"
+
+    # CI/CD file changes
+    [[git.commit_parsers]]
+        message = ".*\\.ya?ml"
+        group   = "<!-- 8 -->👷 CI/CD"
+
+    [[git.commit_parsers]]
+        message = ".*workflow.*"
+        group   = "<!-- 8 -->👷 CI/CD"
+
+    # Catch-all for miscellaneous changes
+    [[git.commit_parsers]]
+        message = ".*"
+        group   = "<!-- 13 -->🛠️ Other Changes"
 
 [remote]
     # Keep remote metadata lookups disabled by default while still exposing
