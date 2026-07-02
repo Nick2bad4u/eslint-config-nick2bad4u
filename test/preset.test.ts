@@ -586,6 +586,7 @@ describe("eslint-config-nick2bad4u presets", () => {
         ).toStrictEqual([
             "error",
             {
+                ignore: ["^allowDefaultProjectFilePatternPresets$"],
                 prefixes: {
                     allow: true,
                     allows: true,

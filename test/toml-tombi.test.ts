@@ -76,8 +76,7 @@ describe("toml and Tombi config", () => {
             overrideConfigFile: true,
         });
         const config = (await eslint.calculateConfigForFile(".tombi.toml")) as
-            | Linter.Config
-            | undefined;
+            Linter.Config | undefined;
         const parserOptions = config?.languageOptions?.["parserOptions"];
         const rules = getRules(config);
 
@@ -137,7 +136,7 @@ describe("toml and Tombi config", () => {
         const allRuleNames = new Set(
             presets.all.flatMap((config) => Object.keys(config.rules ?? {}))
         );
-        const withoutTombiRuleNames = new Set(
+        const ruleNamesWithoutTombi = new Set(
             presets.withoutTombi.flatMap((config) =>
                 Object.keys(config.rules ?? {})
             )
@@ -147,7 +146,7 @@ describe("toml and Tombi config", () => {
             [...allRuleNames].some((ruleName) => ruleName.startsWith("tombi/"))
         ).not.toBe(false);
         expect(
-            [...withoutTombiRuleNames].filter((ruleName) =>
+            [...ruleNamesWithoutTombi].filter((ruleName) =>
                 ruleName.startsWith("tombi/")
             )
         ).toStrictEqual([]);

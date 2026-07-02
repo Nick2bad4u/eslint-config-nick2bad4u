@@ -474,7 +474,7 @@ const storybookRecommendedStoriesRules =
 export const createConfig = (
     options: Nick2Bad4UEslintConfigOptions = {}
 ): EslintConfig[] => {
-    const allowDefaultProjectFilePatterns =
+    const defaultProjectFilePatterns =
         options.allowDefaultProjectFilePatterns ??
         DEFAULT_PROJECT_FILE_PATTERNS;
     const rootDirectory = path.resolve(
@@ -491,10 +491,10 @@ export const createConfig = (
             .filter(([, plugin]) => plugin === false || plugin === null)
             .map(([pluginName]) => pluginName)
     );
-    const projectService = isEmpty(allowDefaultProjectFilePatterns)
+    const projectService = isEmpty(defaultProjectFilePatterns)
         ? true
         : {
-              allowDefaultProject: [...allowDefaultProjectFilePatterns],
+              allowDefaultProject: [...defaultProjectFilePatterns],
           };
     const typefest = resolveTypedPlugin(
         pluginOverrideEntries,
@@ -848,6 +848,7 @@ export const createConfig = (
                 "unicorn/consistent-boolean-name": [
                     "error",
                     {
+                        ignore: ["^allowDefaultProjectFilePatternPresets$"],
                         prefixes: {
                             allow: true,
                             allows: true,
@@ -1205,7 +1206,7 @@ export const createConfig = (
         ...(copilotPlugin === null
             ? []
             : copilotPlugin.configs.all.map((config) =>
-                  withoutJsonPluginRegistration(config)
+                  removeJsonPluginRegistration(config)
               )),
         // MARK: 🛡️ SDL
         ...(sdlPlugin === null ? [] : [sdlPlugin.configs.required]),
@@ -1302,7 +1303,7 @@ export const createConfig = (
         ...(runtimeCleanupPlugin === null
             ? []
             : [
-                  withoutProjectServiceParserOption(
+                  removeProjectServiceParserOption(
                       runtimeCleanupPlugin.configs.all
                   ),
               ]),
@@ -3975,6 +3976,40 @@ function removeDisabledPluginRules(
     });
 }
 
+function removeJsonPluginRegistration(config: EslintConfig): EslintConfig {
+    if (!isDefined(config.plugins) || !keyIn(config.plugins, "json")) {
+        return config;
+    }
+    const plugins = { ...config.plugins };
+    Reflect.deleteProperty(plugins, "json");
+    return {
+        ...config,
+        plugins,
+    };
+}
+
+function removeProjectServiceParserOption(config: EslintConfig): EslintConfig {
+    const languageOptions = config.languageOptions;
+    const parserOptions = languageOptions?.["parserOptions"];
+    if (
+        !isPresent(parserOptions) ||
+        typeof parserOptions !== "object" ||
+        Array.isArray(parserOptions) ||
+        !objectHasOwn(parserOptions, "projectService")
+    ) {
+        return config;
+    }
+    const nextParserOptions: UnknownRecord = { ...parserOptions };
+    Reflect.deleteProperty(nextParserOptions, "projectService");
+    return {
+        ...config,
+        languageOptions: {
+            ...languageOptions,
+            parserOptions: nextParserOptions,
+        },
+    };
+}
+
 function resolvePlugin(
     pluginOverrideEntries: ReadonlyMap<string, PluginOverride>,
     pluginName: string,
@@ -4046,54 +4081,21 @@ function scopeTypeScriptEslintConfigToCodeFiles(
     };
 }
 
-function withoutJsonPluginRegistration(config: EslintConfig): EslintConfig {
-    if (!isDefined(config.plugins) || !keyIn(config.plugins, "json")) {
-        return config;
-    }
-    const plugins = { ...config.plugins };
-    Reflect.deleteProperty(plugins, "json");
-    return {
-        ...config,
-        plugins,
-    };
-}
-
-function withoutProjectServiceParserOption(config: EslintConfig): EslintConfig {
-    const languageOptions = config.languageOptions;
-    const parserOptions = languageOptions?.["parserOptions"];
-    if (
-        !isPresent(parserOptions) ||
-        typeof parserOptions !== "object" ||
-        Array.isArray(parserOptions) ||
-        !objectHasOwn(parserOptions, "projectService")
-    ) {
-        return config;
-    }
-    const nextParserOptions: UnknownRecord = { ...parserOptions };
-    Reflect.deleteProperty(nextParserOptions, "projectService");
-    return {
-        ...config,
-        languageOptions: {
-            ...languageOptions,
-            parserOptions: nextParserOptions,
-        },
-    };
-}
 /* eslint-enable @typescript-eslint/no-unsafe-type-assertion, @typescript-eslint/prefer-readonly-parameter-types -- helper boundary */
 // #endregion 🆘 Helper Functions
 // #region 📦 Preset Construction
 // ═══════════════════════════════════════════════════════════════════════════════
 const allConfigs: EslintConfig[] = createConfig();
-const withoutSdl2BaseConfigs: EslintConfig[] = createConfig({
+const configsWithoutSdl2Base: EslintConfig[] = createConfig({
     plugins: {
         sdl: false,
         "sdl-2": false,
     },
 });
-const withoutSdl2HasNodePlugin = withoutSdl2BaseConfigs.some(
+const hasNodePluginWithoutSdl2 = configsWithoutSdl2Base.some(
     (config) => isDefined(config.plugins) && keyIn(config.plugins, "n")
 );
-const withoutGitHubActions2Configs: EslintConfig[] = createConfig({
+const configsWithoutGitHubActions2: EslintConfig[] = createConfig({
     plugins: {
         "github-actions": false,
         "github-actions-2": false,
@@ -4141,8 +4143,8 @@ const sharedConfigs: Nick2Bad4UEslintConfigPresets = {
             "file-progress-2": false,
         },
     }),
-    withoutGitHubActions2: withoutGitHubActions2Configs,
-    withoutGithubActions2: withoutGitHubActions2Configs,
+    withoutGitHubActions2: configsWithoutGitHubActions2,
+    withoutGithubActions2: configsWithoutGitHubActions2,
     withoutImmutable2: createConfig({
         plugins: {
             immutable: false,
@@ -4165,8 +4167,8 @@ const sharedConfigs: Nick2Bad4UEslintConfigPresets = {
             "runtime-cleanup": false,
         },
     }),
-    withoutSdl2: withoutSdl2HasNodePlugin
-        ? withoutSdl2BaseConfigs
+    withoutSdl2: hasNodePluginWithoutSdl2
+        ? configsWithoutSdl2Base
         : [
               {
                   name: "Node plugin registration (withoutSdl2 only)",
@@ -4174,7 +4176,7 @@ const sharedConfigs: Nick2Bad4UEslintConfigPresets = {
                       n: nodePlugin,
                   },
               },
-              ...withoutSdl2BaseConfigs,
+              ...configsWithoutSdl2Base,
           ],
     withoutSecretlint: createConfig({
         plugins: {
