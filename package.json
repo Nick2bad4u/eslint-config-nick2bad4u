@@ -150,7 +150,7 @@
         "eslint-plugin-jsdoc": "^63.0.10",
         "eslint-plugin-json-schema-validator-2": "^7.0.7",
         "eslint-plugin-jsonc": "^3.2.0",
-        "eslint-plugin-listeners": "^1.5.2",
+        "eslint-plugin-listeners": "^1.6.0",
         "eslint-plugin-math": "^0.13.1",
         "eslint-plugin-module-interop": "^0.3.1",
         "eslint-plugin-n": "^18.2.1",

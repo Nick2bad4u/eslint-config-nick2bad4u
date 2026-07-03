@@ -99,6 +99,7 @@ import {
     objectFromEntries,
     objectHasOwn,
     objectKeys,
+    safeCastTo,
     setHas,
     stringSplit,
 } from "ts-extras";
@@ -459,6 +460,34 @@ const storybookRecommendedStoriesRules =
     storybookRecommendedConfigs.find((config) => isDefined(config.rules))
         ?.rules ??
     {};
+const listenerFlatStrictConfigInput = safeCastTo<EslintConfigInput | undefined>(
+    listeners.configs["flat/strict"]
+);
+const listenerLegacyStrictConfig = listeners.configs["strict"];
+const isEslintConfigArray = (
+    configInput: unknown
+): configInput is readonly EslintConfig[] => Array.isArray(configInput);
+const listenerStrictConfigs: readonly EslintConfig[] = (() => {
+    if (isEslintConfigArray(listenerFlatStrictConfigInput)) {
+        return listenerFlatStrictConfigInput;
+    }
+
+    if (isDefined(listenerFlatStrictConfigInput)) {
+        return [listenerFlatStrictConfigInput];
+    }
+
+    if (isDefined(listenerLegacyStrictConfig)) {
+        return [
+            {
+                rules: {
+                    ...listenerLegacyStrictConfig.rules,
+                },
+            },
+        ];
+    }
+
+    return [];
+})();
 
 // #endregion 🏗️ Setup and Public Types
 // #region 🛠️ Config
@@ -1007,21 +1036,23 @@ export const createConfig = (
                 "canonical/sort-react-dependencies": "warn",
             },
         },
-        ...(isDefined(listeners.configs["strict"])
-            ? [
-                  {
-                      // MARK: 🎧 Listeners
-                      files: [...GLOBAL_FILE_PATTERNS],
-                      name: "🎧 Listeners: Strict",
-                      plugins: {
-                          listeners,
-                      },
-                      rules: {
-                          ...listeners.configs["strict"].rules,
-                      },
-                  },
-              ]
-            : []),
+        ...listenerStrictConfigs.map((config, configIndex) => ({
+            ...config,
+            // MARK: 🎧 Listeners
+            files: [...GLOBAL_FILE_PATTERNS],
+            name:
+                config.name ??
+                (listenerStrictConfigs.length === 1
+                    ? "🎧 Listeners: Strict"
+                    : `🎧 Listeners: Strict ${String(configIndex + 1)}`),
+            plugins: {
+                ...config.plugins,
+                listeners,
+            },
+            rules: {
+                ...config.rules,
+            },
+        })),
         {
             // MARK: 🐝 Module Interop
             files: [...GLOBAL_FILE_PATTERNS],
@@ -3259,7 +3290,7 @@ export const createConfig = (
             rules: {
                 "@stylistic/spaced-comment": "off",
                 // TOML ESLint Plugin Rules (toml/*)
-                "toml/array-bracket-newline": "warn",
+                "toml/array-bracket-newline": "off",
                 "toml/array-bracket-spacing": "warn",
                 "toml/array-element-newline": "off",
                 "toml/comma-style": "warn",

@@ -344,6 +344,33 @@ describe("eslint-config-nick2bad4u presets", () => {
         ).toBeGreaterThan(0);
     });
 
+    it("uses the Listeners flat strict preset", () => {
+        expect.assertions(5);
+
+        const listenersConfig = findConfigByName(
+            presets.all,
+            "🎧 Listeners: Strict"
+        );
+
+        expect(listenersConfig?.name).toBe("🎧 Listeners: Strict");
+        expect(Object.keys(listenersConfig?.plugins ?? {})).toContain(
+            "listeners"
+        );
+        expect(
+            listenersConfig?.rules?.[
+                "listeners/no-missing-remove-event-listener"
+            ]
+        ).toBe("error");
+        expect(
+            listenersConfig?.rules?.["listeners/matching-remove-event-listener"]
+        ).toBe("error");
+        expect(
+            listenersConfig?.rules?.[
+                "listeners/no-inline-function-event-listener"
+            ]
+        ).toBe("error");
+    });
+
     it("keeps the Node plugin available when withoutSdl2 removes SDL namespaces", () => {
         expect.assertions(3);
 

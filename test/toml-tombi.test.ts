@@ -9,7 +9,6 @@ const fixtureWorkspaceRoot = fileURLToPath(
 );
 
 const compatibleTomlRules = [
-    "toml/array-bracket-newline",
     "toml/array-bracket-spacing",
     "toml/comma-style",
     "toml/inline-table-curly-newline",
@@ -29,6 +28,7 @@ const compatibleTomlRules = [
 ] as const;
 
 const conflictingOrDuplicateTomlRules = [
+    "toml/array-bracket-newline",
     "toml/array-element-newline",
     "toml/indent",
     "toml/key-spacing",
