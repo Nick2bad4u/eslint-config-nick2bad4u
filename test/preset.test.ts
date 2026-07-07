@@ -479,7 +479,7 @@ describe("eslint-config-nick2bad4u presets", () => {
         expect(Object.hasOwn(parserOptions, "projectService")).toBe(false);
     });
 
-    it("uses ESLint built-in unused-disable reporting", () => {
+    it("uses ESLint built-in inline config reporting", () => {
         expect.assertions(1);
 
         const linterOptionsConfig = findConfigByName(
@@ -487,9 +487,11 @@ describe("eslint-config-nick2bad4u presets", () => {
             "🌍 Global: Linter Options"
         );
 
-        expect(
-            linterOptionsConfig?.linterOptions?.reportUnusedDisableDirectives
-        ).toBe("warn");
+        expect(linterOptionsConfig?.linterOptions).toStrictEqual({
+            noInlineConfig: false,
+            reportUnusedDisableDirectives: "warn",
+            reportUnusedInlineConfigs: "warn",
+        });
     });
 
     it("configures browser and Node globals for Docusaurus workspace files", () => {

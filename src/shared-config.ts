@@ -757,7 +757,9 @@ export const createConfig = (
         // ═══════════════════════════════════════════════════════════════════════════════
         {
             linterOptions: {
+                noInlineConfig: false,
                 reportUnusedDisableDirectives: "warn",
+                reportUnusedInlineConfigs: "warn",
             },
             name: "🌍 Global: Linter Options",
         },
