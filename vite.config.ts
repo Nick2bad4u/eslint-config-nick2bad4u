@@ -251,7 +251,9 @@ const isCiEnvironment = process.env["CI"] === "true",
             outputFile: {
                 json: "./coverage/test-results.json",
             },
-            pool: "threads", // Use worker threads for better performance
+            // Unicorn v71 pulls in `web-worker`, which assumes it owns worker_threads.workerData.
+            // Vitest's thread pool also uses workerData, so run tests in child processes.
+            pool: "forks",
             printConsoleTrace: false, // Disable stack trace printing for cleaner output
             // Improve test output
             reporters: vitestReporters,

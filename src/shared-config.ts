@@ -93,11 +93,9 @@ import {
     arrayJoin,
     isDefined,
     isEmpty,
-    isPresent,
     keyIn,
     objectEntries,
     objectFromEntries,
-    objectHasOwn,
     objectKeys,
     safeCastTo,
     setHas,
@@ -411,7 +409,11 @@ interface ConfigurablePlugin {
 
 type EslintConfig = Linter.Config;
 type EslintConfigInput = EslintConfig | readonly EslintConfig[];
-type PluginOverride = ConfigurablePlugin | false | null | undefined;
+type PluginOverride =
+    | ConfigurablePlugin
+    | false
+    | null
+    | undefined;
 type PluginOverrides = Readonly<Record<string, PluginOverride>>;
 
 /**
@@ -753,6 +755,12 @@ export const createConfig = (
         // Intentionally left empty.
         // #endregion 🗣️ Global Language Options
         // ═══════════════════════════════════════════════════════════════════════════════
+        {
+            linterOptions: {
+                reportUnusedDisableDirectives: "warn",
+            },
+            name: "🌍 Global: Linter Options",
+        },
         {
             name: "🌍 Global: Settings",
             settings: {
@@ -1236,9 +1244,7 @@ export const createConfig = (
         // MARK: 🤖 Copilot
         ...(copilotPlugin === null
             ? []
-            : copilotPlugin.configs.all.map((config) =>
-                  removeJsonPluginRegistration(config)
-              )),
+            : copilotPlugin.configs["all-without-language-plugins"]),
         // MARK: 🛡️ SDL
         ...(sdlPlugin === null ? [] : [sdlPlugin.configs.required]),
         // MARK: 🦑 GitHub Actions
@@ -1327,17 +1333,11 @@ export const createConfig = (
          * Runtime Cleanup is an explicit opt-out/dogfood target.
          * Keep it conditional so createConfig({ plugins: { name: false } })
          * removes the upstream preset before the final namespace cleanup pass.
-         * Strip runtime-cleanup's projectService so this config owns TS project
-         * resolution.
          */
         // MARK: 🍧 Runtime Cleanup
         ...(runtimeCleanupPlugin === null
             ? []
-            : [
-                  removeProjectServiceParserOption(
-                      runtimeCleanupPlugin.configs.all
-                  ),
-              ]),
+            : [runtimeCleanupPlugin.configs.all]),
         // MARK: 🧪 Test Signal
         ...(testSignalPlugin === null
             ? []
@@ -2747,16 +2747,17 @@ export const createConfig = (
             },
         },
         // #endregion 🧪 Test Files
-        // #region 🔌 Data File Plugins
+        // #region 🔌 Document Language Plugins
         // ═══════════════════════════════════════════════════════════════════════════════
         {
-            name: "🔌 Data File Plugins",
+            name: "🔌 Document Language Plugins",
             plugins: {
                 json: json,
                 jsonc: jsonc,
+                markdown: markdown,
             },
         },
-        // #endregion 🔌 Data File Plugins
+        // #endregion 🔌 Document Language Plugins
         // #region 📦 Package Metadata
         // ═══════════════════════════════════════════════════════════════════════════════
         {
@@ -3165,8 +3166,7 @@ export const createConfig = (
         // #region 🏝️ YAML Files
         // ═══════════════════════════════════════════════════════════════════════════════
         {
-            files: ["**/*.{yaml,yml}"],
-            language: "yml/yaml",
+            ...yml.configs.standard[1],
             languageOptions: {
                 parser: yamlEslintParser,
                 // Options used with yaml-eslint-parser.
@@ -3179,38 +3179,20 @@ export const createConfig = (
                 yml: yml,
             },
             rules: {
-                // Most off rules below are "off" because they conflict with Prettier
-                // Because using yml.configs.prettier looks bad in inspector, we manually turn
-                // them off here.
-                "yml/block-mapping": "warn",
-                "yml/block-mapping-colon-indicator-newline": "off",
-                "yml/block-mapping-question-indicator-newline": "off",
-                "yml/block-sequence": "warn",
-                "yml/block-sequence-hyphen-indicator-newline": "off",
+                // Instead of using the `yml` plugin's recommended rules,
+                // we merge in the `standard` and `prettier` configs to avoid conflicts with Prettier formatting.
+                // It also looks cleaner to have the rules in one place rather than split across multiple configs.
+                ...yml.configs.standard[2]?.rules,
+                ...yml.configs.prettier[2]?.rules,
+                "no-irregular-whitespace": "off",
+                "no-unused-vars": "off",
                 "yml/file-extension": "off",
-                "yml/flow-mapping-curly-newline": "off",
-                "yml/flow-mapping-curly-spacing": "off",
-                "yml/flow-sequence-bracket-newline": "off",
-                "yml/flow-sequence-bracket-spacing": "off",
-                "yml/indent": "off",
                 "yml/key-name-casing": "off",
-                "yml/key-spacing": "off",
-                "yml/no-empty-document": "error",
-                "yml/no-empty-key": "error",
-                "yml/no-empty-mapping-value": "error",
-                "yml/no-empty-sequence-entry": "error",
-                "yml/no-irregular-whitespace": "error",
-                "yml/no-multiple-empty-lines": "off",
-                "yml/no-tab-indent": "error",
-                "yml/no-trailing-spaces": "warn",
-                "yml/no-trailing-zeros": "off",
                 "yml/plain-scalar": "off",
                 "yml/quotes": "off",
                 "yml/require-string-key": "error",
                 "yml/sort-keys": "error",
                 "yml/sort-sequence-values": "off",
-                "yml/spaced-comment": "warn",
-                "yml/vue-custom-block/no-parsing-error": "warn",
             },
         },
         // MARK: 🏝️ Yamllint
@@ -3320,6 +3302,23 @@ export const createConfig = (
             },
         },
         ...(tombiPlugin === null ? [] : [tombiPlugin.configs.all]),
+        {
+            files: [
+                ".tombi.toml",
+                "cliff.toml",
+                ".gitleaks.toml",
+                "lychee.toml",
+            ],
+            name: "🐦‍🔥 TOML: Tool Configs ⛔ Overrides",
+            // Keep tool-owned TOML away from the Tombi ESLint fixer; it can currently corrupt .tombi.toml.
+            // Re-enable per file when matching schemas are available and the fixer is safe.
+            // @see https://github.com/SchemaStore/schemastore/pull/5896
+            // @see https://github.com/SchemaStore/schemastore/pull/5894
+            // @see https://github.com/SchemaStore/schemastore/pull/5897
+            rules: {
+                "tombi/tombi": "off",
+            },
+        },
         // #endregion 🐦‍🔥 TOML Files
         // #region 📁 Markdown Code Block Final Overrides
         // ═══════════════════════════════════════════════════════════════════════════════
@@ -4005,40 +4004,6 @@ function removeDisabledPluginRules(
         }
         return nextConfig as EslintConfig;
     });
-}
-
-function removeJsonPluginRegistration(config: EslintConfig): EslintConfig {
-    if (!isDefined(config.plugins) || !keyIn(config.plugins, "json")) {
-        return config;
-    }
-    const plugins = { ...config.plugins };
-    Reflect.deleteProperty(plugins, "json");
-    return {
-        ...config,
-        plugins,
-    };
-}
-
-function removeProjectServiceParserOption(config: EslintConfig): EslintConfig {
-    const languageOptions = config.languageOptions;
-    const parserOptions = languageOptions?.["parserOptions"];
-    if (
-        !isPresent(parserOptions) ||
-        typeof parserOptions !== "object" ||
-        Array.isArray(parserOptions) ||
-        !objectHasOwn(parserOptions, "projectService")
-    ) {
-        return config;
-    }
-    const nextParserOptions: UnknownRecord = { ...parserOptions };
-    Reflect.deleteProperty(nextParserOptions, "projectService");
-    return {
-        ...config,
-        languageOptions: {
-            ...languageOptions,
-            parserOptions: nextParserOptions,
-        },
-    };
 }
 
 function resolvePlugin(

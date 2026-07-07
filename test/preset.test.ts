@@ -144,6 +144,17 @@ const isNonArrayObject = (
 ): value is Record<PropertyKey, unknown> =>
     typeof value === "object" && value !== null && !Array.isArray(value);
 
+const assertNonArrayObject = (
+    value: unknown,
+    message: string
+): Record<PropertyKey, unknown> => {
+    if (!isNonArrayObject(value)) {
+        throw new TypeError(message);
+    }
+
+    return value;
+};
+
 const getParserOptionsGlobalsEntries = (
     configEntries: readonly Linter.Config[]
 ): Array<{
@@ -250,9 +261,7 @@ describe("eslint-config-nick2bad4u presets", () => {
         expect(Reflect.get(presets, "withoutGithubActions2")).toBe(
             presets.withoutGitHubActions2
         );
-        expect(allPreset).toStrictEqual(
-            expect.arrayContaining([expect.any(Object)])
-        );
+        expect(isNonArrayObject(allPreset[0])).toBe(true);
     });
 
     it("falls back only for unknown preset names", () => {
@@ -415,6 +424,73 @@ describe("eslint-config-nick2bad4u presets", () => {
             expect(getParserOptionsGlobalsEntries(preset)).toStrictEqual([]);
         }
     );
+
+    it("uses Copilot configs without duplicate-prone language plugin registrations", () => {
+        expect.assertions(3);
+
+        const copilotConfigEntries = presets.all.filter(
+            (configEntry) =>
+                typeof configEntry.name === "string" &&
+                configEntry.name.startsWith(
+                    "copilot:all-without-language-plugins:"
+                )
+        );
+        const documentLanguageConfig = findConfigByName(
+            presets.all,
+            "🔌 Document Language Plugins"
+        );
+
+        expect(
+            copilotConfigEntries.map((configEntry) => configEntry.name)
+        ).toStrictEqual([
+            "copilot:all-without-language-plugins:markdown",
+            "copilot:all-without-language-plugins:json",
+        ]);
+
+        expect(
+            copilotConfigEntries.map((configEntry) =>
+                Object.keys(configEntry.plugins ?? {})
+            )
+        ).toStrictEqual([["copilot"], ["copilot"]]);
+
+        expect(
+            Object.keys(documentLanguageConfig?.plugins ?? {})
+        ).toStrictEqual(
+            expect.arrayContaining([
+                "json",
+                "jsonc",
+                "markdown",
+            ])
+        );
+    });
+
+    it("keeps Runtime Cleanup from owning TypeScript project service", () => {
+        expect.assertions(1);
+
+        const runtimeCleanupConfig = findConfigByName(
+            presets.all,
+            "runtime-cleanup:all"
+        );
+        const parserOptions = assertNonArrayObject(
+            runtimeCleanupConfig?.languageOptions?.["parserOptions"],
+            "Expected runtime-cleanup parserOptions."
+        );
+
+        expect(Object.hasOwn(parserOptions, "projectService")).toBe(false);
+    });
+
+    it("uses ESLint built-in unused-disable reporting", () => {
+        expect.assertions(1);
+
+        const linterOptionsConfig = findConfigByName(
+            presets.all,
+            "🌍 Global: Linter Options"
+        );
+
+        expect(
+            linterOptionsConfig?.linterOptions?.reportUnusedDisableDirectives
+        ).toBe("warn");
+    });
 
     it("configures browser and Node globals for Docusaurus workspace files", () => {
         expect.assertions(1);
@@ -719,7 +795,7 @@ describe("eslint-config-nick2bad4u presets", () => {
             {
                 createPlugin: () => ({
                     configs: {
-                        all: [
+                        "all-without-language-plugins": [
                             createLocalConfig("copilot", "copilot/local-only"),
                         ],
                     },

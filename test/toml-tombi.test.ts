@@ -75,8 +75,9 @@ describe("toml and Tombi config", () => {
             }),
             overrideConfigFile: true,
         });
-        const config = (await eslint.calculateConfigForFile(".tombi.toml")) as
-            Linter.Config | undefined;
+        const config = (await eslint.calculateConfigForFile(
+            "config/site.toml"
+        )) as Linter.Config | undefined;
         const parserOptions = config?.languageOptions?.["parserOptions"];
         const rules = getRules(config);
 
@@ -115,7 +116,6 @@ describe("toml and Tombi config", () => {
             overrideConfigFile: true,
         });
         const results = await eslint.lintFiles([
-            ".tombi.toml",
             "config/site.toml",
             "config/tombi-compat.toml",
         ]);
@@ -128,6 +128,43 @@ describe("toml and Tombi config", () => {
                 )
             )
         ).toStrictEqual([]);
+    });
+
+    it("disables Tombi document checks for external-tool TOML configs", async () => {
+        expect.assertions(1);
+
+        const eslint = new ESLint({
+            cwd: fixtureWorkspaceRoot,
+            overrideConfig: createConfig({
+                rootDirectory: fixtureWorkspaceRoot,
+                tsconfigPaths: ["./tsconfig.json"],
+            }),
+            overrideConfigFile: true,
+        });
+        const tombiRuleEntries = await Promise.all(
+            [
+                ".tombi.toml",
+                "cliff.toml",
+                ".gitleaks.toml",
+                "lychee.toml",
+            ].map(async (fileName) => {
+                const config = (await eslint.calculateConfigForFile(
+                    fileName
+                )) as Linter.Config | undefined;
+
+                return [
+                    fileName,
+                    isRuleEnabled(config?.rules?.["tombi/tombi"]),
+                ] as const;
+            })
+        );
+
+        expect(tombiRuleEntries).toStrictEqual([
+            [".tombi.toml", false],
+            ["cliff.toml", false],
+            [".gitleaks.toml", false],
+            ["lychee.toml", false],
+        ]);
     });
 
     it("exposes a withoutTombi preset", () => {

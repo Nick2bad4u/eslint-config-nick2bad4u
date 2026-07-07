@@ -60,10 +60,10 @@ export type Nick2Bad4UEslintConfigPluginOverride =
     | null
     | undefined
     | {
-          readonly configs?: object;
-          readonly flat?: object;
-          readonly rules?: Readonly<Record<string, unknown>>;
-      };
+        readonly configs?: object;
+        readonly flat?: object;
+        readonly rules?: Readonly<Record<string, unknown>>;
+    };
 
 /** Plugin overrides keyed by ESLint namespace. */
 export type Nick2Bad4UEslintConfigPluginOverrides = Readonly<
