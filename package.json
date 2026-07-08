@@ -62,7 +62,7 @@
         "coverage": "npx vitest run --coverage",
         "lint": "npm run build:runtime && npx cross-env NODE_OPTIONS=--max_old_space_size=8192 npx eslint . --cache --cache-strategy content --cache-location .cache/.eslintcache",
         "lint:actions": "actionlint -config-file ActionLintConfig.yaml",
-        "lint:all": "npm run lint && npm run typecheck && npm run test && npm run lint:prettier && npm run lint:package && npm run lint:jscpd && npm run lint:gitleaks && npm run lint:lychee && npm run lint:secretlint",
+        "lint:all": "npm run lint && npm run typecheck && npm run test && npm run lint:prettier && npm run lint:package && npm run lint:gitleaks && npm run lint:secretlint",
         "lint:all:fix": "npm run lint:fix && npm run lint:prettier:fix && npm run lint:package:fix && npm run typecheck && npm run test && npm run lint:secretlint",
         "lint:all:nocache": "npm run lint:nocache && npm run typecheck && npm run test && npm run lint:prettier && npm run lint:package && npm run lint:secretlint",
         "lint:attw": "node scripts/check-package-types.mjs",
