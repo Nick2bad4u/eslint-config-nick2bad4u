@@ -1,6 +1,6 @@
 ---
 name: Feature request
-about: Suggest a new rule or improvement for eslint-plugin-tsconfig
+about: Suggest a shared preset or configuration improvement for eslint-config-nick2bad4u
 title: "Feature: "
 labels:
  - enhancement
@@ -18,8 +18,8 @@ assignees: []
 
 ## Scope
 
-- Type: New rule / Rule enhancement / Config preset / Docs / Tooling
-- Affected rule IDs (if any):
+- Type: Config preset / Rule configuration / Docs / Tooling
+- Affected plugin or rule IDs (if any):
 - Requires type checking?: Yes / No / Unsure
 
 ## Alternatives considered
@@ -42,5 +42,5 @@ assignees: []
 
 - [ ] Clear, actionable diagnostic message(s)
 - [ ] Safe autofix or suggestion behavior defined
-- [ ] Test coverage plan (valid/invalid/edge/fixer)
-- [ ] Documentation impact identified (`docs/rules/<rule-id>.md` if rule-related)
+- [ ] Test coverage plan identified
+- [ ] Documentation impact identified

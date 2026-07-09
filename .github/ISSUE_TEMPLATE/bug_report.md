@@ -1,6 +1,6 @@
 ---
 name: Bug report
-about: Report a reproducible bug in eslint-plugin-tsconfig
+about: Report a reproducible bug in eslint-config-nick2bad4u
 title: "Bug: "
 labels:
  - bug
@@ -14,7 +14,7 @@ assignees: []
 
 ## Rule / Area
 
-<!-- Example: prefer-ts-extras-array-at, docs/docusaurus, presets, runtime API docs -->
+<!-- Example: React preset, TOML handling, docs/migration, package metadata -->
 
 ## Reproduction
 
@@ -33,7 +33,7 @@ assignees: []
 ### Command and output
 
 ```bash
-# Example: npm run test -- test/prefer-ts-extras-array-at.test.ts
+# Example: npm run test -- test/preset.test.ts
 ```
 
 ## Steps to reproduce
@@ -53,7 +53,7 @@ assignees: []
 - ESLint version:
 - TypeScript version:
 - `@typescript-eslint/*` version:
-- `eslint-plugin-tsconfig` version/commit:
+- `eslint-config-nick2bad4u` version/commit:
 - OS:
 
 ## Additional context

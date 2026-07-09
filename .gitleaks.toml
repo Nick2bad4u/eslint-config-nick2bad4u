@@ -1,3 +1,11 @@
+# gitleaks ~ default configuration file
+# https://github.com/gitleaks/gitleaks
+#
+# Lines starting with "#" are comments.
+# Configuration options are organized into tables and keys.
+# See documentation for more information on available options.
+# yaml-language-server: $schema=https://www.schemastore.org/gitleaks.json
+
 title = "Nick2bad4u shared Gitleaks configuration"
 
 [extend]

@@ -41,18 +41,55 @@ const npmPackCommand =
 /**
  * @param {unknown} value
  *
- * @returns {value is readonly [NpmPackResult, ...NpmPackResult[]]}
+ * @returns {value is NpmPackResult}
  */
-const isNpmPackResultList = (value) =>
-    Array.isArray(value) &&
-    value.length > 0 &&
-    value.every(
-        (entry) =>
-            typeof entry === "object" &&
-            entry !== null &&
-            "filename" in entry &&
-            typeof entry.filename === "string"
-    );
+const isNpmPackResult = (value) =>
+    typeof value === "object" &&
+    value !== null &&
+    "filename" in value &&
+    typeof value.filename === "string";
+
+/**
+ * @param {unknown} value
+ *
+ * @returns {value is Record<string, unknown>}
+ */
+const isRecord = (value) => typeof value === "object" && value !== null;
+
+/**
+ * @param {unknown} value
+ *
+ * @returns {readonly NpmPackResult[]}
+ */
+const getNpmPackResults = (value) => {
+    /** @type {unknown[]} */
+    const entries = Array.isArray(value)
+        ? value
+        : isRecord(value)
+          ? Object.values(value)
+          : [];
+
+    if (entries.length === 0 || !entries.every(isNpmPackResult)) {
+        return [];
+    }
+
+    return entries;
+};
+
+/**
+ * @param {readonly NpmPackResult[]} packResults
+ *
+ * @returns {NpmPackResult}
+ */
+const getSingleNpmPackResult = (packResults) => {
+    const [packResult] = packResults;
+
+    if (packResults.length !== 1 || packResult === undefined) {
+        throw new TypeError("Unexpected npm pack --json output.");
+    }
+
+    return packResult;
+};
 
 /**
  * @returns {Promise<string>}
@@ -70,11 +107,9 @@ const packCurrentPackage = async () => {
     /** @type {unknown} */
     const parsedPackOutput = JSON.parse(packOutput);
 
-    if (!isNpmPackResultList(parsedPackOutput)) {
-        throw new TypeError("Unexpected npm pack --json output.");
-    }
+    const packResults = getNpmPackResults(parsedPackOutput);
 
-    return parsedPackOutput[0].filename;
+    return getSingleNpmPackResult(packResults).filename;
 };
 
 /**

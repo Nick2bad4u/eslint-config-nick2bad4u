@@ -1,0 +1,3 @@
+# all-contributors generates local usage-anchor fragments for contribution
+# types, but this repo does not render matching per-type sections.
+^file:///.*(?:README|docs/contributors)\.md#(?:ideas|infra|maintenance|security|tool)-.+$

@@ -71,6 +71,9 @@
         "lint:config-rule-counts": "npm run build:runtime && node scripts/count-rules-by-plugin.mjs",
         "lint:fix": "npm run lint -- --fix",
         "lint:gitleaks": "gitleaks dir --config .gitleaks.toml .",
+        "lint:jscpd": "jscpd --config node_modules/jscpd-config-nick2bad4u/jscpd.json",
+        "lint:lychee": "lychee --config node_modules/lychee-config-nick2bad4u/lychee.toml .",
+        "lint:lychee:smoke": "lychee --config node_modules/lychee-config-nick2bad4u/lychee.toml --dump-inputs README.md",
         "lint:nocache": "npm run build:runtime && npx cross-env NODE_OPTIONS=--max_old_space_size=8192 npx eslint . --no-cache",
         "lint:package": "npm run lint:package-sort && npm run lint:package-json && npm run lint:package-check",
         "lint:package:fix": "npx sort-package-json package.json",
@@ -102,15 +105,12 @@
         "update-actions": "npx actions-up --yes --style sha --quiet",
         "update-all": "npm run update-deps && npm run update-actions",
         "update-deps": "npx ncu -i --install never && npm update --force && npm install --force && npm run sync:peer-eslint-range && npm run sync:node-version-files && npm run sync:peer-typescript-range",
-        "verify": "npm run release:verify",
-        "lint:jscpd": "jscpd --config node_modules/jscpd-config-nick2bad4u/jscpd.json",
-        "lint:lychee": "lychee --config node_modules/lychee-config-nick2bad4u/lychee.toml .",
-        "lint:lychee:smoke": "lychee --config node_modules/lychee-config-nick2bad4u/lychee.toml --dump-inputs README.md"
+        "verify": "npm run release:verify"
     },
     "dependencies": {
         "@docusaurus/eslint-plugin": "^3.10.1",
         "@eslint-community/eslint-plugin-eslint-comments": "^4.7.2",
-        "@eslint-react/eslint-plugin": "^5.11.3",
+        "@eslint-react/eslint-plugin": "^5.13.2",
         "@eslint/config-helpers": "^0.6.0",
         "@eslint/css": "^1.4.0",
         "@eslint/js": "^10.0.1",
@@ -121,7 +121,7 @@
         "@next/eslint-plugin-next": "^16.2.10",
         "@stylistic/eslint-plugin": "^5.10.0",
         "@typpi/eslint-plugin-vite": "^1.0.19",
-        "@vitest/eslint-plugin": "^1.6.21",
+        "@vitest/eslint-plugin": "^1.6.22",
         "cross-env": "^10.1.0",
         "eslint-config-flat-gitignore": "^2.3.0",
         "eslint-config-prettier": "^10.1.8",
@@ -197,7 +197,7 @@
         "type-fest": "^5.8.0",
         "typescript-eslint": "^8.63.0",
         "vue-eslint-parser": "^10.4.1",
-        "yaml-eslint-parser": "^2.0.0"
+        "yaml-eslint-parser": "^2.1.0"
     },
     "devDependencies": {
         "@andrewbranch/untar.js": "^1.0.3",
@@ -205,21 +205,21 @@
         "@arethetypeswrong/core": "^0.18.4",
         "@microsoft/tsdoc-config": "^0.18.1",
         "@types/eslint-plugin-security": "^3.0.1",
-        "@types/node": "^26.1.0",
+        "@types/node": "^26.1.1",
         "@vitest/coverage-v8": "^4.1.10",
         "actions-up": "^1.16.0",
         "eslint": "^10.6.0",
         "eslint-formatter-mo": "^2.4.1",
         "git-cliff": "^2.13.1",
-        "gitcliff-config-nick2bad4u": "^1.1.0",
-        "gitleaks-config-nick2bad4u": "^1.0.3",
+        "gitcliff-config-nick2bad4u": "^1.2.0",
+        "gitleaks-config-nick2bad4u": "^1.0.4",
         "jscpd": "^5.0.12",
-        "jscpd-config-nick2bad4u": "^1.0.0",
-        "lychee-config-nick2bad4u": "^1.0.0",
+        "jscpd-config-nick2bad4u": "^1.1.0",
+        "lychee-config-nick2bad4u": "^2.0.0",
         "npm-package-json-lint": "^10.4.1",
         "npm-package-json-lint-config-nick2bad4u": "^1.0.4",
         "picocolors": "^1.1.1",
-        "prettier": "^3.9.4",
+        "prettier": "^3.9.5",
         "prettier-config-nick2bad4u": "^1.1.1",
         "publint": "^0.3.21",
         "remark-config-nick2bad4u": "^1.1.3",
@@ -231,7 +231,7 @@
         "stylelint-define-config": "^17.11.0",
         "tsdoc-config-nick2bad4u": "^1.0.6",
         "typescript": "^6.0.3",
-        "vite": "^8.1.3",
+        "vite": "^8.1.4",
         "vitest": "^4.1.10",
         "yamllint-config-nick2bad4u": "^1.1.1"
     },
@@ -247,7 +247,7 @@
             "optional": false
         }
     },
-    "packageManager": "npm@11.18.0",
+    "packageManager": "npm@12.0.0",
     "engines": {
         "node": "^22.22.3 || ^24.16.0 || >=26.3.0"
     },
