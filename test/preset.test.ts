@@ -681,6 +681,17 @@ describe("eslint-config-nick2bad4u presets", () => {
         ]);
     });
 
+    it("enforces arrow callbacks across global JavaScript and TypeScript files", () => {
+        expect.assertions(1);
+
+        const globalConfig = findConfigByName(presets.all, "🌍 Global: Rules");
+
+        expect(globalConfig?.rules?.["prefer-arrow-callback"]).toStrictEqual([
+            "error",
+            { allowNamedFunctions: true, allowUnboundThis: true },
+        ]);
+    });
+
     it("keeps Unicorn boolean-name prefixes focused on common config flags", () => {
         expect.assertions(1);
 

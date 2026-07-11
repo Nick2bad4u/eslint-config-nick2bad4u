@@ -2553,7 +2553,7 @@ export const createConfig = (
                 "object-shorthand": "off",
                 "one-var": "off",
                 "prefer-arrow-callback": [
-                    "warn",
+                    "error",
                     { allowNamedFunctions: true, allowUnboundThis: true },
                 ],
                 "prefer-destructuring": "off",
@@ -3272,7 +3272,6 @@ export const createConfig = (
             name: "🐦‍🔥 TOML: **/*.TOML",
             plugins: { toml: toml },
             rules: {
-                "@stylistic/spaced-comment": "off",
                 // TOML ESLint Plugin Rules (toml/*)
                 "toml/array-bracket-newline": "off",
                 "toml/array-bracket-spacing": "warn",
