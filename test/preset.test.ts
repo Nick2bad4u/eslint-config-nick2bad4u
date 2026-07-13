@@ -1,5 +1,6 @@
 import type { Linter } from "eslint";
 
+import astro from "eslint-plugin-astro";
 import { describe, expect, it } from "vitest";
 
 import nickTwoBadFourU, {
@@ -1065,5 +1066,47 @@ describe("eslint-config-nick2bad4u presets", () => {
                 "🍀 Write Good Comments: (not used in this repo)"
             )?.settings?.["localWriteGoodComments"]
         ).toBe(true);
+    });
+});
+
+describe("astro preset integration", () => {
+    it("keeps the complete base and only self-contained supported rules", () => {
+        expect.assertions(3);
+
+        const presetConfigNames = new Set(
+            presets.all.map((configEntry) => configEntry.name)
+        );
+        const missingAstroBaseConfigNames = astro.configs.base
+            .map((configEntry) => configEntry.name)
+            .filter((configName) => !presetConfigNames.has(configName));
+        // JSX accessibility wrappers are not self-contained and their optional peer
+        // does not support this package's ESLint major yet.
+        const supportedAstroRuleNames = Object.entries(astro.rules)
+            .filter(([ruleName, rule]) => {
+                const deprecated = rule.meta?.deprecated;
+
+                return (
+                    !ruleName.startsWith("jsx-a11y/") &&
+                    (deprecated === undefined || deprecated === false)
+                );
+            })
+            .map(([ruleName]) => `astro/${ruleName}`)
+            .toSorted((left, right) => left.localeCompare(right));
+        const astroTypeScriptBaseConfig = findConfigByName(
+            presets.all,
+            "astro/base/typescript"
+        );
+        const astroTypeScriptParserOptions = assertNonArrayObject(
+            astroTypeScriptBaseConfig?.languageOptions?.["parserOptions"],
+            "Expected the Astro TypeScript base config to define parser options."
+        );
+
+        expect(missingAstroBaseConfigNames).toStrictEqual([]);
+        expect(
+            getRuleNamesForPlugin(presets.all, "astro").toSorted(
+                (left, right) => left.localeCompare(right)
+            )
+        ).toStrictEqual(supportedAstroRuleNames);
+        expect(Reflect.get(astroTypeScriptParserOptions, "project")).toBeNull();
     });
 });

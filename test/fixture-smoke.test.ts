@@ -162,7 +162,7 @@ describe("fixture smoke matrix", () => {
     it(
         "lints every configured fixture surface without parser or rule-loading failures",
         async () => {
-            expect.assertions(3);
+            expect.assertions(4);
 
             const sharedConfig = createConfig({
                 rootDirectory: fixtureWorkspaceRoot,
@@ -207,6 +207,18 @@ describe("fixture smoke matrix", () => {
                             `${normalizeFixturePath(result.filePath)}:${String(message.line)}:${String(message.column)} ${message.message}`
                     )
             );
+            const missingJsxA11yPeerMessages = results.flatMap((result) =>
+                result.messages
+                    .filter((message) =>
+                        message.message.includes(
+                            "need to install eslint-plugin-jsx-a11y"
+                        )
+                    )
+                    .map(
+                        (message) =>
+                            `${normalizeFixturePath(result.filePath)}:${String(message.line)}:${String(message.column)} ${message.message}`
+                    )
+            );
 
             expect(new Set(lintedPaths)).toStrictEqual(new Set(fixturePaths));
             expect(
@@ -216,6 +228,7 @@ describe("fixture smoke matrix", () => {
                 )
             ).toStrictEqual([]);
             expect(fatalMessages).toStrictEqual([]);
+            expect(missingJsxA11yPeerMessages).toStrictEqual([]);
         },
         FIXTURE_SMOKE_TEST_TIMEOUT
     );
