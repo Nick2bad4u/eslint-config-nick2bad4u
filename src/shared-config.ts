@@ -22,6 +22,7 @@ import markdown from "@eslint/markdown";
 import html from "@html-eslint/eslint-plugin";
 import next from "@next/eslint-plugin-next";
 import stylistic from "@stylistic/eslint-plugin";
+import codex from "@typpi/eslint-plugin-codex";
 import vite from "@typpi/eslint-plugin-vite";
 import vitest from "@vitest/eslint-plugin";
 import gitignore from "eslint-config-flat-gitignore";
@@ -373,6 +374,7 @@ export interface Nick2Bad4UEslintConfigPresets {
     readonly base: EslintConfig[];
     readonly recommended: EslintConfig[];
     readonly withoutActionlint: EslintConfig[];
+    readonly withoutCodex: EslintConfig[];
     readonly withoutCopilot: EslintConfig[];
     readonly withoutDocusaurus2: EslintConfig[];
     readonly withoutEtcMisc: EslintConfig[];
@@ -537,6 +539,27 @@ export const createConfig = (
         "actionlint",
         actionlint
     );
+    const codexPlugin = resolveTypedPlugin(
+        pluginOverrideEntries,
+        "codex",
+        codex
+    );
+    const codexAllConfigs =
+        codexPlugin?.configs["all-without-language-plugins"] ?? [];
+    const codexMarkdownDocumentFilePatterns: string[] = [];
+    for (const config of codexAllConfigs) {
+        if (config.language !== "markdown/gfm") {
+            continue;
+        }
+        const filePatterns = config.files ?? [];
+        for (const filePattern of filePatterns) {
+            if (typeof filePattern === "string") {
+                codexMarkdownDocumentFilePatterns.push(filePattern);
+            } else {
+                codexMarkdownDocumentFilePatterns.push(...filePattern);
+            }
+        }
+    }
     const copilotPlugin = resolveTypedPlugin(
         pluginOverrideEntries,
         "copilot",
@@ -658,7 +681,6 @@ export const createConfig = (
                 "**/*.secretlintrc.mjs",
                 "**/.agentic-tools*",
                 "**/.cache/**",
-                "**/AGENTS.md",
                 "**/CHANGELOG.md",
                 "**/Coverage/**",
                 "**/_ZENTASKS*",
@@ -2760,6 +2782,20 @@ export const createConfig = (
             },
         },
         // #endregion 🔌 Document Language Plugins
+        // MARK: 🧠 Codex
+        ...codexAllConfigs,
+        ...(isEmpty(codexMarkdownDocumentFilePatterns)
+            ? []
+            : [
+                  {
+                      files: [...codexMarkdownDocumentFilePatterns],
+                      name: "🧠 Codex: Markdown document overrides",
+                      rules: {
+                          // Codex instruction files use their own document structure and prose.
+                          "remark/remark": "off",
+                      },
+                  },
+              ]),
         // #region 📦 Package Metadata
         // ═══════════════════════════════════════════════════════════════════════════════
         {
@@ -3012,6 +3048,7 @@ export const createConfig = (
         {
             files: ["**/*.{md,markup,atom,rss,markdown}"],
             ignores: [
+                ...codexMarkdownDocumentFilePatterns,
                 "**/docs/packages/**",
                 "**/docs/TSDoc/**",
                 "**/.github/agents/**",
@@ -3080,6 +3117,7 @@ export const createConfig = (
                   {
                       files: ["**/*.{md,markdown}"],
                       ignores: [
+                          ...codexMarkdownDocumentFilePatterns,
                           "**/docs/packages/**",
                           "**/docs/TSDoc/**",
                           "**/.github/agents/**",
@@ -3852,6 +3890,13 @@ export const createConfig = (
             },
         },
         {
+            files: [".github/workflows/AGENTS.md"],
+            name: "🧠 Codex: Workflow instructions ⛔ Overrides",
+            rules: {
+                "codex/max-agents-instruction-chain-bytes": "off",
+            },
+        },
+        {
             files: ["**/*.{js,mjs,cjs}"],
             name: "☕ JavaScript: JS/MJS/CJS ⛔ Overrides",
             rules: {
@@ -4079,6 +4124,11 @@ const sharedConfigs: Nick2Bad4UEslintConfigPresets = {
     withoutActionlint: createConfig({
         plugins: {
             actionlint: false,
+        },
+    }),
+    withoutCodex: createConfig({
+        plugins: {
+            codex: false,
         },
     }),
     withoutCopilot: createConfig({

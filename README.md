@@ -125,6 +125,7 @@ from the named `presets` export.
 | `recommended`               | Alias for `all`; provided for familiar preset naming.                              |
 | `base`                      | Shared config without explicit source-rule plugin sections.                        |
 | `withoutActionlint`         | Full shared config without Actionlint rules.                                       |
+| `withoutCodex`              | Full shared config without Codex plugin rules.                                     |
 | `withoutCopilot`            | Full shared config without Copilot rules.                                          |
 | `withoutDocusaurus2`        | Full shared config without Docusaurus 2 plugin rules.                              |
 | `withoutEtcMisc`            | Full shared config without the Etc-Misc source-rule section.                       |

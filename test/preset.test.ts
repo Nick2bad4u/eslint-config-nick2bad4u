@@ -185,6 +185,7 @@ const getParserOptionsGlobalsEntries = (
 
 const presetByName: Readonly<Record<string, readonly Linter.Config[]>> = {
     withoutActionlint: presets.withoutActionlint,
+    withoutCodex: presets.withoutCodex,
     withoutCopilot: presets.withoutCopilot,
     withoutDocusaurus2: presets.withoutDocusaurus2,
     withoutEtcMisc: presets.withoutEtcMisc,
@@ -274,6 +275,7 @@ describe("eslint-config-nick2bad4u presets", () => {
 
     it.each([
         ["withoutActionlint", ["actionlint"]],
+        ["withoutCodex", ["codex"]],
         ["withoutCopilot", ["copilot"]],
         ["withoutDocusaurus2", ["docusaurus-2"]],
         ["withoutEtcMisc", ["etc-misc"]],
@@ -327,7 +329,7 @@ describe("eslint-config-nick2bad4u presets", () => {
     );
 
     it("keeps full preset rules in the all preset", () => {
-        expect.assertions(7);
+        expect.assertions(8);
 
         const allPreset = presets.all as readonly Linter.Config[];
 
@@ -336,6 +338,9 @@ describe("eslint-config-nick2bad4u presets", () => {
         ).toBeGreaterThan(0);
         expect(
             getRuleNamesForPlugin(allPreset, "copilot").length
+        ).toBeGreaterThan(0);
+        expect(
+            getRuleNamesForPlugin(allPreset, "codex").length
         ).toBeGreaterThan(0);
         expect(
             getRuleNamesForPlugin(allPreset, "runtime-cleanup").length

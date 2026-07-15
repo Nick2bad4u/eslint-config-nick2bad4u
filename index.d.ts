@@ -87,6 +87,9 @@ export interface Nick2Bad4UEslintConfigPresets {
     /** Full shared config without Actionlint rules. */
     readonly withoutActionlint: Linter.Config[];
 
+    /** Full shared config without Codex plugin rules. */
+    readonly withoutCodex: Linter.Config[];
+
     /** Full shared config without the Copilot rules. */
     readonly withoutCopilot: Linter.Config[];
 
@@ -132,6 +135,9 @@ export interface Nick2Bad4UEslintConfigPresets {
 
     /** Full shared config without Test Signal plugin rules. */
     readonly withoutTestSignal: Linter.Config[];
+
+    /** Full shared config without Tombi plugin rules. */
+    readonly withoutTombi: Linter.Config[];
 
     /** Full shared config without future eslint-plugin-tsconfig rules. */
     readonly withoutTsconfig: Linter.Config[];

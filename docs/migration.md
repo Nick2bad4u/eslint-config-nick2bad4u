@@ -39,6 +39,7 @@ $bundledLintPackages = @(
     "@html-eslint/parser",
     "@next/eslint-plugin-next",
     "@stylistic/eslint-plugin",
+    "@typpi/eslint-plugin-codex",
     "@typpi/eslint-plugin-vite",
     "@vitest/eslint-plugin",
     "eslint-config-flat-gitignore",
@@ -273,6 +274,7 @@ All presets are exposed on the default export as `.configs` and as the named
 | `recommended`               | Alias for `all`.                                                                   |
 | `base`                      | Shared config without explicit source-rule plugin sections.                        |
 | `withoutActionlint`         | Full shared config without Actionlint rules.                                       |
+| `withoutCodex`              | Full shared config without Codex plugin rules.                                     |
 | `withoutCopilot`            | Full shared config without Copilot rules.                                          |
 | `withoutDocusaurus2`        | Full shared config without Docusaurus 2 plugin rules.                              |
 | `withoutEtcMisc`            | Full shared config without the Etc-Misc source-rule section.                       |

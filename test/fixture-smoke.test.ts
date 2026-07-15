@@ -10,6 +10,8 @@ const fixtureWorkspaceRoot = fileURLToPath(
 );
 
 const fixturePaths = [
+    ".codex/config.toml",
+    ".codex/hooks.json",
     ".github/actions/cache/action.yml",
     ".github/agents/fixture.agent.md",
     ".github/workflow-templates/reusable.properties.json",
