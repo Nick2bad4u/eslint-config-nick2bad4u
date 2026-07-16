@@ -50,13 +50,6 @@ config-variables:
 # Path-specific configurations for different workflow types
 # Enhanced security and performance patterns for 2025
 paths:
-    # Build workflows - comprehensive patterns for Electron applications
-    .github/workflows/Build.{yml,yaml}:
-        ignore:
-            # Shell script patterns - allow advanced shell features for build scripts
-            # Warning about Unused Patch Number - Intented for now
-            # Match SC2034 (or any SC2034 message) — allow nothing or any trailing text after the colon
-            - "^shellcheck reported issue in this script: SC2034:.*"
     .github/workflows/summary.{yml,yaml}:
         ignore:
             # Match unknown permission scope "SOMETHING" (matches any scope name inside quotes)

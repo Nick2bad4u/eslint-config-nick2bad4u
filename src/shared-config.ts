@@ -1745,12 +1745,17 @@ export const createConfig = (
                 tolerant: true,
             },
             name: "🎨 CSS: recommended",
+            plugins: {
+                ...css.configs.recommended.plugins,
+                unicorn: unicorn,
+            },
             rules: {
                 ...css.configs.recommended.rules,
                 "css/prefer-logical-properties": "warn",
                 "css/relative-font-units": "warn",
                 "css/selector-complexity": "warn",
                 "css/use-layers": "off",
+                "unicorn/prefer-explicit-viewport-units": "warn",
             },
         },
         {
@@ -2143,7 +2148,6 @@ export const createConfig = (
                 // which provides better coverage and understanding of `this` in various contexts (e.g. class
                 // properties, arrow functions, etc.) without false positives.
                 "@typescript-eslint/no-invalid-this": "off",
-                "@typescript-eslint/no-loop-func": "warn",
                 "@typescript-eslint/no-magic-numbers": "off",
                 "@typescript-eslint/no-misused-promises": [
                     "error",
@@ -2563,7 +2567,6 @@ export const createConfig = (
                 "no-continue": "off",
                 "no-inline-comments": "off", // Allow inline comments for complex logic explanations
                 "no-invalid-this": "off", // Use TypeScript version which understands class properties and arrow functions
-                "no-loop-func": "off", // Use TypeScript version instead
                 "no-magic-numbers": "off", // Use TypeScript Version instead
                 "no-restricted-imports": "off", // Use the TypeScript-specific version for better type-aware handling
                 "no-shadow": "off", // Use the TypeScript-specific version for better type-aware handling
