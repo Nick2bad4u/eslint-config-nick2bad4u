@@ -1008,11 +1008,11 @@ export const createConfig = (
                 "n/file-extension-in-import": "off",
                 // @Deprecated Rule: https://github.com/eslint-community/eslint-plugin-n/blob/HEAD/docs/rules/no-hide-core-modules.md
                 // This is deprecated since v4.2.0. This rule was based on an invalid assumption.
-                // @see https://github.com/mysticatea/eslint-plugin-node/issues/69
+                // @see {@link https://github.com/mysticatea/eslint-plugin-node/issues/69}
                 "n/no-hide-core-modules": "off",
                 "n/no-missing-import": "off",
                 // @Deprecated Rule: Old alias for hashbang
-                // @see https://github.com/eslint-community/eslint-plugin-n/issues/529
+                // @see {@link https://github.com/eslint-community/eslint-plugin-n/issues/529}
                 "n/shebang": "off",
             },
         },
@@ -1178,6 +1178,7 @@ export const createConfig = (
                 "eslint-plugin/require-meta-docs-description": "warn",
                 "eslint-plugin/require-meta-docs-recommended": "warn",
                 "eslint-plugin/require-meta-docs-url": "warn",
+                "eslint-plugin/require-meta-languages": "warn",
                 "eslint-plugin/require-test-case-name": "warn",
                 "eslint-plugin/require-test-error-positions": "warn",
                 "eslint-plugin/test-case-property-ordering": "warn",
@@ -2110,7 +2111,7 @@ export const createConfig = (
             },
             rules: {
                 "@typescript-eslint/class-methods-use-this": "warn",
-                // @see https://typescript-eslint.io/rules/consistent-return/
+                // @see {@link https://typescript-eslint.io/rules/consistent-return}
                 // Recommended to use `noImplicitReturns` in Tsconfig for better coverage and to avoid edge cases where
                 // the ESLint rule can miss certain code paths.
                 "@typescript-eslint/consistent-return": "off",
@@ -2143,7 +2144,7 @@ export const createConfig = (
                 // Keep enabled: Helps with bundle optimization and makes type vs runtime imports clearer.
                 // Can be resolved incrementally as warnings.
                 "@typescript-eslint/no-import-type-side-effects": "warn",
-                // @see https://typescript-eslint.io/rules/no-invalid-this/
+                // @see {@link https://typescript-eslint.io/rules/no-invalid-this}
                 // Covered by TypeScript's `noImplicitThis` compiler option,
                 // which provides better coverage and understanding of `this` in various contexts (e.g. class
                 // properties, arrow functions, etc.) without false positives.
@@ -2158,7 +2159,7 @@ export const createConfig = (
                     },
                 ],
                 "@typescript-eslint/no-non-null-assertion": "warn",
-                // @see https://typescript-eslint.io/rules/no-redeclare/
+                // @see {@link https://typescript-eslint.io/rules/no-redeclare}
                 // Covered by TypeScript compiler
                 "@typescript-eslint/no-redeclare": "off",
                 "@typescript-eslint/no-restricted-imports": [
@@ -3344,23 +3345,6 @@ export const createConfig = (
             },
         },
         ...(tombiPlugin === null ? [] : [tombiPlugin.configs.all]),
-        {
-            files: [
-                ".tombi.toml",
-                "cliff.toml",
-                ".gitleaks.toml",
-                "lychee.toml",
-            ],
-            name: "🐦‍🔥 TOML: Tool Configs ⛔ Overrides",
-            // Keep tool-owned TOML away from the Tombi ESLint fixer; it can currently corrupt .tombi.toml.
-            // Re-enable per file when matching schemas are available and the fixer is safe.
-            // @see https://github.com/SchemaStore/schemastore/pull/5896
-            // @see https://github.com/SchemaStore/schemastore/pull/5894
-            // @see https://github.com/SchemaStore/schemastore/pull/5897
-            rules: {
-                "tombi/tombi": "off",
-            },
-        },
         // #endregion 🐦‍🔥 TOML Files
         // #region 📁 Markdown Code Block Final Overrides
         // ═══════════════════════════════════════════════════════════════════════════════
@@ -3412,6 +3396,7 @@ export const createConfig = (
                 "jsdoc/no-bad-blocks": "warn",
                 "jsdoc/no-blank-block-descriptions": "warn",
                 "jsdoc/no-blank-blocks": "warn",
+                "jsdoc/normalize-see-links": "warn",
                 "jsdoc/prefer-import-tag": "warn",
                 "jsdoc/require-asterisk-prefix": "warn",
                 "jsdoc/require-hyphen-before-param-description": "warn",
@@ -3648,10 +3633,10 @@ export const createConfig = (
                 "vue/no-useless-mustaches": "warn",
                 "vue/no-useless-v-bind": "warn",
                 // Deprecated rule
-                // @see https://eslint.vuejs.org/rules/no-v-for-template-key.html
+                // @see {@link https://eslint.vuejs.org/rules/no-v-for-template-key.html}
                 "vue/no-v-for-template-key": "off",
                 // Deprecated rule
-                // @see https://eslint.vuejs.org/rules/no-v-model-argument.html
+                // @see {@link https://eslint.vuejs.org/rules/no-v-model-argument.html}
                 "vue/no-v-model-argument": "off",
                 "vue/no-v-text": "warn",
                 "vue/object-shorthand": "warn",
@@ -3693,9 +3678,50 @@ export const createConfig = (
             files: ["*.astro", "**/*.astro"],
             name: "🚀 Astro Components: **/*.astro",
             rules: {
+                // @NOTE: eslint-plugin-jsx-a11y should not be enabled until ESLint 10 support lands.
+                // @see {@link https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/issues/1075}
+                // @see {@link https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/releases}
                 // The Astro JSX accessibility wrappers require eslint-plugin-jsx-a11y,
                 // whose v6.10.2 peer range only supports ESLint through v9. Enabling the
                 // wrappers without that optional peer emits one dependency warning per rule.
+                "astro/jsx-a11y/alt-text": "off",
+                "astro/jsx-a11y/anchor-ambiguous-text": "off",
+                "astro/jsx-a11y/anchor-has-content": "off",
+                "astro/jsx-a11y/anchor-is-valid": "off",
+                "astro/jsx-a11y/aria-activedescendant-has-tabindex": "off",
+                "astro/jsx-a11y/aria-props": "off",
+                "astro/jsx-a11y/aria-proptypes": "off",
+                "astro/jsx-a11y/aria-role": "off",
+                "astro/jsx-a11y/aria-unsupported-elements": "off",
+                "astro/jsx-a11y/autocomplete-valid": "off",
+                "astro/jsx-a11y/click-events-have-key-events": "off",
+                "astro/jsx-a11y/control-has-associated-label": "off",
+                "astro/jsx-a11y/heading-has-content": "off",
+                "astro/jsx-a11y/html-has-lang": "off",
+                "astro/jsx-a11y/iframe-has-title": "off",
+                "astro/jsx-a11y/img-redundant-alt": "off",
+                "astro/jsx-a11y/interactive-supports-focus": "off",
+                "astro/jsx-a11y/label-has-associated-control": "off",
+                "astro/jsx-a11y/lang": "off",
+                "astro/jsx-a11y/media-has-caption": "off",
+                "astro/jsx-a11y/mouse-events-have-key-events": "off",
+                "astro/jsx-a11y/no-access-key": "off",
+                "astro/jsx-a11y/no-aria-hidden-on-focusable": "off",
+                "astro/jsx-a11y/no-autofocus": "off",
+                "astro/jsx-a11y/no-distracting-elements": "off",
+                "astro/jsx-a11y/no-interactive-element-to-noninteractive-role":
+                    "off",
+                "astro/jsx-a11y/no-noninteractive-element-interactions": "off",
+                "astro/jsx-a11y/no-noninteractive-element-to-interactive-role":
+                    "off",
+                "astro/jsx-a11y/no-noninteractive-tabindex": "off",
+                "astro/jsx-a11y/no-redundant-roles": "off",
+                "astro/jsx-a11y/no-static-element-interactions": "off",
+                "astro/jsx-a11y/prefer-tag-over-role": "off",
+                "astro/jsx-a11y/role-has-required-aria-props": "off",
+                "astro/jsx-a11y/role-supports-aria-props": "off",
+                "astro/jsx-a11y/scope": "off",
+                "astro/jsx-a11y/tabindex-no-positive": "off",
                 "astro/missing-client-only-directive-value": "warn",
                 "astro/no-conflict-set-directives": "warn",
                 "astro/no-deprecated-astro-canonicalurl": "warn",
