@@ -1,3 +1,8 @@
+/**
+ * Public flat-config presets and factory helpers for eslint-config-nick2bad4u.
+ *
+ * @packageDocumentation
+ */
 import {
     createConfig as createSharedConfig,
     type Nick2Bad4UAllowDefaultProjectFilePatternPresets,
@@ -29,6 +34,7 @@ export const presets: Nick2Bad4UEslintConfigPresets = Object.freeze({
     all: sharedConfigs.all,
     base: sharedConfigs.base,
     recommended: sharedConfigs.recommended,
+    withNext: sharedConfigs.withNext,
     withoutActionlint: sharedConfigs.withoutActionlint,
     withoutCodex: sharedConfigs.withoutCodex,
     withoutCopilot: sharedConfigs.withoutCopilot,

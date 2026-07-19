@@ -1,6 +1,7 @@
-import type { Linter } from "eslint";
-
+import next from "@next/eslint-plugin-next";
+import { ESLint, type Linter } from "eslint";
 import astro from "eslint-plugin-astro";
+import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
 import nickTwoBadFourU, {
@@ -8,6 +9,8 @@ import nickTwoBadFourU, {
     createConfig,
     presets,
 } from "../src/preset";
+
+const repositoryRoot = fileURLToPath(new URL("..", import.meta.url));
 
 const getRuleNames = (configEntries: readonly Linter.Config[]): Set<string> => {
     const ruleNames = configEntries.flatMap((configEntry) =>
@@ -53,8 +56,11 @@ const getPresetNamespaces = (
     );
 };
 
+const getRuleSeverity = (ruleConfig: unknown): unknown =>
+    Array.isArray(ruleConfig) ? ruleConfig[0] : ruleConfig;
+
 const isRuleEnabled = (ruleConfig: unknown): boolean => {
-    const severity = Array.isArray(ruleConfig) ? ruleConfig[0] : ruleConfig;
+    const severity = getRuleSeverity(ruleConfig);
 
     return severity !== "off" && severity !== 0;
 };
@@ -184,6 +190,7 @@ const getParserOptionsGlobalsEntries = (
     });
 
 const presetByName: Readonly<Record<string, readonly Linter.Config[]>> = {
+    withNext: presets.withNext,
     withoutActionlint: presets.withoutActionlint,
     withoutCodex: presets.withoutCodex,
     withoutCopilot: presets.withoutCopilot,
@@ -1074,9 +1081,178 @@ describe("eslint-config-nick2bad4u presets", () => {
     });
 });
 
-describe("astro preset integration", () => {
-    it("keeps the complete base and only self-contained supported rules", () => {
+describe("selected rule defaults", () => {
+    it("enables the selected low-noise rules at warning severity", () => {
         expect.assertions(3);
+
+        const etcMiscConfig = findConfigByName(
+            presets.all,
+            "⌨️ Etc-Misc: Rules for Source"
+        );
+        const typedocConfig = findConfigByName(
+            presets.all,
+            "⌨️ TypeDoc: Recommended"
+        );
+        const writeGoodCommentsConfig = findConfigByName(
+            presets.all,
+            "🍀 Write Good Comments: (not used in this repo)"
+        );
+
+        expect(etcMiscConfig?.rules).toMatchObject({
+            "etc-misc/no-const-enum": "warn",
+            "etc-misc/no-unnecessary-as-const": "warn",
+        });
+        expect(typedocConfig?.rules).toMatchObject({
+            "typedoc/require-package-documentation-description": "warn",
+            "typedoc/require-param-tag-description": "warn",
+            "typedoc/require-returns-description": "warn",
+            "typedoc/require-since-tag-description": "warn",
+            "typedoc/require-throws-description": "warn",
+            "typedoc/require-type-param-tag-description": "warn",
+        });
+        expect(
+            writeGoodCommentsConfig?.rules?.[
+                "write-good-comments/task-comment-format"
+            ]
+        ).toBe("warn");
+    });
+
+    it("keeps both etc-misc unsafe Object.assign rule names disabled", () => {
+        expect.assertions(2);
+
+        const etcMiscConfig = findConfigByName(
+            presets.all,
+            "⌨️ Etc-Misc: Rules for Source"
+        );
+
+        expect(
+            etcMiscConfig?.rules?.[
+                "etc-misc/typescript/no-unsafe-object-assign"
+            ]
+        ).toBe("off");
+        expect(
+            etcMiscConfig?.rules?.[
+                "etc-misc/typescript/no-unsafe-object-assignment"
+            ]
+        ).toBe("off");
+    });
+
+    it("scopes package documentation to the repository entrypoint", async () => {
+        expect.assertions(3);
+
+        const typedocConfig = findConfigByName(
+            presets.all,
+            "⌨️ TypeDoc: Recommended"
+        );
+        const eslint = new ESLint({ cwd: repositoryRoot });
+        const presetConfig = (await eslint.calculateConfigForFile(
+            "src/preset.ts"
+        )) as Linter.Config | undefined;
+        const sharedConfig = (await eslint.calculateConfigForFile(
+            "src/shared-config.ts"
+        )) as Linter.Config | undefined;
+
+        expect(
+            typedocConfig?.rules?.["typedoc/require-package-documentation"]
+        ).toBe("off");
+        expect(
+            getRuleSeverity(
+                presetConfig?.rules?.["typedoc/require-package-documentation"]
+            )
+        ).toBe(1);
+        expect(
+            getRuleSeverity(
+                sharedConfig?.rules?.["typedoc/require-package-documentation"]
+            )
+        ).toBe(0);
+    });
+});
+
+describe("next.js preset integration", () => {
+    it("omits the Next plugin and its rules by default", () => {
+        expect.assertions(2);
+
+        expect(getRegisteredPluginNames(presets.all)).not.toContain(
+            "@next/next"
+        );
+        expect(getRuleNamesForPlugin(presets.all, "@next/next")).toStrictEqual(
+            []
+        );
+    });
+
+    it("enables the exact recommended rules on the default router globs", () => {
+        expect.assertions(2);
+
+        const configEntries = createConfig({ next: true });
+        const nextConfig = findConfigByName(
+            configEntries,
+            "⚛️ Next.js: Recommended"
+        );
+
+        expect(nextConfig?.files).toStrictEqual([
+            "app/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
+            "pages/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
+            "src/app/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
+            "src/pages/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
+        ]);
+        expect(nextConfig?.rules).toStrictEqual(next.configs.recommended.rules);
+    });
+
+    it("replaces the default router globs with custom files", () => {
+        expect.assertions(2);
+
+        const files = ["apps/*/src/app/**/*.{ts,tsx}"] as const;
+        const configEntries = createConfig({ next: { files } });
+        const nextConfig = findConfigByName(
+            configEntries,
+            "⚛️ Next.js: Recommended"
+        );
+
+        expect(nextConfig?.files).toStrictEqual([...files]);
+        expect(nextConfig?.rules).toStrictEqual(next.configs.recommended.rules);
+    });
+
+    it.each([
+        ["readonly array", ["apps/docs", "apps/web"] as const],
+        ["string", "apps/web"],
+    ] as const)("preserves a %s Next rootDir", (_description, rootDir) => {
+        expect.assertions(1);
+
+        const configEntries = createConfig({ next: { rootDir } });
+        const nextConfig = findConfigByName(
+            configEntries,
+            "⚛️ Next.js: Recommended"
+        );
+        const nextSettings = assertNonArrayObject(
+            nextConfig?.settings?.["next"],
+            "Expected the enabled Next config to define settings.next."
+        );
+
+        expect(nextSettings["rootDir"]).toStrictEqual(rootDir);
+    });
+
+    it("maps withNext as a complete recommended-rule preset", () => {
+        expect.assertions(4);
+
+        const nextConfig = findConfigByName(
+            presets.withNext,
+            "⚛️ Next.js: Recommended"
+        );
+
+        expect(getPresetByName("withNext")).toBe(presets.withNext);
+        expect(nickTwoBadFourU.configs.withNext).toBe(presets.withNext);
+        expect(nextConfig?.rules).toStrictEqual(next.configs.recommended.rules);
+        expect(
+            Object.values(nextConfig?.rules ?? {}).some((ruleConfig) =>
+                isRuleEnabled(ruleConfig)
+            )
+        ).toBe(true);
+    });
+});
+
+describe("astro preset integration", () => {
+    it("keeps the complete base, supported rules, and disabled JSX-a11y wrappers", () => {
+        expect.assertions(5);
 
         const presetConfigNames = new Set(
             presets.all.map((configEntry) => configEntry.name)
@@ -1097,6 +1273,23 @@ describe("astro preset integration", () => {
             })
             .map(([ruleName]) => `astro/${ruleName}`)
             .toSorted((left, right) => left.localeCompare(right));
+        const astroJsxA11yRuleNames = Object.keys(astro.rules)
+            .filter((ruleName) => ruleName.startsWith("jsx-a11y/"))
+            .map((ruleName) => `astro/${ruleName}`)
+            .toSorted((left, right) => left.localeCompare(right));
+        const unsortedExpectedConfiguredAstroRuleNames = [
+            ...supportedAstroRuleNames,
+            ...astroJsxA11yRuleNames,
+        ];
+        const expectedConfiguredAstroRuleNames =
+            unsortedExpectedConfiguredAstroRuleNames.toSorted((left, right) =>
+                left.localeCompare(right)
+            );
+        const astroComponentConfig = findConfigByName(
+            presets.all,
+            "🚀 Astro Components: **/*.astro"
+        );
+        const astroComponentRules = astroComponentConfig?.rules ?? {};
         const astroTypeScriptBaseConfig = findConfigByName(
             presets.all,
             "astro/base/typescript"
@@ -1111,7 +1304,20 @@ describe("astro preset integration", () => {
             getRuleNamesForPlugin(presets.all, "astro").toSorted(
                 (left, right) => left.localeCompare(right)
             )
-        ).toStrictEqual(supportedAstroRuleNames);
+        ).toStrictEqual(expectedConfiguredAstroRuleNames);
+        expect(
+            supportedAstroRuleNames.filter(
+                (ruleName) => !isRuleEnabled(astroComponentRules[ruleName])
+            )
+        ).toStrictEqual([]);
+        expect(
+            astroJsxA11yRuleNames.map((ruleName) => [
+                ruleName,
+                astroComponentRules[ruleName],
+            ])
+        ).toStrictEqual(
+            astroJsxA11yRuleNames.map((ruleName) => [ruleName, "off"])
+        );
         expect(Reflect.get(astroTypeScriptParserOptions, "project")).toBeNull();
     });
 });

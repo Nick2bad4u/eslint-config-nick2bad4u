@@ -48,6 +48,25 @@ const tombiAllRules = [
     "tombi/tombi",
 ] as const;
 
+const externalToolTomlFixtures = [
+    {
+        code: "max_concurrency = 16\n",
+        filePath: "lychee.toml",
+    },
+    {
+        code: '[changelog]\n    body = ""\n',
+        filePath: "cliff.toml",
+    },
+    {
+        code: 'title = "fixture"\n',
+        filePath: ".gitleaks.toml",
+    },
+    {
+        code: 'toml-version = "v1.1.0"\n\n[files]\n    include = [ "**/*.toml" ]\n',
+        filePath: ".tombi.toml",
+    },
+] as const;
+
 const isNonArrayObject = (
     value: unknown
 ): value is Record<PropertyKey, unknown> =>
@@ -130,41 +149,51 @@ describe("toml and Tombi config", () => {
         ).toStrictEqual([]);
     });
 
-    it("disables Tombi document checks for external-tool TOML configs", async () => {
-        expect.assertions(1);
+    it("lints external-tool TOML configs with Tombi enabled", async () => {
+        expect.assertions(2);
 
         const eslint = new ESLint({
             cwd: fixtureWorkspaceRoot,
             overrideConfig: createConfig({
+                plugins: { secretlint: false },
                 rootDirectory: fixtureWorkspaceRoot,
                 tsconfigPaths: ["./tsconfig.json"],
             }),
             overrideConfigFile: true,
         });
-        const tombiRuleEntries = await Promise.all(
-            [
-                ".tombi.toml",
-                "cliff.toml",
-                ".gitleaks.toml",
-                "lychee.toml",
-            ].map(async (fileName) => {
+        const toolConfigResults = await Promise.all(
+            externalToolTomlFixtures.map(async ({ code, filePath }) => {
                 const config = (await eslint.calculateConfigForFile(
-                    fileName
+                    filePath
                 )) as Linter.Config | undefined;
+                const lintResults = await eslint.lintText(code, { filePath });
 
-                return [
-                    fileName,
-                    isRuleEnabled(config?.rules?.["tombi/tombi"]),
-                ] as const;
+                return {
+                    filePath,
+                    lintResults,
+                    tombiEnabled: isRuleEnabled(config?.rules?.["tombi/tombi"]),
+                } as const;
             })
         );
 
-        expect(tombiRuleEntries).toStrictEqual([
-            [".tombi.toml", false],
-            ["cliff.toml", false],
-            [".gitleaks.toml", false],
-            ["lychee.toml", false],
-        ]);
+        expect(
+            toolConfigResults.map(({ filePath, tombiEnabled }) => [
+                filePath,
+                tombiEnabled,
+            ])
+        ).toStrictEqual(
+            externalToolTomlFixtures.map(({ filePath }) => [filePath, true])
+        );
+        expect(
+            toolConfigResults.flatMap(({ lintResults }) =>
+                lintResults.flatMap((result) =>
+                    result.messages.map(
+                        (message) =>
+                            `${result.filePath}:${String(message.line)}:${String(message.column)} ${message.ruleId ?? "fatal"} ${message.message}`
+                    )
+                )
+            )
+        ).toStrictEqual([]);
     });
 
     it("exposes a withoutTombi preset", () => {

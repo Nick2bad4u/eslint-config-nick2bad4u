@@ -105,6 +105,7 @@ export default createConfig({
 | Option                            | Type                                | Default                      | Use it when                                                                                                          |
 | --------------------------------- | ----------------------------------- | ---------------------------- | -------------------------------------------------------------------------------------------------------------------- |
 | `allowDefaultProjectFilePatterns` | `readonly string[]`                 | Root JS/CJS/MJS globs        | Root config files are intentionally outside the nearest `tsconfig.json`; keep this list tiny and avoid broad globs.  |
+| `next`                            | `boolean \| { files?, rootDir? }`   | `false`                      | Enable Next.js recommended rules; set both fields when a monorepo uses nonstandard app roots.                        |
 | `rootDirectory`                   | `string`                            | `process.cwd()`              | ESLint runs outside the project root or a monorepo package needs its own root.                                       |
 | `tsconfigPaths`                   | `readonly string[]`                 | `["./tsconfig.eslint.json"]` | Import resolver project paths; this does not replace TypeScript parser project-service discovery of `tsconfig.json`. |
 | `plugins`                         | `Readonly<Record<string, unknown>>` | `{}`                         | You need to dogfood a local plugin build or disable packaged plugin rules by namespace.                              |
@@ -124,6 +125,7 @@ from the named `presets` export.
 | `all`                       | Full shared config, including packaged Typefest and Etc-Misc source-rule sections. |
 | `recommended`               | Alias for `all`; provided for familiar preset naming.                              |
 | `base`                      | Shared config without explicit source-rule plugin sections.                        |
+| `withNext`                  | Full shared config with the recommended Next.js rules enabled.                     |
 | `withoutActionlint`         | Full shared config without Actionlint rules.                                       |
 | `withoutCodex`              | Full shared config without Codex plugin rules.                                     |
 | `withoutCopilot`            | Full shared config without Copilot rules.                                          |

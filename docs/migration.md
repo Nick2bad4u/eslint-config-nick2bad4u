@@ -273,6 +273,7 @@ All presets are exposed on the default export as `.configs` and as the named
 | `all`                       | Full shared config, including packaged Typefest and Etc-Misc source-rule sections. |
 | `recommended`               | Alias for `all`.                                                                   |
 | `base`                      | Shared config without explicit source-rule plugin sections.                        |
+| `withNext`                  | Full shared config with the recommended Next.js rules enabled.                     |
 | `withoutActionlint`         | Full shared config without Actionlint rules.                                       |
 | `withoutCodex`              | Full shared config without Codex plugin rules.                                     |
 | `withoutCopilot`            | Full shared config without Copilot rules.                                          |

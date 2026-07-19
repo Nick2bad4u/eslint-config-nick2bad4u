@@ -53,13 +53,14 @@
     ],
     "scripts": {
         "build": "npm run build:runtime",
-        "build:eslint-inspector:local": "npx -y @eslint/config-inspector@latest",
+        "build:eslint-inspector:local": "eslint-config-inspector",
         "build:runtime": "npx tsc -p tsconfig.build.json",
         "build:watch": "npm run build:runtime -- --watch",
         "changelog:generate": "git cliff --config node_modules/gitcliff-config-nick2bad4u/cliff.toml --github-repo Nick2bad4u/eslint-config-nick2bad4u --output CHANGELOG.md",
         "changelog:preview": "git cliff --config node_modules/gitcliff-config-nick2bad4u/cliff.toml --github-repo Nick2bad4u/eslint-config-nick2bad4u --unreleased",
         "changelog:release-notes": "git cliff --config node_modules/gitcliff-config-nick2bad4u/cliff.toml --github-repo Nick2bad4u/eslint-config-nick2bad4u --current",
         "coverage": "npx vitest run --coverage",
+        "inspect:config": "npm run build:runtime && eslint-config-inspector",
         "lint": "npm run build:runtime && npx cross-env NODE_OPTIONS=--max_old_space_size=8192 npx eslint . --cache --cache-strategy content --cache-location .cache/.eslintcache",
         "lint:actions": "actionlint -color -shellcheck= -pyflakes=",
         "lint:actions:full": "actionlint -color",
@@ -206,6 +207,7 @@
     },
     "devDependencies": {
         "@arethetypeswrong/cli": "^0.18.5",
+        "@eslint/config-inspector": "^3.1.0",
         "@microsoft/tsdoc-config": "^0.18.1",
         "@types/eslint-plugin-security": "^3.0.1",
         "@types/node": "^26.1.1",

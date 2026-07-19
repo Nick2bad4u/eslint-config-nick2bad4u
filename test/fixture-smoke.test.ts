@@ -76,39 +76,6 @@ const fixturePaths = [
     "widget.vue.ts",
 ] as const;
 
-const forcedOptionalFrameworkRules = {
-    files: [
-        "app/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
-        "pages/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
-        "src/app/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
-        "src/pages/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
-    ],
-    name: "Fixture smoke: force optional Next.js rules",
-    rules: {
-        "@next/next/google-font-display": "warn",
-        "@next/next/google-font-preconnect": "warn",
-        "@next/next/inline-script-id": "warn",
-        "@next/next/next-script-for-ga": "warn",
-        "@next/next/no-assign-module-variable": "warn",
-        "@next/next/no-async-client-component": "warn",
-        "@next/next/no-before-interactive-script-outside-document": "warn",
-        "@next/next/no-css-tags": "warn",
-        "@next/next/no-document-import-in-page": "warn",
-        "@next/next/no-duplicate-head": "warn",
-        "@next/next/no-head-element": "warn",
-        "@next/next/no-head-import-in-document": "warn",
-        "@next/next/no-html-link-for-pages": "warn",
-        "@next/next/no-img-element": "warn",
-        "@next/next/no-page-custom-font": "warn",
-        "@next/next/no-script-component-in-head": "warn",
-        "@next/next/no-styled-jsx-in-document": "warn",
-        "@next/next/no-sync-scripts": "warn",
-        "@next/next/no-title-in-document-head": "warn",
-        "@next/next/no-typos": "warn",
-        "@next/next/no-unwanted-polyfillio": "warn",
-    },
-} satisfies Linter.Config;
-
 const forcedOptionalDocusaurusRules = {
     files: ["docs/docusaurus/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}"],
     name: "Fixture smoke: force optional Docusaurus rules",
@@ -167,6 +134,7 @@ describe("fixture smoke matrix", () => {
             expect.assertions(4);
 
             const sharedConfig = createConfig({
+                next: true,
                 rootDirectory: fixtureWorkspaceRoot,
                 tsconfigPaths: ["./tsconfig.json"],
             });
@@ -175,7 +143,6 @@ describe("fixture smoke matrix", () => {
                 cwd: fixtureWorkspaceRoot,
                 overrideConfig: [
                     ...sharedConfig,
-                    forcedOptionalFrameworkRules,
                     forcedOptionalDocusaurusRules,
                     fixtureTypeScriptProject,
                 ],

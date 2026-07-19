@@ -5,7 +5,6 @@
  *
  * @see {@link https://www.schemastore.org/eslintrc.json} for JSON schema validation
  */
-
 /// <reference path="./_types/eslint-plugin-shims.d.ts" />
 
 import type { Linter } from "eslint";
@@ -324,6 +323,12 @@ const TYPEDOC_API_FILE_PATTERNS = Object.freeze([
     "packages/*/src/**/*.{ts,tsx,mts,cts}",
     "src/**/*.{ts,tsx,mts,cts}",
 ]);
+const NEXT_FILE_PATTERNS = Object.freeze([
+    "app/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
+    "pages/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
+    "src/app/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
+    "src/pages/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
+]);
 const TYPEDOC_API_IGNORES = Object.freeze([
     "**/*.config.{ts,tsx,mts,cts}",
     "**/*.config.*.{ts,tsx,mts,cts}",
@@ -354,6 +359,8 @@ export interface Nick2Bad4UEslintConfigOptions {
      * `tsconfig.json`; broad TypeScript globs also match declaration files.
      */
     readonly allowDefaultProjectFilePatterns?: readonly string[];
+    /** Enable the recommended Next.js rules, with optional monorepo scoping. */
+    readonly next?: boolean | Nick2Bad4UNextOptions;
     /** Plugin overrides keyed by ESLint namespace. */
     readonly plugins?: PluginOverrides;
     /** Project root used for parser root resolution and local alias checks. */
@@ -373,6 +380,8 @@ export interface Nick2Bad4UEslintConfigPresets {
     readonly all: EslintConfig[];
     readonly base: EslintConfig[];
     readonly recommended: EslintConfig[];
+    /** Full shared config with the recommended Next.js rules enabled. */
+    readonly withNext: EslintConfig[];
     readonly withoutActionlint: EslintConfig[];
     readonly withoutCodex: EslintConfig[];
     readonly withoutCopilot: EslintConfig[];
@@ -398,6 +407,14 @@ export interface Nick2Bad4UEslintConfigPresets {
     readonly withoutVite: EslintConfig[];
     readonly withoutWriteGoodComments2: EslintConfig[];
     readonly withoutYamllint: EslintConfig[];
+}
+
+/** Options for the opt-in Next.js rule section. */
+export interface Nick2Bad4UNextOptions {
+    /** File globs that replace the standard Next.js router globs. */
+    readonly files?: readonly string[];
+    /** Value passed directly to `settings.next.rootDir`. */
+    readonly rootDir?: readonly string[] | string;
 }
 
 // The public factory accepts plugin overrides so downstream repos can disable
@@ -514,6 +531,19 @@ export const createConfig = (
         options.rootDirectory ?? processEnvironment["ESLINT_CONFIG_ROOT"] ?? "."
     );
     const tsconfigPaths = options.tsconfigPaths ?? DEFAULT_TSCONFIG_PATHS;
+    const nextOptions = options.next;
+    const hasNextOptions = typeof nextOptions === "object";
+    const nextFiles =
+        hasNextOptions && isDefined(nextOptions.files)
+            ? [...nextOptions.files]
+            : [...NEXT_FILE_PATTERNS];
+    const nextRootDirectory =
+        hasNextOptions && isDefined(nextOptions.rootDir)
+            ? typeof nextOptions.rootDir === "string"
+                ? nextOptions.rootDir
+                : [...nextOptions.rootDir]
+            : undefined;
+    const shouldEnableNext = nextOptions === true || hasNextOptions;
     const pluginOverrides = options.plugins ?? {};
     const pluginOverrideEntries = new Map(objectEntries(pluginOverrides));
     // Plugin overrides are the same mechanism behind the public withoutX
@@ -1502,16 +1532,16 @@ export const createConfig = (
                           "typedoc/require-example-tag": "off",
                           "typedoc/require-package-documentation": "off",
                           "typedoc/require-package-documentation-description":
-                              "off",
-                          "typedoc/require-param-tag-description": "off",
+                              "warn",
+                          "typedoc/require-param-tag-description": "warn",
                           "typedoc/require-param-tags": "off",
-                          "typedoc/require-returns-description": "off",
+                          "typedoc/require-returns-description": "warn",
                           "typedoc/require-returns-tag": "off",
                           "typedoc/require-see-tag-link": "warn",
-                          "typedoc/require-since-tag-description": "off",
-                          "typedoc/require-throws-description": "off",
+                          "typedoc/require-since-tag-description": "warn",
+                          "typedoc/require-throws-description": "warn",
                           "typedoc/require-throws-tag": "warn",
-                          "typedoc/require-type-param-tag-description": "off",
+                          "typedoc/require-type-param-tag-description": "warn",
                           "typedoc/require-type-param-tags": "off",
                       },
                   },
@@ -1542,7 +1572,7 @@ export const createConfig = (
                           "write-good-comments/no-profane-comments": "off",
                           "write-good-comments/readability-comments": "off",
                           "write-good-comments/spellcheck-comments": "off",
-                          "write-good-comments/task-comment-format": "off",
+                          "write-good-comments/task-comment-format": "warn",
                           "write-good-comments/write-good-comments": "off",
                       },
                   },
@@ -1990,7 +2020,7 @@ export const createConfig = (
                           "etc-misc/no-at-sign-import": "off",
                           "etc-misc/no-at-sign-internal-import": "off",
                           "etc-misc/no-chain-coalescence-mixture": "off",
-                          "etc-misc/no-const-enum": "off",
+                          "etc-misc/no-const-enum": "warn",
                           "etc-misc/no-enum": "off",
                           "etc-misc/no-expression-empty-lines": "off",
                           "etc-misc/no-foreach": "off",
@@ -2008,7 +2038,7 @@ export const createConfig = (
                           "etc-misc/no-single-line-comment": "off",
                           "etc-misc/no-t": "off",
                           "etc-misc/no-underscore-export": "off",
-                          "etc-misc/no-unnecessary-as-const": "off",
+                          "etc-misc/no-unnecessary-as-const": "warn",
                           "etc-misc/no-unnecessary-break": "warn",
                           "etc-misc/no-unnecessary-initialization": "warn",
                           "etc-misc/no-unnecessary-template-literal": "warn",
@@ -2047,7 +2077,11 @@ export const createConfig = (
                           "etc-misc/typescript/no-redundant-undefined-readonly-property": "off",
                           "etc-misc/typescript/no-redundant-undefined-return-type": "off",
                           "etc-misc/typescript/no-redundant-undefined-var": "off",
+                          // The implementation currently reports zero-source and
+                          // writable-only Object.assign calls on partly readonly targets.
                           "etc-misc/typescript/no-unsafe-object-assign": "off",
+                          // Backwards-compatible alias for the canonical
+                          // `no-unsafe-object-assign` rule name.
                           "etc-misc/typescript/no-unsafe-object-assignment": "off",
                           "etc-misc/typescript/prefer-array-type-alias": "off",
                           "etc-misc/typescript/prefer-class-method": "off",
@@ -3745,58 +3779,37 @@ export const createConfig = (
         // #endregion 🚀 Astro Files
         // #region ⚛️ Next.js Files
         // ═══════════════════════════════════════════════════════════════════════════════
-        {
-            ...next.configs.recommended,
-            files: [
-                "app/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
-                "pages/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
-                "src/app/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
-                "src/pages/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
-            ],
-            languageOptions: {
-                parser: tseslint.parser,
-                parserOptions: {
-                    ecmaFeatures: {
-                        impliedStrict: true,
-                        jsx: true,
-                    },
-                    ecmaVersion: "latest",
-                    jsDocParsingMode: "all",
-                    sourceType: "module",
-                    tsconfigRootDir: rootDirectory,
-                    warnOnUnsupportedTypeScriptVersion: true,
-                },
-            },
-            name: "⚛️ Next.js: Pages and App Router - app/**, pages/**, src/app/**, src/pages/**",
-            // Let users enable Next.js rules in their project if they want,
-            // but don't force them to fix Next.js-specific issues if they're not using Next.js or don't care about
-            // those rules
-            rules: {
-                // ...next.configs.recommended.rules,
-                "@next/next/google-font-display": "off",
-                "@next/next/google-font-preconnect": "off",
-                "@next/next/inline-script-id": "off",
-                "@next/next/next-script-for-ga": "off",
-                "@next/next/no-assign-module-variable": "off",
-                "@next/next/no-async-client-component": "off",
-                "@next/next/no-before-interactive-script-outside-document":
-                    "off",
-                "@next/next/no-css-tags": "off",
-                "@next/next/no-document-import-in-page": "off",
-                "@next/next/no-duplicate-head": "off",
-                "@next/next/no-head-element": "off",
-                "@next/next/no-head-import-in-document": "off",
-                "@next/next/no-html-link-for-pages": "off",
-                "@next/next/no-img-element": "off",
-                "@next/next/no-page-custom-font": "off",
-                "@next/next/no-script-component-in-head": "off",
-                "@next/next/no-styled-jsx-in-document": "off",
-                "@next/next/no-sync-scripts": "off",
-                "@next/next/no-title-in-document-head": "off",
-                "@next/next/no-typos": "off",
-                "@next/next/no-unwanted-polyfillio": "off",
-            },
-        },
+        ...(shouldEnableNext
+            ? [
+                  {
+                      files: nextFiles,
+                      languageOptions: {
+                          parser: tseslint.parser,
+                          parserOptions: {
+                              ecmaFeatures: {
+                                  impliedStrict: true,
+                                  jsx: true,
+                              },
+                              ecmaVersion: "latest",
+                              jsDocParsingMode: "all",
+                              sourceType: "module",
+                              tsconfigRootDir: rootDirectory,
+                              warnOnUnsupportedTypeScriptVersion: true,
+                          },
+                      },
+                      name: "⚛️ Next.js: Recommended",
+                      plugins: next.configs.recommended.plugins,
+                      rules: { ...next.configs.recommended.rules },
+                      ...(isDefined(nextRootDirectory) && {
+                          settings: {
+                              next: {
+                                  rootDir: nextRootDirectory,
+                              },
+                          },
+                      }),
+                  },
+              ]
+            : []),
         // #endregion ⚛️ Next.js Files
         // #endregion 🎭 Framework Configurations
         // #region 🐆 Config Files ⛔ Overrides
@@ -4147,6 +4160,7 @@ const sharedConfigs: Nick2Bad4UEslintConfigPresets = {
     // Keep recommended as a direct alias of all until this package has a
     // smaller opinionated preset surface worth exposing separately.
     recommended: allConfigs,
+    withNext: createConfig({ next: true }),
     // Some packages register shorter runtime namespaces than their package
     // names. Disable both the real namespace and the package-family alias so
     // consumers can choose the obvious withoutX preset name.

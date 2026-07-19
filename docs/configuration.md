@@ -88,6 +88,7 @@ export default createConfig({
 | Option                            | Default                      | Guidance                                                                                                             |
 | --------------------------------- | ---------------------------- | -------------------------------------------------------------------------------------------------------------------- |
 | `allowDefaultProjectFilePatterns` | Root JS/CJS/MJS globs        | Root globs passed to `parserOptions.projectService.allowDefaultProject`. Only include files outside `tsconfig.json`. |
+| `next`                            | `false`                      | Pass `true` for standard Next.js roots or `{ files, rootDir }` for a monorepo.                                       |
 | `rootDirectory`                   | `process.cwd()`              | Set this when ESLint runs from outside the package root.                                                             |
 | `tsconfigPaths`                   | `["./tsconfig.eslint.json"]` | Import resolver project paths. The parser still uses project-service discovery of nearest `tsconfig.json`.           |
 | `plugins`                         | `{}`                         | Pass a plugin object to replace a namespace, or `false`/`null` to disable it.                                        |
@@ -108,6 +109,45 @@ export default createConfig({
 `ESLINT_CONFIG_ROOT` exists for environments where command wrappers control the
 root path. Prefer `rootDirectory` in repository-owned config files because the
 setting stays visible to reviewers.
+
+### Next.js
+
+Next.js rules are opt-in because most consumers of this shared config are not
+Next.js applications. Use the complete `withNext` preset for the standard
+`app`, `pages`, `src/app`, and `src/pages` roots:
+
+```js
+import nick2bad4u from "eslint-config-nick2bad4u";
+
+export default nick2bad4u.configs.withNext;
+```
+
+Use the factory when a monorepo needs custom file globs or
+`settings.next.rootDir`. These settings solve different problems: `files`
+controls which files ESLint matches, while `rootDir` tells the Next.js plugin
+where its applications live. Relative `rootDir` globs resolve from ESLint's
+working directory and are independent of this package's `rootDirectory` option.
+
+```js
+import { createConfig } from "eslint-config-nick2bad4u";
+
+export default createConfig({
+ next: {
+  files: [
+   "apps/*/app/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
+   "apps/*/pages/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
+   "apps/*/src/app/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
+   "apps/*/src/pages/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
+  ],
+  rootDir: ["apps/*/"],
+ },
+});
+```
+
+The TypeDoc package-header rule remains off in the shared preset because a
+single generic source glob would incorrectly require `@packageDocumentation`
+in every exporting module. Append a local override for each actual package
+entrypoint instead.
 
 ### TypeScript projects
 
