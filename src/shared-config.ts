@@ -44,6 +44,7 @@ import progress from "eslint-plugin-file-progress-2";
 import githubActions from "eslint-plugin-github-actions-2";
 import immutable from "eslint-plugin-immutable-2";
 import { importX } from "eslint-plugin-import-x";
+import jest from "eslint-plugin-jest";
 import jsdoc from "eslint-plugin-jsdoc";
 import jsonSchemaValidator from "eslint-plugin-json-schema-validator-2";
 import jsonc from "eslint-plugin-jsonc";
@@ -66,6 +67,7 @@ import runtimeCleanup from "eslint-plugin-runtime-cleanup";
 import sdl from "eslint-plugin-sdl-2";
 import secretlint from "eslint-plugin-secretlint";
 import security from "eslint-plugin-security";
+import sonarjs, { configs as sonarjsConfigs } from "eslint-plugin-sonarjs";
 import storybook from "eslint-plugin-storybook";
 import stylelint2 from "eslint-plugin-stylelint-2";
 import testSignal from "eslint-plugin-test-signal";
@@ -80,6 +82,8 @@ import typefestPlugin from "eslint-plugin-typefest";
 import undefinedCSS from "eslint-plugin-undefined-css-classes";
 import unicorn from "eslint-plugin-unicorn";
 import vue from "eslint-plugin-vue";
+import vueScopedCss from "eslint-plugin-vue-scoped-css";
+import vuejsAccessibility from "eslint-plugin-vuejs-accessibility";
 import writeGoodComments from "eslint-plugin-write-good-comments-2";
 import yamllint from "eslint-plugin-yamllint";
 import yml from "eslint-plugin-yml";
@@ -96,6 +100,7 @@ import {
     keyIn,
     objectEntries,
     objectFromEntries,
+    objectHasOwn,
     objectKeys,
     safeCastTo,
     setHas,
@@ -305,6 +310,13 @@ export const allowDefaultProjectFilePatternPresets: Nick2Bad4UAllowDefaultProjec
 const SOURCE_FILE_PATTERNS = Object.freeze([
     "src/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
 ]);
+const TEST_FILE_PATTERNS = Object.freeze([
+    "test/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
+    "tests/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
+    "src/test/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
+    "benchmarks/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
+    "benchmark/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
+]);
 const TEST_SIGNAL_IGNORES = Object.freeze([
     "**/*RuleTester*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
     "**/*ruleTester*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
@@ -343,6 +355,93 @@ const TYPEDOC_API_IGNORES = Object.freeze([
 ]);
 
 /**
+ * SonarJS rules covered by an established core or plugin rule in this config.
+ *
+ * @remarks
+ * Keeping one owner avoids duplicate reports, contradictory suggestions, and
+ * SonarJS rules silently undoing file-scoped relaxations such as the test
+ * overrides. SonarJS remains enabled for its distinct flow, type, security,
+ * regular-expression, and framework analysis.
+ */
+const SONARJS_CONFLICTING_RULE_OVERRIDES = {
+    "sonarjs/arguments-usage": "off",
+    "sonarjs/array-callback-without-return": "off",
+    "sonarjs/arrow-function-convention": "off",
+    "sonarjs/assertions-in-test-cases": "off",
+    "sonarjs/assertions-in-tests": "off",
+    "sonarjs/async-test-assertions": "off",
+    "sonarjs/block-scoped-var": "off",
+    "sonarjs/code-eval": "off",
+    "sonarjs/concise-regex": "off",
+    "sonarjs/constructor-for-side-effects": "off",
+    "sonarjs/declarations-in-global-scope": "off",
+    "sonarjs/duplicates-in-character-class": "off",
+    "sonarjs/existing-groups": "off",
+    "sonarjs/fixme-tag": "off",
+    "sonarjs/for-in": "off",
+    "sonarjs/for-loop-increment-sign": "off",
+    "sonarjs/function-inside-loop": "off",
+    "sonarjs/generator-without-yield": "off",
+    "sonarjs/hooks-before-test-cases": "off",
+    "sonarjs/index-of-compare-to-positive-number": "off",
+    "sonarjs/jsx-no-leaked-render": "off",
+    "sonarjs/label-position": "off",
+    "sonarjs/link-with-target-blank": "off",
+    "sonarjs/no-alphabetical-sort": "off",
+    "sonarjs/no-array-delete": "off",
+    "sonarjs/no-built-in-override": "off",
+    "sonarjs/no-case-label-in-switch": "off",
+    "sonarjs/no-control-regex": "off",
+    "sonarjs/no-dead-store": "off",
+    "sonarjs/no-delete-var": "off",
+    "sonarjs/no-duplicate-in-composite": "off",
+    "sonarjs/no-duplicate-test-title": "off",
+    "sonarjs/no-empty-alternatives": "off",
+    "sonarjs/no-empty-character-class": "off",
+    "sonarjs/no-empty-group": "off",
+    "sonarjs/no-empty-test-title": "off",
+    "sonarjs/no-exclusive-tests": "off",
+    "sonarjs/no-fallthrough": "off",
+    "sonarjs/no-fixed-wait-in-tests": "off",
+    "sonarjs/no-for-in-iterable": "off",
+    "sonarjs/no-function-declaration-in-block": "off",
+    "sonarjs/no-hook-setter-in-body": "off",
+    "sonarjs/no-implicit-dependencies": "off",
+    "sonarjs/no-implicit-global": "off",
+    "sonarjs/no-incorrect-string-concat": "off",
+    "sonarjs/no-interpolation-in-inline-snapshots": "off",
+    "sonarjs/no-invalid-regexp": "off",
+    "sonarjs/no-labels": "off",
+    "sonarjs/no-misleading-array-reverse": "off",
+    "sonarjs/no-misleading-character-class": "off",
+    "sonarjs/no-nested-incdec": "off",
+    "sonarjs/no-parameter-reassignment": "off",
+    "sonarjs/no-primitive-wrappers": "off",
+    "sonarjs/no-redundant-boolean": "off",
+    "sonarjs/no-regex-spaces": "off",
+    "sonarjs/no-require-or-define": "off",
+    "sonarjs/no-return-type-any": "off",
+    "sonarjs/no-skipped-tests": "off",
+    "sonarjs/no-trivial-assertions": "off",
+    "sonarjs/no-unused-function-argument": "off",
+    "sonarjs/no-unused-vars": "off",
+    "sonarjs/no-use-of-empty-return-value": "off",
+    "sonarjs/no-useless-catch": "off",
+    "sonarjs/no-variable-usage-before-declaration": "off",
+    "sonarjs/prefer-default-last": "off",
+    "sonarjs/prefer-object-literal": "off",
+    "sonarjs/prefer-regexp-exec": "off",
+    "sonarjs/prefer-specific-assertions": "off",
+    "sonarjs/single-char-in-character-classes": "off",
+    "sonarjs/slow-regex": "off",
+    "sonarjs/super-linear-regex": "off",
+    "sonarjs/test-check-exception": "off",
+    "sonarjs/todo-tag": "off",
+    "sonarjs/unused-import": "off",
+    "sonarjs/unused-named-groups": "off",
+} as const satisfies Linter.RulesRecord;
+
+/**
  * Nick2Bad4UEslintConfigOptions API documentation.
  *
  * @remarks
@@ -359,12 +458,16 @@ export interface Nick2Bad4UEslintConfigOptions {
      * `tsconfig.json`; broad TypeScript globs also match declaration files.
      */
     readonly allowDefaultProjectFilePatterns?: readonly string[];
+    /** Use Jest instead of Vitest for test and benchmark files. */
+    readonly jest?: boolean | Nick2Bad4UJestOptions;
     /** Enable the recommended Next.js rules, with optional monorepo scoping. */
     readonly next?: boolean | Nick2Bad4UNextOptions;
     /** Plugin overrides keyed by ESLint namespace. */
     readonly plugins?: PluginOverrides;
     /** Project root used for parser root resolution and local alias checks. */
     readonly rootDirectory?: string;
+    /** Configure the default-on SonarJS rules, or pass `false` to disable them. */
+    readonly sonarjs?: boolean | Nick2Bad4USonarJSOptions;
     /** TypeScript project files relative to `rootDirectory`. */
     readonly tsconfigPaths?: readonly string[];
 }
@@ -380,6 +483,8 @@ export interface Nick2Bad4UEslintConfigPresets {
     readonly all: EslintConfig[];
     readonly base: EslintConfig[];
     readonly recommended: EslintConfig[];
+    /** Full shared config using Jest instead of Vitest for test files. */
+    readonly withJest: EslintConfig[];
     /** Full shared config with the recommended Next.js rules enabled. */
     readonly withNext: EslintConfig[];
     readonly withoutActionlint: EslintConfig[];
@@ -397,6 +502,8 @@ export interface Nick2Bad4UEslintConfigPresets {
     readonly withoutRuntimeCleanup: EslintConfig[];
     readonly withoutSdl2: EslintConfig[];
     readonly withoutSecretlint: EslintConfig[];
+    /** Full shared config without SonarJS rules. */
+    readonly withoutSonarJS: EslintConfig[];
     readonly withoutStylelint2: EslintConfig[];
     readonly withoutTestSignal: EslintConfig[];
     readonly withoutTombi: EslintConfig[];
@@ -407,6 +514,16 @@ export interface Nick2Bad4UEslintConfigPresets {
     readonly withoutVite: EslintConfig[];
     readonly withoutWriteGoodComments2: EslintConfig[];
     readonly withoutYamllint: EslintConfig[];
+    /** Compatibility alias for `all`; SonarJS is enabled by default. */
+    readonly withSonarJS: EslintConfig[];
+}
+
+/** Options for the opt-in Jest rule section. */
+export interface Nick2Bad4UJestOptions {
+    /** File globs that replace the standard test and benchmark globs. */
+    readonly files?: readonly string[];
+    /** Jest version used by version-sensitive rules. */
+    readonly version?: number | string;
 }
 
 /** Options for the opt-in Next.js rule section. */
@@ -415,6 +532,12 @@ export interface Nick2Bad4UNextOptions {
     readonly files?: readonly string[];
     /** Value passed directly to `settings.next.rootDir`. */
     readonly rootDir?: readonly string[] | string;
+}
+
+/** Options for scoping the default-on SonarJS rule section. */
+export interface Nick2Bad4USonarJSOptions {
+    /** File globs that replace the standard JavaScript and TypeScript globs. */
+    readonly files?: readonly string[];
 }
 
 // The public factory accepts plugin overrides so downstream repos can disable
@@ -509,6 +632,39 @@ const listenerStrictConfigs: readonly EslintConfig[] = (() => {
 
     return [];
 })();
+function getNamedConfigRules(
+    configs: object | undefined,
+    configName: string
+): object {
+    if (!isDefined(configs) || !objectHasOwn(configs, configName)) {
+        return {};
+    }
+
+    const config: unknown = Reflect.get(configs, configName);
+    if (
+        typeof config !== "object" ||
+        config === null ||
+        !objectHasOwn(config, "rules")
+    ) {
+        return {};
+    }
+
+    const rules: unknown = Reflect.get(config, "rules");
+
+    return typeof rules === "object" && rules !== null ? rules : {};
+}
+function hasConfigRules<TConfig extends object>(
+    config: TConfig
+): config is TConfig & {
+    readonly rules: NonNullable<EslintConfig["rules"]>;
+} {
+    return objectHasOwn(config, "rules");
+}
+const vueScopedCssRecommendedRules =
+    vueScopedCss.configs.recommended.find(hasConfigRules)?.rules ?? {};
+const vuejsAccessibilityRecommendedRules =
+    vuejsAccessibility.configs["flat/recommended"].find(hasConfigRules)
+        ?.rules ?? {};
 
 // #endregion 🏗️ Setup and Public Types
 // #region 🛠️ Config
@@ -531,6 +687,20 @@ export const createConfig = (
         options.rootDirectory ?? processEnvironment["ESLINT_CONFIG_ROOT"] ?? "."
     );
     const tsconfigPaths = options.tsconfigPaths ?? DEFAULT_TSCONFIG_PATHS;
+    const jestOptions = options.jest;
+    const hasJestOptions = typeof jestOptions === "object";
+    const jestFiles =
+        hasJestOptions && isDefined(jestOptions.files)
+            ? [...jestOptions.files]
+            : [...TEST_FILE_PATTERNS];
+    const jestVersion =
+        hasJestOptions && isDefined(jestOptions.version)
+            ? jestOptions.version
+            : undefined;
+    const shouldEnableJest = jestOptions === true || hasJestOptions;
+    const testFilePatterns = shouldEnableJest
+        ? jestFiles
+        : [...TEST_FILE_PATTERNS];
     const nextOptions = options.next;
     const hasNextOptions = typeof nextOptions === "object";
     const nextFiles =
@@ -544,6 +714,13 @@ export const createConfig = (
                 : [...nextOptions.rootDir]
             : undefined;
     const shouldEnableNext = nextOptions === true || hasNextOptions;
+    const sonarJSOptions = options.sonarjs;
+    const hasSonarJSOptions = typeof sonarJSOptions === "object";
+    const sonarJSFiles =
+        hasSonarJSOptions && isDefined(sonarJSOptions.files)
+            ? [...sonarJSOptions.files]
+            : [...GLOBAL_FILE_PATTERNS];
+    const shouldEnableSonarJS = sonarJSOptions !== false;
     const pluginOverrides = options.plugins ?? {};
     const pluginOverrideEntries = new Map(objectEntries(pluginOverrides));
     // Plugin overrides are the same mechanism behind the public withoutX
@@ -605,6 +782,10 @@ export const createConfig = (
         "etc-misc",
         etcMiscPlugin
     );
+    const etcMiscConfigs = safeCastTo<ConfigurablePlugin | null>(
+        etcMisc
+    )?.configs;
+    const etcMiscAllRules = getNamedConfigRules(etcMiscConfigs, "all");
     const fileProgressPlugin = resolveTypedPluginByAlias(
         pluginOverrideEntries,
         ["file-progress", "file-progress-2"],
@@ -625,6 +806,7 @@ export const createConfig = (
         ["json-schema-validator", "json-schema-validator-2"],
         jsonSchemaValidator
     );
+    const jestPlugin = resolveTypedPlugin(pluginOverrideEntries, "jest", jest);
     const remarkPlugin = resolveTypedPlugin(
         pluginOverrideEntries,
         "remark",
@@ -644,6 +826,11 @@ export const createConfig = (
         pluginOverrideEntries,
         ["sdl", "sdl-2"],
         sdl
+    );
+    const sonarjsPlugin = resolveTypedPlugin(
+        pluginOverrideEntries,
+        "sonarjs",
+        sonarjs
     );
     const secretlintPlugin = resolveTypedPlugin(
         pluginOverrideEntries,
@@ -679,6 +866,16 @@ export const createConfig = (
         pluginOverrideEntries,
         "typedoc",
         typedoc
+    );
+    const vueScopedCssPlugin = resolveTypedPlugin(
+        pluginOverrideEntries,
+        "vue-scoped-css",
+        vueScopedCss
+    );
+    const vuejsAccessibilityPlugin = resolveTypedPlugin(
+        pluginOverrideEntries,
+        "vuejs-accessibility",
+        vuejsAccessibility
     );
     const writeGoodCommentsPlugin = resolveTypedPluginByAlias(
         pluginOverrideEntries,
@@ -1327,6 +1524,53 @@ export const createConfig = (
                 "security/detect-object-injection": "off",
             },
         },
+        // MARK: 📡 SonarJS
+        ...(shouldEnableSonarJS && sonarjsPlugin !== null
+            ? [
+                  {
+                      ...sonarjsConfigs.recommended,
+                      files: sonarJSFiles,
+                      name: "📡 SonarJS: Recommended",
+                      plugins: {
+                          sonarjs: sonarjsPlugin,
+                      },
+                      rules: {
+                          ...sonarjsConfigs.recommended.rules,
+                          "sonarjs/aws-iam-all-resources-accessible": "warn",
+                          "sonarjs/bool-param-default": "warn",
+                          "sonarjs/class-prototype": "warn",
+                          "sonarjs/cognitive-complexity": "off", // Disabled because it is too noisy and not useful for our codebases
+                          "sonarjs/destructuring-assignment-syntax": "warn",
+                          "sonarjs/elseif-without-else": "warn", // Warn if an if-else statement has an else-if without a final else, which can lead to unexpected behavior
+                          "sonarjs/function-name": "warn",
+                          "sonarjs/max-union-size": ["warn", { threshold: 7 }], // Warn if a union type has more than 7 members
+                          "sonarjs/nested-control-flow": "warn", // Warn if there are nested control flow statements, which can lead to complex and hard-to-read code
+                          "sonarjs/no-collapsible-if": "warn", // Warn if there are collapsible if statements, which can lead to complex and hard-to-read code
+                          "sonarjs/no-duplicate-string": [
+                              "warn",
+                              {
+                                  ignoreStrings: "application/json",
+                                  threshold: 5,
+                              },
+                          ], // Warn if there are duplicate strings, which can lead to complex and hard-to-read code
+                          "sonarjs/no-inconsistent-returns": "warn",
+                          "sonarjs/no-nested-conditional": "off", // Turned off because they are not always possible to avoid and can be more readable in some cases
+                          "sonarjs/no-nested-switch": "warn", // Warn if there are nested switch statements, which can lead to complex and hard-to-read code
+                          "sonarjs/no-reference-error": "warn",
+                          "sonarjs/no-sonar-comments": "warn", // Warn if there are SonarQube comments, which can lead to complex and hard-to-read code
+                          "sonarjs/no-undefined-assignment": "warn", // Warn if there are assignments to undefined, which can lead to complex and hard-to-read code
+                          "sonarjs/non-number-in-arithmetic-expression": "warn",
+                          "sonarjs/operation-returning-nan": "warn", // Warn if an operation returns NaN, which can lead to unexpected behavior
+                          "sonarjs/prefer-immediate-return": "warn",
+                          "sonarjs/strings-comparison": "warn", // Warn if there are string comparisons, which can lead to complex and hard-to-read code
+                          "sonarjs/too-many-break-or-continue-in-loop": "warn", // Warn if there are too many break or continue statements in a loop, which can lead to complex and hard-to-read code,
+                          "sonarjs/values-not-convertible-to-numbers": "warn",
+                          "sonarjs/variable-name": "warn",
+                          ...SONARJS_CONFLICTING_RULE_OVERRIDES,
+                      },
+                  },
+              ]
+            : []),
         {
             // MARK: 🌹 Perfectionist
             ...perfectionist.configs["recommended-natural"],
@@ -1401,6 +1645,12 @@ export const createConfig = (
                       ...testSignalPlugin.configs.all,
                       ignores: [...TEST_SIGNAL_IGNORES],
                       name: "🧪 Test Signal: All",
+                      rules: {
+                          ...testSignalPlugin.configs.all.rules,
+                          // Vitest or Jest owns focused suite/test calls on the
+                          // same test-file globs.
+                          "test-signal/no-focused-tests": "off",
+                      },
                   },
               ]),
         // MARK: ⚡ Vite
@@ -1857,6 +2107,9 @@ export const createConfig = (
                 "@eslint-react/no-implicit-children": "warn",
                 "@eslint-react/no-implicit-key": "warn",
                 "@eslint-react/no-implicit-ref": "warn",
+                // Etc-Misc's focused JSX allocation rules own unstable prop
+                // values so React and Etc-Misc do not report the same node.
+                "@eslint-react/no-unstable-context-value": "off",
                 // Legacy React rule aliases:
                 "@eslint-react/x-error-boundaries": "off",
                 "@eslint-react/x-exhaustive-deps": "off",
@@ -2002,14 +2255,19 @@ export const createConfig = (
                       },
                       // prettier-ignore
                       rules: {
-                          // Enable rules as needed or the config:
-                          // ...etcMisc.configs.recommended.rules
-                         "etc-misc/class-match-filename": "off",
+                          // Start from the plugin's real v2 inventory. Explicit
+                          // overrides below preserve this preset's severities,
+                          // disable deprecated rules, and assign overlapping
+                          // behavior to exactly one plugin.
+                          ...etcMiscAllRules,
+                          "etc-misc/class-match-filename": "off",
                           "etc-misc/comment-spacing": "off",
                           "etc-misc/consistent-empty-lines": "off",
                           "etc-misc/consistent-enum-members": "off",
+                          "etc-misc/consistent-filename": "off",
                           "etc-misc/consistent-import": "off",
                           "etc-misc/consistent-optional-props": "off",
+                          "etc-misc/consistent-source-extension": "off",
                           "etc-misc/consistent-symbol-description": "off",
                           "etc-misc/default-case": "off",
                           "etc-misc/disallow-import": "off",
@@ -2020,7 +2278,9 @@ export const createConfig = (
                           "etc-misc/no-at-sign-import": "off",
                           "etc-misc/no-at-sign-internal-import": "off",
                           "etc-misc/no-chain-coalescence-mixture": "off",
+                          "etc-misc/no-commented-out-code": "off",
                           "etc-misc/no-const-enum": "warn",
+                          "etc-misc/no-deprecated": "off",
                           "etc-misc/no-enum": "off",
                           "etc-misc/no-expression-empty-lines": "off",
                           "etc-misc/no-foreach": "off",
@@ -2033,7 +2293,14 @@ export const createConfig = (
                           "etc-misc/no-misused-generics": "off",
                           "etc-misc/no-negated-conditions": "off",
                           "etc-misc/no-nodejs-modules": "off",
+                          // The active Vitest or Jest integration owns focused
+                          // suite and test calls.
+                          "etc-misc/no-only-tests": "off",
                           "etc-misc/no-param-reassign": "warn",
+                          "etc-misc/no-relative-parent-import": "off",
+                          "etc-misc/no-restricted-syntax": "off",
+                          "etc-misc/no-self-import": "off",
+                          "etc-misc/no-shadow": "off",
                           "etc-misc/no-sibling-import": "off",
                           "etc-misc/no-single-line-comment": "off",
                           "etc-misc/no-t": "off",
@@ -2042,6 +2309,9 @@ export const createConfig = (
                           "etc-misc/no-unnecessary-break": "warn",
                           "etc-misc/no-unnecessary-initialization": "warn",
                           "etc-misc/no-unnecessary-template-literal": "warn",
+                          // The focused JSX allocation rules below own unstable
+                          // prop values without overlapping this umbrella rule.
+                          "etc-misc/no-unstable-react-values": "off",
                           "etc-misc/no-use-extend-native": "error",
                           "etc-misc/no-vulnerable": "error",
                           "etc-misc/no-writeonly": "off",
@@ -2049,24 +2319,39 @@ export const createConfig = (
                           "etc-misc/only-export-name": "off",
                           "etc-misc/prefer-arrow-function-property": "off",
                           "etc-misc/prefer-const-require": "warn",
+                          "etc-misc/prefer-interface": "off",
                           "etc-misc/prefer-less-than": "off",
+                          "etc-misc/prefer-object-has-own": "off",
                           "etc-misc/prefer-only-export": "off",
+                          // @eslint-react/no-class-component is the canonical
+                          // owner for this behavior in the React file section.
+                          "etc-misc/react-prefer-function-component": "off",
+                          // The React Compiler supersedes blanket component
+                          // memoization requirements.
+                          "etc-misc/require-jsdoc": "off",
+                          "etc-misc/require-memo": "off",
                           "etc-misc/require-syntax": "off",
                           "etc-misc/restrict-identifier-characters": "off",
                           "etc-misc/sort-array": "off",
                           "etc-misc/sort-call-signature": "off",
+                          "etc-misc/sort-class-members": "off",
                           "etc-misc/sort-construct-signature": "off",
                           "etc-misc/sort-export-specifiers": "off",
                           "etc-misc/sort-keys": "off",
                           "etc-misc/sort-top-comments": "off",
+                          "etc-misc/switch-case-spacing": "off",
                           "etc-misc/template-literal-format": "off",
                           "etc-misc/throw-error": "warn",
                           "etc-misc/typescript/array-callback-return-type": "off",
+                          "etc-misc/typescript/class-methods-use-this": "off",
                           "etc-misc/typescript/consistent-array-type-name": "off",
                           "etc-misc/typescript/define-function-in-one-statement": "off",
+                          "etc-misc/typescript/exhaustive-switch": "off",
                           "etc-misc/typescript/no-boolean-literal-type": "off",
                           "etc-misc/typescript/no-complex-declarator-type": "off",
                           "etc-misc/typescript/no-complex-return-type": "off",
+                          "etc-misc/typescript/no-empty-interfaces": "off",
+                          "etc-misc/typescript/no-inferrable-types": "off",
                           "etc-misc/typescript/no-multi-type-tuples": "off",
                           "etc-misc/typescript/no-never": "off",
                           "etc-misc/typescript/no-redundant-undefined-const": "off",
@@ -2077,12 +2362,8 @@ export const createConfig = (
                           "etc-misc/typescript/no-redundant-undefined-readonly-property": "off",
                           "etc-misc/typescript/no-redundant-undefined-return-type": "off",
                           "etc-misc/typescript/no-redundant-undefined-var": "off",
-                          // The implementation currently reports zero-source and
-                          // writable-only Object.assign calls on partly readonly targets.
-                          "etc-misc/typescript/no-unsafe-object-assign": "off",
-                          // Backwards-compatible alias for the canonical
-                          // `no-unsafe-object-assign` rule name.
-                          "etc-misc/typescript/no-unsafe-object-assignment": "off",
+                          "etc-misc/typescript/no-restricted-syntax": "off",
+                          "etc-misc/typescript/no-unsafe-object-assign": "warn",
                           "etc-misc/typescript/prefer-array-type-alias": "off",
                           "etc-misc/typescript/prefer-class-method": "off",
                           "etc-misc/typescript/prefer-enum": "off",
@@ -2196,8 +2477,171 @@ export const createConfig = (
                 // @see {@link https://typescript-eslint.io/rules/no-redeclare}
                 // Covered by TypeScript compiler
                 "@typescript-eslint/no-redeclare": "off",
-                "@typescript-eslint/no-restricted-imports": [
+                // @deprecated -- As of ESLint v9.37.0, the base eslint/no-restricted-imports rule supports TypeScript import syntaxes (import type, inline type specifiers, and import x = require(...)). There is no longer any need to use this extension rule.
+                // @see {@link https://typescript-eslint.io/rules/no-restricted-imports/}
+                "@typescript-eslint/no-restricted-imports": "off",
+                "@typescript-eslint/no-restricted-types": [
+                    "error",
+                    {
+                        types: {
+                            Function: {
+                                message: arrayJoin(
+                                    [
+                                        "The `Function` type accepts any function-like value.",
+                                        "It provides no type safety when calling the function, which can be a common source of bugs.",
+                                        "If you are expecting the function to accept certain arguments, you should explicitly define the function shape.",
+                                        "Use '(...args: unknown[]) => unknown' for generic handlers or define specific function signatures.",
+                                    ],
+                                    "\n"
+                                ),
+                            },
+                        },
+                    },
+                ],
+                "@typescript-eslint/no-shadow": "warn",
+                "@typescript-eslint/no-unnecessary-condition": [
                     "warn",
+                    {
+                        allowConstantLoopConditions: true, // Allow while(true) patterns in services
+                    },
+                ],
+                "@typescript-eslint/no-unnecessary-parameter-property-assignment":
+                    "warn",
+                "@typescript-eslint/no-unnecessary-qualifier": "warn",
+                "@typescript-eslint/no-unsafe-type-assertion": "warn",
+                "@typescript-eslint/no-unused-private-class-members": "warn",
+                "@typescript-eslint/no-use-before-define": [
+                    "warn",
+                    {
+                        allowNamedExports: false,
+                        classes: true,
+                        enums: true,
+                        functions: false,
+                        ignoreTypeReferences: true,
+                        typedefs: true,
+                        variables: true,
+                    },
+                ],
+                "@typescript-eslint/no-useless-empty-export": "warn",
+                "@typescript-eslint/parameter-properties": "warn",
+                "@typescript-eslint/prefer-destructuring": "off",
+                "@typescript-eslint/prefer-enum-initializers": "warn",
+                "@typescript-eslint/prefer-nullish-coalescing": [
+                    "error",
+                    {
+                        ignoreConditionalTests: false, // Check conditionals for nullish coalescing opportunities
+                    },
+                ],
+                "@typescript-eslint/prefer-readonly": "warn", // Prefer readonly for service class properties
+                // Keep signal strong on explicitly typed APIs while avoiding noisy
+                // churn for inferred callback/test parameters.
+                "@typescript-eslint/prefer-readonly-parameter-types": [
+                    "warn",
+                    {
+                        allow: [
+                            {
+                                from: "lib",
+                                name: ["Readonly"],
+                            },
+                            {
+                                from: "package",
+                                name: ["RuleContext", "SourceCode"],
+                                package: "@typescript-eslint/utils",
+                            },
+                            {
+                                from: "package",
+                                name: [
+                                    "BinaryExpression",
+                                    "CallExpression",
+                                    "Expression",
+                                    "MemberExpression",
+                                    "Node",
+                                    "Program",
+                                    "Statement",
+                                    "ThrowStatement",
+                                    "TSTypeReference",
+                                    "TSUnionType",
+                                    "TypeNode",
+                                ],
+                                package: "@typescript-eslint/types",
+                            },
+                            {
+                                from: "package",
+                                name: [
+                                    "Signature",
+                                    "Type",
+                                    "TypeChecker",
+                                ],
+                                package: "typescript",
+                            },
+                        ],
+                        ignoreInferredTypes: true,
+                        treatMethodsAsReadonly: true,
+                    },
+                ],
+                // Configured: Allows non-async functions that return promises
+                // (like utility wrappers around Promise.all).
+                // But encourages async for most cases.
+                "@typescript-eslint/promise-function-async": [
+                    "warn",
+                    {
+                        allowAny: true,
+                        allowedPromiseNames: ["Promise"],
+                        checkArrowFunctions: false,
+                    },
+                ],
+                "@typescript-eslint/require-array-sort-compare": "warn",
+                "@typescript-eslint/restrict-template-expressions": [
+                    "error",
+                    {
+                        allowAny: false,
+                        allowBoolean: false,
+                        allowNever: false,
+                        allowNullish: false,
+                        allowNumber: true,
+                        allowRegExp: false,
+                    },
+                ],
+                "@typescript-eslint/strict-boolean-expressions": "warn",
+                "@typescript-eslint/strict-void-return": "warn",
+                "@typescript-eslint/switch-exhaustiveness-check": "error", // Ensure switch statements are exhaustive
+                camelcase: "off",
+                "capitalized-comments": [
+                    "error",
+                    "always",
+                    {
+                        ignoreConsecutiveComments: true,
+                        ignoreInlineComments: true,
+                        ignorePattern:
+                            "pragma|ignored|import|prettier|eslint|tslint|copyright|license|eslint-disable|@ts-.*|jsx-a11y.*|@eslint.*|global|jsx|jsdoc|prettier|istanbul|jcoreio|metamask|microsoft|no-unsafe-optional-chaining|no-unnecessary-type-assertion|no-non-null-asserted-optional-chain|no-non-null-asserted-nullish-coalescing|@typescript-eslint.*|@docusaurus.*|@react.*|boundaries.*|depend.*|deprecation.*|etc.*|ex.*|functional.*|import-x.*|import-zod.*|jsx-a11y.*|loadable-imports.*|math.*|n.*|neverthrow.*|no-constructor-bind.*|no-lookahead-lookbehind-regexp.*|no-secrets.*|no-unary-plus.*|no-unawaited-dot-catch-throw.*|no-unsanitized.*|no-use-extend-native.*|observers.*|prefer-arrow.*|perfectionist.*|prettier.*|promise.*|react.*|react-hooks.*|react-hooks-addons.*|redos.*|regexp.*|require-jsdoc.*|safe-jsx.*|security.*|sonarjs.*|sort-class-members.*|sort-destructure-keys.*|sort-keys-fix.*|sql-template.*|ssr-friendly.*|styled-components-a11y.*|switch-case.*|total-functions.*|tsdoc.*|unicorn.*|unused-imports.*|usememo-recommendations.*|validate-jsx-nesting.*|write-good-comments.*|xss.*|v8.*|c8.*|istanbul.*|nyc.*|codecov.*|coveralls.*|c8-coverage.*|codecov-coverage.*",
+                    },
+                ],
+                // Use the TypeScript rule; it handles class properties and React components better.
+                "class-methods-use-this": "off",
+                "consistent-return": "off", // Use TypeScript version
+                "default-param-last": "off", // Use TypeScript version instead for better type awareness
+                eqeqeq: "off", // Use the TypeScript version instead
+                "func-style": "off",
+                "id-length": "off",
+                "init-declarations": "off", // Use TypeScript Version
+                "max-lines": "off",
+                "max-lines-per-function": [
+                    "error",
+                    {
+                        IIFEs: false,
+                        max: 750,
+                        skipBlankLines: true,
+                        skipComments: true,
+                    },
+                ],
+                "max-params": "off", // Use TypeScript version which can be configured to ignore `this` parameters and is more aware of function overloads.
+                "max-statements": "off",
+                "no-continue": "off",
+                "no-inline-comments": "off", // Allow inline comments for complex logic explanations
+                "no-invalid-this": "off", // Use TypeScript version which understands class properties and arrow functions
+                "no-magic-numbers": "off", // Use TypeScript Version instead
+                "no-restricted-imports": [
+                    "error",
                     {
                         paths: [
                             {
@@ -2443,167 +2887,6 @@ export const createConfig = (
                         ],
                     },
                 ],
-                "@typescript-eslint/no-restricted-types": [
-                    "error",
-                    {
-                        types: {
-                            Function: {
-                                message: arrayJoin(
-                                    [
-                                        "The `Function` type accepts any function-like value.",
-                                        "It provides no type safety when calling the function, which can be a common source of bugs.",
-                                        "If you are expecting the function to accept certain arguments, you should explicitly define the function shape.",
-                                        "Use '(...args: unknown[]) => unknown' for generic handlers or define specific function signatures.",
-                                    ],
-                                    "\n"
-                                ),
-                            },
-                        },
-                    },
-                ],
-                "@typescript-eslint/no-shadow": "warn",
-                "@typescript-eslint/no-unnecessary-condition": [
-                    "warn",
-                    {
-                        allowConstantLoopConditions: true, // Allow while(true) patterns in services
-                    },
-                ],
-                "@typescript-eslint/no-unnecessary-parameter-property-assignment":
-                    "warn",
-                "@typescript-eslint/no-unnecessary-qualifier": "warn",
-                "@typescript-eslint/no-unsafe-type-assertion": "warn",
-                "@typescript-eslint/no-unused-private-class-members": "warn",
-                "@typescript-eslint/no-use-before-define": [
-                    "warn",
-                    {
-                        allowNamedExports: false,
-                        classes: true,
-                        enums: true,
-                        functions: false,
-                        ignoreTypeReferences: true,
-                        typedefs: true,
-                        variables: true,
-                    },
-                ],
-                "@typescript-eslint/no-useless-empty-export": "warn",
-                "@typescript-eslint/parameter-properties": "warn",
-                "@typescript-eslint/prefer-destructuring": "off",
-                "@typescript-eslint/prefer-enum-initializers": "warn",
-                "@typescript-eslint/prefer-nullish-coalescing": [
-                    "error",
-                    {
-                        ignoreConditionalTests: false, // Check conditionals for nullish coalescing opportunities
-                    },
-                ],
-                "@typescript-eslint/prefer-readonly": "warn", // Prefer readonly for service class properties
-                // Keep signal strong on explicitly typed APIs while avoiding noisy
-                // churn for inferred callback/test parameters.
-                "@typescript-eslint/prefer-readonly-parameter-types": [
-                    "warn",
-                    {
-                        allow: [
-                            {
-                                from: "lib",
-                                name: ["Readonly"],
-                            },
-                            {
-                                from: "package",
-                                name: ["RuleContext", "SourceCode"],
-                                package: "@typescript-eslint/utils",
-                            },
-                            {
-                                from: "package",
-                                name: [
-                                    "BinaryExpression",
-                                    "CallExpression",
-                                    "Expression",
-                                    "MemberExpression",
-                                    "Node",
-                                    "Program",
-                                    "Statement",
-                                    "ThrowStatement",
-                                    "TSTypeReference",
-                                    "TSUnionType",
-                                    "TypeNode",
-                                ],
-                                package: "@typescript-eslint/types",
-                            },
-                            {
-                                from: "package",
-                                name: [
-                                    "Signature",
-                                    "Type",
-                                    "TypeChecker",
-                                ],
-                                package: "typescript",
-                            },
-                        ],
-                        ignoreInferredTypes: true,
-                        treatMethodsAsReadonly: true,
-                    },
-                ],
-                // Configured: Allows non-async functions that return promises
-                // (like utility wrappers around Promise.all).
-                // But encourages async for most cases.
-                "@typescript-eslint/promise-function-async": [
-                    "warn",
-                    {
-                        allowAny: true,
-                        allowedPromiseNames: ["Promise"],
-                        checkArrowFunctions: false,
-                    },
-                ],
-                "@typescript-eslint/require-array-sort-compare": "warn",
-                "@typescript-eslint/restrict-template-expressions": [
-                    "error",
-                    {
-                        allowAny: false,
-                        allowBoolean: false,
-                        allowNever: false,
-                        allowNullish: false,
-                        allowNumber: true,
-                        allowRegExp: false,
-                    },
-                ],
-                "@typescript-eslint/strict-boolean-expressions": "warn",
-                "@typescript-eslint/strict-void-return": "warn",
-                "@typescript-eslint/switch-exhaustiveness-check": "error", // Ensure switch statements are exhaustive
-                camelcase: "off",
-                "capitalized-comments": [
-                    "error",
-                    "always",
-                    {
-                        ignoreConsecutiveComments: true,
-                        ignoreInlineComments: true,
-                        ignorePattern:
-                            "pragma|ignored|import|prettier|eslint|tslint|copyright|license|eslint-disable|@ts-.*|jsx-a11y.*|@eslint.*|global|jsx|jsdoc|prettier|istanbul|jcoreio|metamask|microsoft|no-unsafe-optional-chaining|no-unnecessary-type-assertion|no-non-null-asserted-optional-chain|no-non-null-asserted-nullish-coalescing|@typescript-eslint.*|@docusaurus.*|@react.*|boundaries.*|depend.*|deprecation.*|etc.*|ex.*|functional.*|import-x.*|import-zod.*|jsx-a11y.*|loadable-imports.*|math.*|n.*|neverthrow.*|no-constructor-bind.*|no-explicit-type-exports.*|no-lookahead-lookbehind-regexp.*|no-secrets.*|no-unary-plus.*|no-unawaited-dot-catch-throw.*|no-unsanitized.*|no-use-extend-native.*|observers.*|prefer-arrow.*|perfectionist.*|prettier.*|promise.*|react.*|react-hooks.*|react-hooks-addons.*|redos.*|regexp.*|require-jsdoc.*|safe-jsx.*|security.*|sonarjs.*|sort-class-members.*|sort-destructure-keys.*|sort-keys-fix.*|sql-template.*|ssr-friendly.*|styled-components-a11y.*|switch-case.*|total-functions.*|tsdoc.*|unicorn.*|unused-imports.*|usememo-recommendations.*|validate-jsx-nesting.*|write-good-comments.*|xss.*|v8.*|c8.*|istanbul.*|nyc.*|codecov.*|coveralls.*|c8-coverage.*|codecov-coverage.*",
-                    },
-                ],
-                // Use the TypeScript rule; it handles class properties and React components better.
-                "class-methods-use-this": "off",
-                "consistent-return": "off", // Use TypeScript version
-                "default-param-last": "off", // Use TypeScript version instead for better type awareness
-                eqeqeq: "off", // Use the TypeScript version instead
-                "func-style": "off",
-                "id-length": "off",
-                "init-declarations": "off", // Use TypeScript Version
-                "max-lines": "off",
-                "max-lines-per-function": [
-                    "error",
-                    {
-                        IIFEs: false,
-                        max: 750,
-                        skipBlankLines: true,
-                        skipComments: true,
-                    },
-                ],
-                "max-params": "off", // Use TypeScript version which can be configured to ignore `this` parameters and is more aware of function overloads.
-                "max-statements": "off",
-                "no-continue": "off",
-                "no-inline-comments": "off", // Allow inline comments for complex logic explanations
-                "no-invalid-this": "off", // Use TypeScript version which understands class properties and arrow functions
-                "no-magic-numbers": "off", // Use TypeScript Version instead
-                "no-restricted-imports": "off", // Use the TypeScript-specific version for better type-aware handling
                 "no-shadow": "off", // Use the TypeScript-specific version for better type-aware handling
                 "no-ternary": "off",
                 "no-undefined": "off", // Use explicit `undefined` for clarity and type safety
@@ -2629,38 +2912,51 @@ export const createConfig = (
         // #endregion 🌍 Global Rules After Plugin Configs
         // #region 🧪 Test & Benchmark Files
         // ═══════════════════════════════════════════════════════════════════════════════
-        {
-            // MARK: 🧪 Vitest
-            ...vitest.configs.all,
-            files: [
-                "test/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
-                "tests/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
-                "src/test/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
-                "benchmarks/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
-                "benchmark/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
-            ],
-            name: "🧪 Vitest: all",
-            rules: {
-                ...vitest.configs.all.rules,
-                "vitest/max-expects": ["warn", { max: 20 }], // Encourage more focused tests, but allow flexibility when needed
-                "vitest/prefer-mock-return-shorthand": "warn",
-                "vitest/prefer-to-be-falsy": "off", // Allow explicit checks for false, 0, '', etc. for clarity in tests
-                "vitest/prefer-to-be-truthy": "off", // Allow explicit checks for true, non-empty strings, non-zero numbers, etc. for clarity in tests
-                "vitest/require-hook": "off",
-                "vitest/require-test-timeout": "off", // Allow flexibility in test timeouts, especially for integration tests or tests with external dependencies
-                "vitest/warn-todo": "warn",
-            },
-        },
+        ...(shouldEnableJest
+            ? jestPlugin === null
+                ? []
+                : [
+                      {
+                          ...jest.configs["flat/recommended"],
+                          files: [...jestFiles],
+                          name: "🃏 Jest: Recommended",
+                          plugins: {
+                              jest: jestPlugin,
+                          },
+                          rules: {
+                              ...jest.configs["flat/recommended"].rules,
+                          },
+                          ...(isDefined(jestVersion) && {
+                              settings: {
+                                  jest: {
+                                      version: jestVersion,
+                                  },
+                              },
+                          }),
+                      },
+                  ]
+            : [
+                  {
+                      // MARK: 🧪 Vitest
+                      ...vitest.configs.all,
+                      files: [...TEST_FILE_PATTERNS],
+                      name: "🧪 Vitest: all",
+                      rules: {
+                          ...vitest.configs.all.rules,
+                          "vitest/max-expects": ["warn", { max: 20 }], // Encourage more focused tests, but allow flexibility when needed
+                          "vitest/prefer-mock-return-shorthand": "warn",
+                          "vitest/prefer-to-be-falsy": "off", // Allow explicit checks for false, 0, '', etc. for clarity in tests
+                          "vitest/prefer-to-be-truthy": "off", // Allow explicit checks for true, non-empty strings, non-zero numbers, etc. for clarity in tests
+                          "vitest/require-hook": "off",
+                          "vitest/require-test-timeout": "off", // Allow flexibility in test timeouts, especially for integration tests or tests with external dependencies
+                          "vitest/warn-todo": "warn",
+                      },
+                  },
+              ]),
         {
             // MARK: 👨‍🔬 Testing Library
             ...testingLibrary.configs["flat/dom"],
-            files: [
-                "test/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
-                "tests/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
-                "src/test/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
-                "benchmarks/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
-                "benchmark/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
-            ],
+            files: [...testFilePatterns],
             name: "👨‍🔬 Testing Library: DOM",
             rules: {
                 ...testingLibrary.configs["flat/dom"].rules,
@@ -2695,19 +2991,15 @@ export const createConfig = (
         },
         {
             // MARK: 🧪 Tests: Tests, Benchmarks ⛔ Overrides
-            files: [
-                "test/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
-                "tests/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
-                "src/test/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
-                "benchmarks/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
-                "benchmark/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
-            ],
+            files: [...testFilePatterns],
             languageOptions: {
                 globals: {
                     ...globals.builtin,
                     ...globals.nodeBuiltin,
                     ...globals.commonjs,
-                    ...vitest.environments.env.globals,
+                    ...(shouldEnableJest
+                        ? globals.jest
+                        : vitest.environments.env.globals),
                     createTypedRuleSelectorAwarePassThrough: "readonly",
                 },
                 parser: tseslint.parser,
@@ -2760,6 +3052,10 @@ export const createConfig = (
                 "no-underscore-dangle": "off",
                 "no-useless-assignment": "off",
                 "security/detect-non-literal-fs-filename": "off",
+                ...(shouldEnableSonarJS &&
+                    sonarjsPlugin !== null && {
+                        "sonarjs/no-duplicate-string": "off",
+                    }),
                 "typedoc/require-exported-doc-comment": "off", // Allow non-exported functions in tests without doc comments
                 "unicorn/consistent-function-scoping": "off", // Tests often use different scoping
                 "unicorn/filename-case": "off", // Allow test files to have any case
@@ -2792,9 +3088,11 @@ export const createConfig = (
                         "electron-devtools-installer",
                     ],
                 },
-                vitest: {
-                    typecheck: true,
-                },
+                ...(!shouldEnableJest && {
+                    vitest: {
+                        typecheck: true,
+                    },
+                }),
             },
         },
         {
@@ -3585,10 +3883,23 @@ export const createConfig = (
                 },
             },
             name: "🖖 Vue SFCs: **/*.vue",
+            plugins: {
+                ...vue.configs["flat/base"][1]?.plugins,
+                ...(vueScopedCssPlugin !== null && {
+                    "vue-scoped-css": vueScopedCssPlugin,
+                }),
+                ...(vuejsAccessibilityPlugin !== null && {
+                    "vuejs-accessibility": vuejsAccessibilityPlugin,
+                }),
+            },
             rules: {
                 ...vue.configs.essential.rules,
                 ...vue.configs.recommended.rules,
                 ...vue.configs["strongly-recommended"].rules,
+                ...(vueScopedCssPlugin !== null &&
+                    vueScopedCssRecommendedRules),
+                ...(vuejsAccessibilityPlugin !== null &&
+                    vuejsAccessibilityRecommendedRules),
                 "vue/block-lang": "warn",
                 "vue/camelcase": "warn",
                 "vue/comment-directive": "warn",
@@ -4160,6 +4471,7 @@ const sharedConfigs: Nick2Bad4UEslintConfigPresets = {
     // Keep recommended as a direct alias of all until this package has a
     // smaller opinionated preset surface worth exposing separately.
     recommended: allConfigs,
+    withJest: createConfig({ jest: true }),
     withNext: createConfig({ next: true }),
     // Some packages register shorter runtime namespaces than their package
     // names. Disable both the real namespace and the package-family alias so
@@ -4235,6 +4547,7 @@ const sharedConfigs: Nick2Bad4UEslintConfigPresets = {
             secretlint: false,
         },
     }),
+    withoutSonarJS: createConfig({ sonarjs: false }),
     withoutStylelint2: createConfig({
         plugins: {
             "stylelint-2": false,
@@ -4286,6 +4599,8 @@ const sharedConfigs: Nick2Bad4UEslintConfigPresets = {
             yamllint: false,
         },
     }),
+    // Compatibility alias retained for consumers of the former opt-in preset.
+    withSonarJS: allConfigs,
 };
 // #endregion 📦 Preset Construction
 // #region 📤 Public Exports

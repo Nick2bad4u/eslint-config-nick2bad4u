@@ -29,6 +29,9 @@ export interface Nick2Bad4UEslintConfigOptions {
      */
     readonly allowDefaultProjectFilePatterns?: readonly string[];
 
+    /** Use Jest instead of Vitest for test and benchmark files. */
+    readonly jest?: boolean | Nick2Bad4UJestOptions;
+
     /** Enable the recommended Next.js rules, with optional monorepo scoping. */
     readonly next?: boolean | Nick2Bad4UNextOptions;
 
@@ -46,6 +49,9 @@ export interface Nick2Bad4UEslintConfigOptions {
      * checks. Defaults to `process.cwd()`.
      */
     readonly rootDirectory?: string;
+
+    /** Configure the default-on SonarJS rules, or pass `false` to disable them. */
+    readonly sonarjs?: boolean | Nick2Bad4USonarJSOptions;
 
     /**
      * Import resolver TypeScript project files, relative to `rootDirectory`.
@@ -86,6 +92,9 @@ export interface Nick2Bad4UEslintConfigPresets {
 
     /** Alias for `all`; kept for familiar preset naming. */
     readonly recommended: Linter.Config[];
+
+    /** Full shared config using Jest instead of Vitest for test files. */
+    readonly withJest: Linter.Config[];
 
     /** Full shared config with the recommended Next.js rules enabled. */
     readonly withNext: Linter.Config[];
@@ -136,6 +145,9 @@ export interface Nick2Bad4UEslintConfigPresets {
     /** Full shared config without Secretlint plugin rules. */
     readonly withoutSecretlint: Linter.Config[];
 
+    /** Full shared config without SonarJS rules. */
+    readonly withoutSonarJS: Linter.Config[];
+
     /** Full shared config without Stylelint 2 rules. */
     readonly withoutStylelint2: Linter.Config[];
 
@@ -165,6 +177,18 @@ export interface Nick2Bad4UEslintConfigPresets {
 
     /** Full shared config without Yamllint plugin rules. */
     readonly withoutYamllint: Linter.Config[];
+
+    /** @deprecated SonarJS is enabled by default. Use `all` or `recommended`. */
+    readonly withSonarJS: Linter.Config[];
+}
+
+/** Options for the opt-in Jest rule section. */
+export interface Nick2Bad4UJestOptions {
+    /** File globs that replace the standard test and benchmark globs. */
+    readonly files?: readonly string[];
+
+    /** Jest version used by version-sensitive rules. */
+    readonly version?: number | string;
 }
 
 /** Options for the opt-in Next.js rule section. */
@@ -174,6 +198,12 @@ export interface Nick2Bad4UNextOptions {
 
     /** Value passed directly to `settings.next.rootDir`. */
     readonly rootDir?: readonly string[] | string;
+}
+
+/** Options for scoping the default-on SonarJS rule section. */
+export interface Nick2Bad4USonarJSOptions {
+    /** File globs that replace the standard JavaScript and TypeScript globs. */
+    readonly files?: readonly string[];
 }
 
 /** Create the shared Nick2Bad4U ESLint flat config. */

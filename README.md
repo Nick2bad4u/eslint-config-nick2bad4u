@@ -105,8 +105,10 @@ export default createConfig({
 | Option                            | Type                                | Default                      | Use it when                                                                                                          |
 | --------------------------------- | ----------------------------------- | ---------------------------- | -------------------------------------------------------------------------------------------------------------------- |
 | `allowDefaultProjectFilePatterns` | `readonly string[]`                 | Root JS/CJS/MJS globs        | Root config files are intentionally outside the nearest `tsconfig.json`; keep this list tiny and avoid broad globs.  |
+| `jest`                            | `boolean \| { files?, version? }`   | `false`                      | Replace the default Vitest rules and globals with Jest's stable recommended preset.                                  |
 | `next`                            | `boolean \| { files?, rootDir? }`   | `false`                      | Enable Next.js recommended rules; set both fields when a monorepo uses nonstandard app roots.                        |
 | `rootDirectory`                   | `string`                            | `process.cwd()`              | ESLint runs outside the project root or a monorepo package needs its own root.                                       |
+| `sonarjs`                         | `boolean \| { files? }`             | `true`                       | Pass `false` to disable SonarJS, or `{ files }` to replace its JavaScript and TypeScript globs.                      |
 | `tsconfigPaths`                   | `readonly string[]`                 | `["./tsconfig.eslint.json"]` | Import resolver project paths; this does not replace TypeScript parser project-service discovery of `tsconfig.json`. |
 | `plugins`                         | `Readonly<Record<string, unknown>>` | `{}`                         | You need to dogfood a local plugin build or disable packaged plugin rules by namespace.                              |
 
@@ -125,7 +127,9 @@ from the named `presets` export.
 | `all`                       | Full shared config, including packaged Typefest and Etc-Misc source-rule sections. |
 | `recommended`               | Alias for `all`; provided for familiar preset naming.                              |
 | `base`                      | Shared config without explicit source-rule plugin sections.                        |
+| `withJest`                  | Full shared config using Jest instead of Vitest for test files.                    |
 | `withNext`                  | Full shared config with the recommended Next.js rules enabled.                     |
+| `withSonarJS`               | Deprecated alias for `all`; SonarJS is enabled by default.                         |
 | `withoutActionlint`         | Full shared config without Actionlint rules.                                       |
 | `withoutCodex`              | Full shared config without Codex plugin rules.                                     |
 | `withoutCopilot`            | Full shared config without Copilot rules.                                          |
@@ -140,6 +144,7 @@ from the named `presets` export.
 | `withoutRuntimeCleanup`     | Full shared config without Runtime Cleanup plugin rules.                           |
 | `withoutSdl2`               | Full shared config without SDL 2 rules.                                            |
 | `withoutSecretlint`         | Full shared config without Secretlint plugin rules.                                |
+| `withoutSonarJS`            | Full shared config without SonarJS rules.                                          |
 | `withoutStylelint2`         | Full shared config without Stylelint 2 rules.                                      |
 | `withoutTestSignal`         | Full shared config without Test Signal plugin rules.                               |
 | `withoutTombi`              | Full shared config without Tombi plugin rules.                                     |
@@ -153,6 +158,10 @@ from the named `presets` export.
 
 Use a `without*` preset when a repository does not use that surface or when it
 needs to provide a local build of that plugin for dogfooding.
+
+Vue scoped-CSS and accessibility recommendations are enabled by default only
+for the existing Vue SFC file block. SonarJS is also enabled by default on code
+files; Jest remains opt-in because it replaces the default Vitest integration.
 
 ## TypeScript project setup
 

@@ -88,8 +88,10 @@ export default createConfig({
 | Option                            | Default                      | Guidance                                                                                                             |
 | --------------------------------- | ---------------------------- | -------------------------------------------------------------------------------------------------------------------- |
 | `allowDefaultProjectFilePatterns` | Root JS/CJS/MJS globs        | Root globs passed to `parserOptions.projectService.allowDefaultProject`. Only include files outside `tsconfig.json`. |
+| `jest`                            | `false`                      | Pass `true` to replace Vitest on standard test globs, or `{ files, version }` for custom Jest projects.              |
 | `next`                            | `false`                      | Pass `true` for standard Next.js roots or `{ files, rootDir }` for a monorepo.                                       |
 | `rootDirectory`                   | `process.cwd()`              | Set this when ESLint runs from outside the package root.                                                             |
+| `sonarjs`                         | `true`                       | Pass `false` to disable SonarJS, or `{ files }` to replace its standard code globs.                                  |
 | `tsconfigPaths`                   | `["./tsconfig.eslint.json"]` | Import resolver project paths. The parser still uses project-service discovery of nearest `tsconfig.json`.           |
 | `plugins`                         | `{}`                         | Pass a plugin object to replace a namespace, or `false`/`null` to disable it.                                        |
 
@@ -109,6 +111,20 @@ export default createConfig({
 `ESLINT_CONFIG_ROOT` exists for environments where command wrappers control the
 root path. Prefer `rootDirectory` in repository-owned config files because the
 setting stays visible to reviewers.
+
+### Etc-Misc
+
+The source-file section starts from Etc-Misc v2's published `all` rule
+inventory, then applies this package's reviewed severities and ownership
+overrides. Deprecated rules and memoization aliases are not enabled. Where an
+upstream TypeScript, Unicorn, Perfectionist, React, or ESLint core facility
+already owns a behavior, the Etc-Misc equivalent stays off so a node receives
+one diagnostic.
+
+The JSX allocation rules retain v2's intrinsic-element allowlist, and invalid
+void-element nesting remains owned by the React DOM rules. Use `withoutEtcMisc`
+when a repository needs to remove the entire source-rule section or register a
+local Etc-Misc build.
 
 ### Next.js
 
@@ -140,6 +156,81 @@ export default createConfig({
    "apps/*/src/pages/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
   ],
   rootDir: ["apps/*/"],
+ },
+});
+```
+
+### Jest
+
+Jest is opt-in because the shared default uses Vitest. Enabling Jest replaces
+the Vitest plugin rules, globals, and settings on the test and benchmark globs;
+it does not layer both test-framework plugins onto the same files.
+
+```js
+import nick2bad4u from "eslint-config-nick2bad4u";
+
+export default nick2bad4u.configs.withJest;
+```
+
+Use the factory for nonstandard paths or when a monorepo needs to pin the Jest
+version used by version-sensitive lint rules.
+
+```js
+import { createConfig } from "eslint-config-nick2bad4u";
+
+export default createConfig({
+ jest: {
+  files: ["packages/*/test/**/*.{js,jsx,ts,tsx}"],
+  version: "30.0.0",
+ },
+});
+```
+
+The preset intentionally uses Jest's stable `recommended` config. It does not
+use `all`, whose rule membership can change outside major releases.
+
+### SonarJS
+
+SonarJS is enabled by default on JavaScript and TypeScript code files. The
+shared config keeps upstream-deprecated rules disabled and turns off SonarJS
+rules already owned by its core, TypeScript, RegExp, React, import, and test
+plugins so one rule owns each diagnostic.
+
+```js
+import nick2bad4u from "eslint-config-nick2bad4u";
+
+export default nick2bad4u.configs.withoutSonarJS;
+```
+
+Use the factory to disable it or narrow it to package source files. The former
+`withSonarJS` preset remains as a deprecated alias for `all` so existing imports
+continue to work.
+
+```js
+import { createConfig } from "eslint-config-nick2bad4u";
+
+export default createConfig({
+ sonarjs: {
+  files: ["packages/*/src/**/*.{js,jsx,ts,tsx}"],
+ },
+});
+```
+
+### Vue
+
+The Vue file block includes the recommended rules from
+`eslint-plugin-vue-scoped-css` and `eslint-plugin-vuejs-accessibility`. They are
+default-on because they apply only where the existing Vue SFC parser block
+matches. Disable either namespace through the plugin override API when a Vue
+project relies on dynamic selectors or another accessibility analyzer.
+
+```js
+import { createConfig } from "eslint-config-nick2bad4u";
+
+export default createConfig({
+ plugins: {
+  "vue-scoped-css": false,
+  "vuejs-accessibility": false,
  },
 });
 ```

@@ -125,7 +125,10 @@ const getMissingPluginNames = (
         .filter((pluginName) => !actualPluginNames.has(pluginName))
         .toSorted((left, right) => left.localeCompare(right));
 
-const FIXTURE_SMOKE_TEST_TIMEOUT = 60_000;
+// The exhaustive matrix competes with the other typechecked Vitest projects
+// during the full release gate. Its isolated runtime is much lower, but the
+// shared Windows runner can legitimately exceed one minute under that load.
+const FIXTURE_SMOKE_TEST_TIMEOUT = 180_000;
 
 describe("fixture smoke matrix", () => {
     it(

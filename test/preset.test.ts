@@ -1,6 +1,12 @@
 import next from "@next/eslint-plugin-next";
 import { ESLint, type Linter } from "eslint";
 import astro from "eslint-plugin-astro";
+import etcMiscPlugin from "eslint-plugin-etc-misc";
+import jest from "eslint-plugin-jest";
+import {
+    configs as sonarjsConfigs,
+    rules as sonarjsRules,
+} from "eslint-plugin-sonarjs";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
@@ -190,6 +196,7 @@ const getParserOptionsGlobalsEntries = (
     });
 
 const presetByName: Readonly<Record<string, readonly Linter.Config[]>> = {
+    withJest: presets.withJest,
     withNext: presets.withNext,
     withoutActionlint: presets.withoutActionlint,
     withoutCodex: presets.withoutCodex,
@@ -205,6 +212,7 @@ const presetByName: Readonly<Record<string, readonly Linter.Config[]>> = {
     withoutRuntimeCleanup: presets.withoutRuntimeCleanup,
     withoutSdl2: presets.withoutSdl2,
     withoutSecretlint: presets.withoutSecretlint,
+    withoutSonarJS: presets.withoutSonarJS,
     withoutStylelint2: presets.withoutStylelint2,
     withoutTestSignal: presets.withoutTestSignal,
     withoutTombi: presets.withoutTombi,
@@ -215,6 +223,7 @@ const presetByName: Readonly<Record<string, readonly Linter.Config[]>> = {
     withoutVite: presets.withoutVite,
     withoutWriteGoodComments2: presets.withoutWriteGoodComments2,
     withoutYamllint: presets.withoutYamllint,
+    withSonarJS: presets.withSonarJS,
 };
 
 const getPresetByName = (presetName: string): readonly Linter.Config[] =>
@@ -421,7 +430,9 @@ describe("eslint-config-nick2bad4u presets", () => {
         (_presetName, preset) => {
             expect.assertions(1);
 
-            const pluginNames = getRegisteredPluginNames(presets.all);
+            const pluginNames = getRegisteredPluginNames(
+                Object.values(presetEntriesByName).flat()
+            );
 
             expect(
                 getMissingEnabledRulePluginRegistrations(preset, pluginNames)
@@ -1117,8 +1128,8 @@ describe("selected rule defaults", () => {
         ).toBe("warn");
     });
 
-    it("keeps both etc-misc unsafe Object.assign rule names disabled", () => {
-        expect.assertions(2);
+    it("enables the canonical unsafe Object.assign rule", () => {
+        expect.assertions(1);
 
         const etcMiscConfig = findConfigByName(
             presets.all,
@@ -1129,12 +1140,7 @@ describe("selected rule defaults", () => {
             etcMiscConfig?.rules?.[
                 "etc-misc/typescript/no-unsafe-object-assign"
             ]
-        ).toBe("off");
-        expect(
-            etcMiscConfig?.rules?.[
-                "etc-misc/typescript/no-unsafe-object-assignment"
-            ]
-        ).toBe("off");
+        ).toBe("warn");
     });
 
     it("scopes package documentation to the repository entrypoint", async () => {
@@ -1165,6 +1171,495 @@ describe("selected rule defaults", () => {
                 sharedConfig?.rules?.["typedoc/require-package-documentation"]
             )
         ).toBe(0);
+    });
+});
+
+describe("etc-misc v2 rule ownership", () => {
+    it("uses the real all preset inventory without enabling deprecated rules", () => {
+        expect.assertions(5);
+
+        const etcMiscConfig = findConfigByName(
+            presets.all,
+            "⌨️ Etc-Misc: Rules for Source"
+        );
+        const configuredRules = etcMiscConfig?.rules ?? {};
+        const configuredRuleNames = Object.keys(configuredRules).filter(
+            (ruleName) => ruleName.startsWith("etc-misc/")
+        );
+        const pluginRuleNames = new Set(Object.keys(etcMiscPlugin.rules));
+        const allPresetRuleNames = Object.keys(etcMiscPlugin.configs.all.rules);
+        const deprecatedRuleNames = Object.entries(etcMiscPlugin.rules)
+            .filter(([, rule]) => Boolean(rule.meta.deprecated))
+            .map(([ruleName]) => `etc-misc/${ruleName}`);
+
+        expect(
+            allPresetRuleNames.filter(
+                (ruleName) => !Object.hasOwn(configuredRules, ruleName)
+            )
+        ).toStrictEqual([]);
+        expect(
+            configuredRuleNames.filter(
+                (ruleName) => !pluginRuleNames.has(ruleName.slice(9))
+            )
+        ).toStrictEqual([]);
+        expect(
+            deprecatedRuleNames.filter(
+                (ruleName) =>
+                    Object.hasOwn(configuredRules, ruleName) &&
+                    isRuleEnabled(configuredRules[ruleName])
+            )
+        ).toStrictEqual([]);
+        expect(configuredRules["etc-misc/require-memo"]).toBe("off");
+        expect(configuredRuleNames).not.toStrictEqual(
+            expect.arrayContaining([
+                "etc-misc/require-usememo",
+                "etc-misc/require-usememo-children",
+            ])
+        );
+    });
+
+    it("keeps canonical upstream behavior owners enabled exactly once", async () => {
+        expect.assertions(7);
+
+        const eslint = new ESLint({
+            cwd: repositoryRoot,
+            overrideConfig: presets.all,
+            overrideConfigFile: true,
+        });
+        const effectiveConfig = (await eslint.calculateConfigForFile(
+            "src/preset.ts"
+        )) as Linter.Config | undefined;
+        const testConfig = (await eslint.calculateConfigForFile(
+            "src/test/example.test.ts"
+        )) as Linter.Config | undefined;
+        const canonicalRuleOwners = [
+            "@typescript-eslint/array-type",
+            "@typescript-eslint/consistent-type-exports",
+            "@typescript-eslint/no-base-to-string",
+            "@typescript-eslint/no-mixed-enums",
+            "@typescript-eslint/no-unnecessary-type-parameters",
+            "@typescript-eslint/no-unused-vars",
+            "perfectionist/sort-exports",
+            "perfectionist/sort-imports",
+            "unicorn/no-unreadable-iife",
+            "unicorn/no-unused-properties",
+            "unicorn/prefer-includes",
+            "unicorn/throw-new-error",
+        ] as const;
+        const intentionallyUnownedPluginNames = [
+            "compat",
+            "no-secrets",
+            "simple-import-sort",
+            "unused-imports",
+        ] as const;
+
+        expect(
+            canonicalRuleOwners.filter(
+                (ruleName) => !isRuleEnabled(effectiveConfig?.rules?.[ruleName])
+            )
+        ).toStrictEqual([]);
+        expect(
+            intentionallyUnownedPluginNames.filter((pluginName) =>
+                Object.hasOwn(effectiveConfig?.plugins ?? {}, pluginName)
+            )
+        ).toStrictEqual([]);
+        expect(
+            effectiveConfig?.rules?.[
+                "@eslint-community/eslint-comments/no-unused-disable"
+            ]
+        ).toBeUndefined();
+        expect(
+            effectiveConfig?.linterOptions?.reportUnusedDisableDirectives
+        ).toBe(1);
+        expect(
+            isRuleEnabled(testConfig?.rules?.["vitest/no-focused-tests"])
+        ).toBe(true);
+        expect(
+            isRuleEnabled(testConfig?.rules?.["test-signal/no-focused-tests"])
+        ).toBe(false);
+        expect(
+            isRuleEnabled(testConfig?.rules?.["etc-misc/no-only-tests"])
+        ).toBe(false);
+    });
+
+    it("preserves intrinsic JSX defaults and assigns overlapping React behavior once", async () => {
+        expect.assertions(10);
+
+        const eslint = new ESLint({
+            cwd: repositoryRoot,
+            overrideConfig: presets.all,
+            overrideConfigFile: true,
+        });
+        const effectiveConfig = (await eslint.calculateConfigForFile(
+            "src/components/example.tsx"
+        )) as Linter.Config | undefined;
+        const intrinsicAllocationRuleNames = [
+            "etc-misc/jsx-no-jsx-as-prop",
+            "etc-misc/jsx-no-new-array-as-prop",
+            "etc-misc/jsx-no-new-function-as-prop",
+            "etc-misc/jsx-no-new-object-as-prop",
+        ] as const;
+
+        for (const ruleName of intrinsicAllocationRuleNames) {
+            expect(effectiveConfig?.rules?.[ruleName]).toStrictEqual([
+                1,
+                { nativeAllowList: "all" },
+            ]);
+        }
+
+        expect(
+            effectiveConfig?.rules?.["etc-misc/no-invalid-jsx-nesting"]
+        ).toStrictEqual([2, { checkVoidParents: false }]);
+        expect(
+            isRuleEnabled(
+                effectiveConfig?.rules?.[
+                    "@eslint-react/dom-no-void-elements-with-children"
+                ]
+            )
+        ).toBe(true);
+        expect(
+            isRuleEnabled(
+                effectiveConfig?.rules?.[
+                    "etc-misc/react-prefer-function-component"
+                ]
+            )
+        ).toBe(false);
+        expect(
+            isRuleEnabled(
+                effectiveConfig?.rules?.["@eslint-react/no-class-component"]
+            )
+        ).toBe(true);
+        expect(
+            isRuleEnabled(
+                effectiveConfig?.rules?.["etc-misc/no-unstable-react-values"]
+            )
+        ).toBe(false);
+        expect(
+            isRuleEnabled(
+                effectiveConfig?.rules?.[
+                    "@eslint-react/no-unstable-context-value"
+                ]
+            )
+        ).toBe(false);
+    });
+
+    it("removes Etc-Misc completely from the effective opt-out preset", async () => {
+        expect.assertions(2);
+
+        const eslint = new ESLint({
+            cwd: repositoryRoot,
+            overrideConfig: presets.withoutEtcMisc,
+            overrideConfigFile: true,
+        });
+        const effectiveConfig = (await eslint.calculateConfigForFile(
+            "src/preset.ts"
+        )) as Linter.Config | undefined;
+
+        expect(Object.hasOwn(effectiveConfig?.plugins ?? {}, "etc-misc")).toBe(
+            false
+        );
+        expect(
+            Object.keys(effectiveConfig?.rules ?? {}).some((ruleName) =>
+                ruleName.startsWith("etc-misc/")
+            )
+        ).toBe(false);
+    });
+});
+
+describe("vue preset integration", () => {
+    it("enables the maintained recommended scoped-CSS and accessibility rules", () => {
+        expect.assertions(6);
+
+        const vueConfig = findConfigByName(
+            presets.all,
+            "🖖 Vue SFCs: **/*.vue"
+        );
+
+        expect(Object.keys(vueConfig?.plugins ?? {})).toStrictEqual(
+            expect.arrayContaining(["vue-scoped-css", "vuejs-accessibility"])
+        );
+        expect(
+            getRuleNamesForPlugin(presets.all, "vue-scoped-css")
+        ).toHaveLength(12);
+        expect(
+            getRuleNamesForPlugin(presets.all, "vuejs-accessibility")
+        ).toHaveLength(20);
+        expect(vueConfig?.rules?.["vue-scoped-css/no-unused-selector"]).toBe(
+            "warn"
+        );
+        expect(vueConfig?.rules?.["vuejs-accessibility/alt-text"]).toBe(
+            "error"
+        );
+        expect(
+            vueConfig?.rules?.["vuejs-accessibility/no-onchange"]
+        ).toBeUndefined();
+    });
+
+    it("supports disabling either added Vue namespace", () => {
+        expect.assertions(4);
+
+        const configEntries = createConfig({
+            plugins: {
+                "vue-scoped-css": false,
+                "vuejs-accessibility": false,
+            },
+        });
+        const registeredPluginNames = getRegisteredPluginNames(configEntries);
+
+        expect(registeredPluginNames).not.toContain("vue-scoped-css");
+        expect(registeredPluginNames).not.toContain("vuejs-accessibility");
+        expect(
+            getRuleNamesForPlugin(configEntries, "vue-scoped-css")
+        ).toStrictEqual([]);
+        expect(
+            getRuleNamesForPlugin(configEntries, "vuejs-accessibility")
+        ).toStrictEqual([]);
+    });
+});
+
+describe("jest preset integration", () => {
+    it("keeps Jest absent and Vitest enabled by default", () => {
+        expect.assertions(3);
+
+        expect(getRegisteredPluginNames(presets.all)).not.toContain("jest");
+        expect(getRuleNamesForPlugin(presets.all, "jest")).toStrictEqual([]);
+        expect(findConfigByName(presets.all, "🧪 Vitest: all")?.name).toBe(
+            "🧪 Vitest: all"
+        );
+    });
+
+    it("replaces Vitest with the stable Jest recommended config", () => {
+        expect.assertions(5);
+
+        const configEntries = createConfig({ jest: true });
+        const jestConfig = findConfigByName(
+            configEntries,
+            "🃏 Jest: Recommended"
+        );
+
+        expect(jestConfig?.files).toStrictEqual([
+            "test/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
+            "tests/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
+            "src/test/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
+            "benchmarks/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
+            "benchmark/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
+        ]);
+        expect(jestConfig?.plugins?.["jest"]).toBe(jest);
+        expect(jestConfig?.rules).toStrictEqual(
+            jest.configs["flat/recommended"].rules
+        );
+        expect(
+            findConfigByName(configEntries, "🧪 Vitest: all")
+        ).toBeUndefined();
+        expect(getRuleNamesForPlugin(configEntries, "vitest")).toStrictEqual(
+            []
+        );
+    });
+
+    it("supports custom files and an explicit Jest version", () => {
+        expect.assertions(4);
+
+        const files = ["packages/*/jest/**/*.{ts,tsx}"] as const;
+        const configEntries = createConfig({
+            jest: { files, version: "30.0.0" },
+        });
+        const jestConfig = findConfigByName(
+            configEntries,
+            "🃏 Jest: Recommended"
+        );
+        const testingLibraryConfig = findConfigByName(
+            configEntries,
+            "👨‍🔬 Testing Library: DOM"
+        );
+        const testOverrides = findConfigByName(
+            configEntries,
+            "🧪 Tests: Tests, Benchmarks ⛔ Overrides"
+        );
+        const jestSettings = assertNonArrayObject(
+            jestConfig?.settings?.["jest"],
+            "Expected the enabled Jest config to define settings.jest."
+        );
+
+        expect(jestConfig?.files).toStrictEqual([...files]);
+        expect(testingLibraryConfig?.files).toStrictEqual([...files]);
+        expect(testOverrides?.files).toStrictEqual([...files]);
+        expect(jestSettings["version"]).toBe("30.0.0");
+    });
+
+    it("maps withJest as a complete opt-in preset", () => {
+        expect.assertions(3);
+
+        expect(getPresetByName("withJest")).toBe(presets.withJest);
+        expect(nickTwoBadFourU.configs.withJest).toBe(presets.withJest);
+        expect(
+            findConfigByName(presets.withJest, "🃏 Jest: Recommended")?.rules
+        ).toStrictEqual(jest.configs["flat/recommended"].rules);
+    });
+});
+
+const sonarJSRulesCoveredElsewhere = [
+    "sonarjs/arguments-usage",
+    "sonarjs/array-callback-without-return",
+    "sonarjs/arrow-function-convention",
+    "sonarjs/assertions-in-test-cases",
+    "sonarjs/assertions-in-tests",
+    "sonarjs/async-test-assertions",
+    "sonarjs/block-scoped-var",
+    "sonarjs/code-eval",
+    "sonarjs/concise-regex",
+    "sonarjs/constructor-for-side-effects",
+    "sonarjs/declarations-in-global-scope",
+    "sonarjs/duplicates-in-character-class",
+    "sonarjs/existing-groups",
+    "sonarjs/fixme-tag",
+    "sonarjs/for-in",
+    "sonarjs/for-loop-increment-sign",
+    "sonarjs/function-inside-loop",
+    "sonarjs/generator-without-yield",
+    "sonarjs/hooks-before-test-cases",
+    "sonarjs/index-of-compare-to-positive-number",
+    "sonarjs/jsx-no-leaked-render",
+    "sonarjs/label-position",
+    "sonarjs/link-with-target-blank",
+    "sonarjs/no-alphabetical-sort",
+    "sonarjs/no-array-delete",
+    "sonarjs/no-built-in-override",
+    "sonarjs/no-case-label-in-switch",
+    "sonarjs/no-control-regex",
+    "sonarjs/no-dead-store",
+    "sonarjs/no-delete-var",
+    "sonarjs/no-duplicate-in-composite",
+    "sonarjs/no-duplicate-test-title",
+    "sonarjs/no-empty-alternatives",
+    "sonarjs/no-empty-character-class",
+    "sonarjs/no-empty-group",
+    "sonarjs/no-empty-test-title",
+    "sonarjs/no-exclusive-tests",
+    "sonarjs/no-fallthrough",
+    "sonarjs/no-fixed-wait-in-tests",
+    "sonarjs/no-for-in-iterable",
+    "sonarjs/no-function-declaration-in-block",
+    "sonarjs/no-hook-setter-in-body",
+    "sonarjs/no-implicit-dependencies",
+    "sonarjs/no-implicit-global",
+    "sonarjs/no-incorrect-string-concat",
+    "sonarjs/no-interpolation-in-inline-snapshots",
+    "sonarjs/no-invalid-regexp",
+    "sonarjs/no-labels",
+    "sonarjs/no-misleading-array-reverse",
+    "sonarjs/no-misleading-character-class",
+    "sonarjs/no-nested-incdec",
+    "sonarjs/no-parameter-reassignment",
+    "sonarjs/no-primitive-wrappers",
+    "sonarjs/no-redundant-boolean",
+    "sonarjs/no-regex-spaces",
+    "sonarjs/no-require-or-define",
+    "sonarjs/no-return-type-any",
+    "sonarjs/no-skipped-tests",
+    "sonarjs/no-trivial-assertions",
+    "sonarjs/no-unused-function-argument",
+    "sonarjs/no-unused-vars",
+    "sonarjs/no-use-of-empty-return-value",
+    "sonarjs/no-useless-catch",
+    "sonarjs/no-variable-usage-before-declaration",
+    "sonarjs/prefer-default-last",
+    "sonarjs/prefer-object-literal",
+    "sonarjs/prefer-regexp-exec",
+    "sonarjs/prefer-specific-assertions",
+    "sonarjs/single-char-in-character-classes",
+    "sonarjs/slow-regex",
+    "sonarjs/super-linear-regex",
+    "sonarjs/test-check-exception",
+    "sonarjs/todo-tag",
+    "sonarjs/unused-import",
+    "sonarjs/unused-named-groups",
+] as const;
+
+describe("sonarjs preset integration", () => {
+    it("enables the audited SonarJS rules by default on code files", () => {
+        expect.assertions(7);
+
+        const sonarJSConfig = findConfigByName(
+            presets.all,
+            "📡 SonarJS: Recommended"
+        );
+
+        expect(sonarJSConfig?.files).toStrictEqual([
+            "**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
+        ]);
+        expect(Object.keys(sonarJSConfig?.plugins ?? {})).toContain("sonarjs");
+        expect(sonarJSConfig?.rules?.["sonarjs/no-identical-expressions"]).toBe(
+            sonarjsConfigs.recommended.rules?.[
+                "sonarjs/no-identical-expressions"
+            ]
+        );
+        expect(sonarJSConfig?.rules?.["sonarjs/no-inconsistent-returns"]).toBe(
+            "warn"
+        );
+        expect(sonarJSConfig?.rules?.["sonarjs/no-undefined-assignment"]).toBe(
+            "warn"
+        );
+        expect(
+            Object.entries(sonarjsRules)
+                .filter(
+                    ([, rule]) =>
+                        rule.meta?.deprecated === true ||
+                        typeof rule.meta?.deprecated === "object"
+                )
+                .map(([ruleName]) => `sonarjs/${ruleName}`)
+                .filter((ruleName) =>
+                    isRuleEnabled(sonarJSConfig?.rules?.[ruleName])
+                )
+        ).toStrictEqual([]);
+        expect(
+            sonarJSRulesCoveredElsewhere.filter((ruleName) =>
+                isRuleEnabled(sonarJSConfig?.rules?.[ruleName])
+            )
+        ).toStrictEqual([]);
+    });
+
+    it("supports explicitly disabling SonarJS", () => {
+        expect.assertions(3);
+
+        const configEntries = createConfig({ sonarjs: false });
+
+        expect(
+            findConfigByName(configEntries, "📡 SonarJS: Recommended")
+        ).toBeUndefined();
+        expect(getRegisteredPluginNames(configEntries)).not.toContain(
+            "sonarjs"
+        );
+        expect(getRuleNamesForPlugin(configEntries, "sonarjs")).toStrictEqual(
+            []
+        );
+    });
+
+    it("supports custom SonarJS file globs", () => {
+        expect.assertions(1);
+
+        const files = ["packages/*/src/**/*.{js,ts}"] as const;
+        const configEntries = createConfig({ sonarjs: { files } });
+        const sonarJSConfig = findConfigByName(
+            configEntries,
+            "📡 SonarJS: Recommended"
+        );
+
+        expect(sonarJSConfig?.files).toStrictEqual([...files]);
+    });
+
+    it("exposes the opt-out preset and preserves the former opt-in alias", () => {
+        expect.assertions(6);
+
+        expect(getPresetByName("withSonarJS")).toBe(presets.withSonarJS);
+        expect(nickTwoBadFourU.configs.withSonarJS).toBe(presets.withSonarJS);
+        expect(presets.withSonarJS).toBe(presets.all);
+        expect(getPresetByName("withoutSonarJS")).toBe(presets.withoutSonarJS);
+        expect(nickTwoBadFourU.configs.withoutSonarJS).toBe(
+            presets.withoutSonarJS
+        );
+        expect(
+            findConfigByName(presets.withoutSonarJS, "📡 SonarJS: Recommended")
+        ).toBeUndefined();
     });
 });
 
