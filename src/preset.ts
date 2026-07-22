@@ -36,7 +36,6 @@ export const presets: Nick2Bad4UEslintConfigPresets = Object.freeze({
     recommended: sharedConfigs.recommended,
     withJest: sharedConfigs.withJest,
     withNext: sharedConfigs.withNext,
-    withoutActionlint: sharedConfigs.withoutActionlint,
     withoutCodex: sharedConfigs.withoutCodex,
     withoutCopilot: sharedConfigs.withoutCopilot,
     withoutDocusaurus2: sharedConfigs.withoutDocusaurus2,

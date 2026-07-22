@@ -76,15 +76,6 @@ const fixturePaths = [
     "widget.vue.ts",
 ] as const;
 
-const forcedOptionalDocusaurusRules = {
-    files: ["docs/docusaurus/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}"],
-    name: "Fixture smoke: force optional Docusaurus rules",
-    rules: {
-        "@docusaurus/no-untranslated-text": "warn",
-        "@docusaurus/string-literal-i18n-messages": "warn",
-    },
-} satisfies Linter.Config;
-
 const fixtureTypeScriptProject = {
     files: ["**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts,vue}"],
     languageOptions: {
@@ -144,11 +135,7 @@ describe("fixture smoke matrix", () => {
 
             const eslint = new ESLint({
                 cwd: fixtureWorkspaceRoot,
-                overrideConfig: [
-                    ...sharedConfig,
-                    forcedOptionalDocusaurusRules,
-                    fixtureTypeScriptProject,
-                ],
+                overrideConfig: [...sharedConfig, fixtureTypeScriptProject],
                 overrideConfigFile: true,
             });
 

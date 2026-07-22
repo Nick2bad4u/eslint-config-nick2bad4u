@@ -114,17 +114,17 @@ setting stays visible to reviewers.
 
 ### Etc-Misc
 
-The source-file section starts from Etc-Misc v2's published `all` rule
+The source-file section starts from Etc-Misc v3's published `all` rule
 inventory, then applies this package's reviewed severities and ownership
-overrides. Deprecated rules and memoization aliases are not enabled. Where an
-upstream TypeScript, Unicorn, Perfectionist, React, or ESLint core facility
-already owns a behavior, the Etc-Misc equivalent stays off so a node receives
-one diagnostic.
+overrides. Deprecated rules and React allocation/memoization checks are not
+enabled. Where an upstream TypeScript, Unicorn, Perfectionist, React, or ESLint
+core facility already owns a behavior, the Etc-Misc equivalent stays off so a
+node receives one diagnostic.
 
-The JSX allocation rules retain v2's intrinsic-element allowlist, and invalid
-void-element nesting remains owned by the React DOM rules. Use `withoutEtcMisc`
-when a repository needs to remove the entire source-rule section or register a
-local Etc-Misc build.
+React allocation checks can be enabled explicitly when a project still needs
+them, and invalid void-element nesting remains owned by the React DOM rules.
+Use `withoutEtcMisc` when a repository needs to remove the entire source-rule
+section or register a local Etc-Misc build.
 
 ### Next.js
 

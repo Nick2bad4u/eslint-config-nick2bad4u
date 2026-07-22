@@ -10,7 +10,6 @@
 import type { Linter } from "eslint";
 import type { Except, UnknownRecord } from "type-fest";
 
-import docusaurus from "@docusaurus/eslint-plugin";
 import comments from "@eslint-community/eslint-plugin-eslint-comments/configs";
 import react from "@eslint-react/eslint-plugin";
 import { globalIgnores } from "@eslint/config-helpers";
@@ -27,7 +26,6 @@ import vitest from "@vitest/eslint-plugin";
 import gitignore from "eslint-config-flat-gitignore";
 import prettierOverrides from "eslint-config-prettier";
 import { createTypeScriptImportResolver } from "eslint-import-resolver-typescript";
-import actionlint from "eslint-plugin-actionlint";
 import arrayFunc from "eslint-plugin-array-func";
 import astro from "eslint-plugin-astro";
 import canonical from "eslint-plugin-canonical";
@@ -109,7 +107,12 @@ import {
 import tseslint from "typescript-eslint";
 import * as yamlEslintParser from "yaml-eslint-parser";
 
-// eslint-disable-next-line n/no-process-env -- Process environment is used for CI detection and opt-in features such as markdown code block linting and file-progress modes.
+/**
+ * Captured environment variable map for config-time feature gates.
+ *
+ * Read once up front so all option checks use a consistent snapshot.
+ */
+/* eslint-disable-next-line n/no-process-env -- Process environment is used for CI detection and opt-in features such as markdown code block linting and file-progress modes. */
 const processEnvironment = process.env;
 
 // #region 📁 Markdown Code Block Processor
@@ -119,6 +122,7 @@ const processEnvironment = process.env;
 // markdown/gfm document rules remain the default Markdown path.
 // PowerShell one-shot:
 // `$flag = "ENABLE_MARKDOWN_CODE_BLOCK_LINTING"; Set-Item "Env:$flag" 1; npx eslint .; Remove-Item "Env:$flag" -EA 0`
+// Feature flag that only enables markdown block extraction when explicitly requested.
 const enableMarkdownCodeBlockLinting =
     processEnvironment["ENABLE_MARKDOWN_CODE_BLOCK_LINTING"] === "1";
 
@@ -128,6 +132,7 @@ const enableMarkdownCodeBlockLinting =
 // Consumers get type-aware rules out of the box through TypeScript ESLint's
 // project service. Keep lint-visible files in the nearest tsconfig.json; use
 // allowDefaultProjectFilePatterns only for a tiny root-file fallback.
+/** JSDoc tags that should be counted as semantic comment blocks. */
 const COMMENT_LENGTH_SEMANTIC_COMMENTS = Object.freeze([
     "*`*",
     "@abstract",
@@ -173,17 +178,25 @@ const COMMENT_LENGTH_SEMANTIC_COMMENTS = Object.freeze([
     "@warn",
     "@yields",
 ]);
+/**
+ * Minimal set of root files that can opt into TypeScript ESLint default-project
+ * fallback.
+ */
 const DEFAULT_PROJECT_FILE_PATTERNS = Object.freeze([
     "*.{js,mjs,cjs}",
     ".*.{js,mjs,cjs}",
 ]);
+/** Default tsconfig path consumed by this config for parser/project services. */
 const DEFAULT_TSCONFIG_PATHS = Object.freeze(["./tsconfig.eslint.json"]);
+/** File globs that should be linted with Docusaurus code rules. */
 const DOCUSAURUS_CODE_FILE_PATTERNS = Object.freeze([
     "**/docs/docusaurus/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
 ]);
+/** Content globs that should be linted as Docusaurus documentation text. */
 const DOCUSAURUS_CONTENT_FILE_PATTERNS = Object.freeze([
     "**/docs/docusaurus/**/*.{md,mdx}",
 ]);
+/** Ignore list for generated or tool-generated Docusaurus output. */
 const DOCUSAURUS_IGNORES = Object.freeze([
     "**/docs/docusaurus/.docusaurus/**",
     "**/docs/docusaurus/build/**",
@@ -191,9 +204,14 @@ const DOCUSAURUS_IGNORES = Object.freeze([
     "**/docs/docusaurus/static/remark-inspector/**",
     "**/docs/docusaurus/static/stylelint-inspector/**",
 ]);
+/** Global file set used for the base ESLint overrides. */
 const GLOBAL_FILE_PATTERNS = Object.freeze([
     "**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
 ]);
+/**
+ * JSON/JSON5 rule overrides that coexist with prettier and mixed-language
+ * handling.
+ */
 const JSONC_AND_JSON5_RULES = {
     "jsonc/array-bracket-newline": "off", // Handled by Prettier
     "jsonc/array-bracket-spacing": "off", // Handled by Prettier
@@ -276,12 +294,17 @@ const JSONC_AND_JSON5_RULES = {
     "jsonc/valid-json-number": "warn",
     "jsonc/vue-custom-block/no-parsing-error": "warn",
 } satisfies Linter.RulesRecord;
+/**
+ * Root config filenames matched for default-project fallback and
+ * config-specific tuning.
+ */
 const ROOT_CONFIG_FILE_PATTERNS = Object.freeze([
     "*.config.{js,mjs,cjs,ts,mts,cts}",
     "*.config.*.{js,mjs,cjs,ts,mts,cts}",
     ".*rc.{js,mjs,cjs,ts,mts,cts}",
     "preset.mjs",
 ]);
+/** Root script entrypoints kept out of strict code-only globs. */
 const ROOT_SCRIPT_FILE_PATTERNS = Object.freeze([
     "*.{js,mjs,cjs,ts,mts,cts}",
     ".*.{js,mjs,cjs,ts,mts,cts}",
@@ -307,9 +330,11 @@ export const allowDefaultProjectFilePatternPresets: Nick2Bad4UAllowDefaultProjec
         rootMjsFiles: Object.freeze(["*.mjs", ".*.mjs"]),
         rootScriptFiles: ROOT_SCRIPT_FILE_PATTERNS,
     });
+/** Primary source-tree file set for TypeScript-aware linting. */
 const SOURCE_FILE_PATTERNS = Object.freeze([
     "src/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
 ]);
+/** Test and benchmark file glob patterns for test-oriented overrides. */
 const TEST_FILE_PATTERNS = Object.freeze([
     "test/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
     "tests/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
@@ -317,6 +342,10 @@ const TEST_FILE_PATTERNS = Object.freeze([
     "benchmarks/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
     "benchmark/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
 ]);
+/**
+ * RuleTester/fixture paths ignored by test-signal to avoid noisy false
+ * positives.
+ */
 const TEST_SIGNAL_IGNORES = Object.freeze([
     "**/*RuleTester*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
     "**/*ruleTester*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
@@ -331,16 +360,19 @@ const TEST_SIGNAL_IGNORES = Object.freeze([
     "**/tests/_internal/**",
     "**/tests/fixtures/**",
 ]);
+/** TypeDoc-aware file list for API doc generation linting. */
 const TYPEDOC_API_FILE_PATTERNS = Object.freeze([
     "packages/*/src/**/*.{ts,tsx,mts,cts}",
     "src/**/*.{ts,tsx,mts,cts}",
 ]);
+/** Next.js source globs for framework-aware config scoping. */
 const NEXT_FILE_PATTERNS = Object.freeze([
     "app/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
     "pages/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
     "src/app/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
     "src/pages/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
 ]);
+/** TypeDoc exclusions for non-source files and non-library artifacts. */
 const TYPEDOC_API_IGNORES = Object.freeze([
     "**/*.config.{ts,tsx,mts,cts}",
     "**/*.config.*.{ts,tsx,mts,cts}",
@@ -487,7 +519,6 @@ export interface Nick2Bad4UEslintConfigPresets {
     readonly withJest: EslintConfig[];
     /** Full shared config with the recommended Next.js rules enabled. */
     readonly withNext: EslintConfig[];
-    readonly withoutActionlint: EslintConfig[];
     readonly withoutCodex: EslintConfig[];
     readonly withoutCopilot: EslintConfig[];
     readonly withoutDocusaurus2: EslintConfig[];
@@ -672,6 +703,7 @@ const vuejsAccessibilityRules = {
     // @NOTE The documented behavior applies specifically to `aria-hidden="true"`,
     // but v2.5.0 also reports `aria-hidden="false"` and dynamic bindings.
     // Disabled because false and statically indeterminate values should not be reported.
+    // @NOTE Re-enable when the plugin is updated and the rule is fixed. Current version: 2.5.0
     // @see {@link https://vue-a11y.github.io/eslint-plugin-vuejs-accessibility/rules/no-aria-hidden-on-focusable.html}
     "vuejs-accessibility/no-aria-hidden-on-focusable": "off",
     "vuejs-accessibility/no-role-presentation-on-focusable": "error",
@@ -751,11 +783,6 @@ export const createConfig = (
         pluginOverrideEntries,
         "typefest",
         typefestPlugin
-    );
-    const actionlintPlugin = resolveTypedPlugin(
-        pluginOverrideEntries,
-        "actionlint",
-        actionlint
     );
     const codexPlugin = resolveTypedPlugin(
         pluginOverrideEntries,
@@ -1524,8 +1551,6 @@ export const createConfig = (
                       },
                   },
               ]),
-        // MARK: 🦑 Actionlint
-        ...(actionlintPlugin === null ? [] : [actionlintPlugin.configs.all]),
         {
             // MARK: 👮 Security
             ...security.configs.recommended,
@@ -2181,7 +2206,6 @@ export const createConfig = (
         // #region 🦖 Docusaurus Files
         // ═══════════════════════════════════════════════════════════════════════════════
         {
-            ...docusaurus.configs.all,
             files: [...DOCUSAURUS_CODE_FILE_PATTERNS],
             ignores: [...DOCUSAURUS_IGNORES],
             languageOptions: {
@@ -2204,13 +2228,7 @@ export const createConfig = (
                 },
             },
             name: "🦖 Docusaurus: Workspace Files",
-            plugins: {
-                "@docusaurus": docusaurus,
-            },
             rules: {
-                ...docusaurus.configs.all.rules,
-                "@docusaurus/no-untranslated-text": "off",
-                "@docusaurus/string-literal-i18n-messages": "off",
                 "import-x/no-unresolved": [
                     "error",
                     {
@@ -2266,7 +2284,7 @@ export const createConfig = (
                       },
                       // prettier-ignore
                       rules: {
-                          // Start from the plugin's real v2 inventory. Explicit
+                          // Start from the plugin's real v3 inventory. Explicit
                           // overrides below preserve this preset's severities,
                           // disable deprecated rules, and assign overlapping
                           // behavior to exactly one plugin.
@@ -2283,6 +2301,10 @@ export const createConfig = (
                           "etc-misc/default-case": "off",
                           "etc-misc/disallow-import": "off",
                           "etc-misc/export-matching-filename-only": "off",
+                          "etc-misc/jsx-no-jsx-as-prop": "off",
+                          "etc-misc/jsx-no-new-array-as-prop": "off",
+                          "etc-misc/jsx-no-new-function-as-prop": "off",
+                          "etc-misc/jsx-no-new-object-as-prop": "off",
                           "etc-misc/match-filename": "off",
                           "etc-misc/max-identifier-blocks": "off",
                           "etc-misc/no-assign-mutated-array": "off",
@@ -2296,7 +2318,7 @@ export const createConfig = (
                           "etc-misc/no-expression-empty-lines": "off",
                           "etc-misc/no-foreach": "off",
                           "etc-misc/no-function-declare-after-return": "warn",
-                          "etc-misc/no-implicit-any-catch": "warn",
+                          "etc-misc/no-implicit-any-catch": "off",
                           "etc-misc/no-index-import": "warn",
                           "etc-misc/no-internal": "off",
                           "etc-misc/no-internal-modules": "off",
@@ -2319,9 +2341,9 @@ export const createConfig = (
                           "etc-misc/no-unnecessary-as-const": "warn",
                           "etc-misc/no-unnecessary-break": "warn",
                           "etc-misc/no-unnecessary-initialization": "warn",
-                          "etc-misc/no-unnecessary-template-literal": "warn",
-                          // The focused JSX allocation rules below own unstable
-                          // prop values without overlapping this umbrella rule.
+                          "etc-misc/no-unnecessary-template-literal": "off",
+                          // React performance identity checks are intentionally
+                          // opt-in; the deprecated focused rules are also off.
                           "etc-misc/no-unstable-react-values": "off",
                           "etc-misc/no-use-extend-native": "error",
                           "etc-misc/no-vulnerable": "error",
@@ -2352,7 +2374,7 @@ export const createConfig = (
                           "etc-misc/sort-top-comments": "off",
                           "etc-misc/switch-case-spacing": "off",
                           "etc-misc/template-literal-format": "off",
-                          "etc-misc/throw-error": "warn",
+                          "etc-misc/throw-error": "off",
                           "etc-misc/typescript/array-callback-return-type": "off",
                           "etc-misc/typescript/class-methods-use-this": "off",
                           "etc-misc/typescript/consistent-array-type-name": "off",
@@ -2586,6 +2608,7 @@ export const createConfig = (
                                 package: "typescript",
                             },
                         ],
+                        checkParameterProperties: true,
                         ignoreInferredTypes: true,
                         treatMethodsAsReadonly: true,
                     },
@@ -2634,6 +2657,16 @@ export const createConfig = (
                 eqeqeq: "off", // Use the TypeScript version instead
                 "func-style": "off",
                 "id-length": "off",
+                "id-match": [
+                    "warn",
+                    String.raw`^[\w$]+$`,
+                    {
+                        classFields: true,
+                        ignoreDestructuring: false,
+                        onlyDeclarations: false,
+                        properties: true,
+                    },
+                ],
                 "init-declarations": "off", // Use TypeScript Version
                 "max-lines": "off",
                 "max-lines-per-function": [
@@ -2651,6 +2684,10 @@ export const createConfig = (
                 "no-inline-comments": "off", // Allow inline comments for complex logic explanations
                 "no-invalid-this": "off", // Use TypeScript version which understands class properties and arrow functions
                 "no-magic-numbers": "off", // Use TypeScript Version instead
+                "no-restricted-exports": [
+                    "warn",
+                    { restrictedNamedExportsPattern: "^_" },
+                ],
                 "no-restricted-imports": [
                     "error",
                     {
@@ -4304,6 +4341,12 @@ export const createConfig = (
             name: "🌍 Global: 🎨 Prettier ⛔ Overrides",
             // This turns off rules globally that conflict and/or are handled by Prettier
             ...prettierOverrides,
+            rules: {
+                ...prettierOverrides.rules,
+                // Retain an ESLint diagnostic for excessive blank lines even
+                // when formatting is checked separately from linting.
+                "@stylistic/no-multiple-empty-lines": ["warn", { max: 1 }],
+            },
         },
         // #endregion 🧹 Prettier ⛔ Overrides
     ];
@@ -4452,16 +4495,23 @@ function scopeTypeScriptEslintConfigToCodeFiles(
 // #endregion 🆘 Helper Functions
 // #region 📦 Preset Construction
 // ═══════════════════════════════════════════════════════════════════════════════
+/** Full config stack with all optional presets enabled. */
 const allConfigs: EslintConfig[] = createConfig();
+/**
+ * Variant where SDL-related plugins are disabled for environments that lack
+ * SDL.
+ */
 const configsWithoutSdl2Base: EslintConfig[] = createConfig({
     plugins: {
         sdl: false,
         "sdl-2": false,
     },
 });
+/** Tracks whether node plugin is still available after removing SDL 2 support. */
 const hasNodePluginWithoutSdl2 = configsWithoutSdl2Base.some(
     (config) => isDefined(config.plugins) && keyIn(config.plugins, "n")
 );
+/** Config variant used by withoutGitHubActions2 preset. */
 const configsWithoutGitHubActions2: EslintConfig[] = createConfig({
     plugins: {
         "github-actions": false,
@@ -4486,11 +4536,6 @@ const sharedConfigs: Nick2Bad4UEslintConfigPresets = {
     // Some packages register shorter runtime namespaces than their package
     // names. Disable both the real namespace and the package-family alias so
     // consumers can choose the obvious withoutX preset name.
-    withoutActionlint: createConfig({
-        plugins: {
-            actionlint: false,
-        },
-    }),
     withoutCodex: createConfig({
         plugins: {
             codex: false,

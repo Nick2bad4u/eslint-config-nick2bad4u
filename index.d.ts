@@ -99,9 +99,6 @@ export interface Nick2Bad4UEslintConfigPresets {
     /** Full shared config with the recommended Next.js rules enabled. */
     readonly withNext: Linter.Config[];
 
-    /** Full shared config without Actionlint rules. */
-    readonly withoutActionlint: Linter.Config[];
-
     /** Full shared config without Codex plugin rules. */
     readonly withoutCodex: Linter.Config[];
 

@@ -17,6 +17,9 @@ import nickTwoBadFourU, {
 } from "../src/preset";
 
 const repositoryRoot = fileURLToPath(new URL("..", import.meta.url));
+const ruleOwnershipFixtureWorkspaceRoot = fileURLToPath(
+    new URL("fixtures/lint-smoke/workspace", import.meta.url)
+);
 
 const getRuleNames = (configEntries: readonly Linter.Config[]): Set<string> => {
     const ruleNames = configEntries.flatMap((configEntry) =>
@@ -198,7 +201,6 @@ const getParserOptionsGlobalsEntries = (
 const presetByName: Readonly<Record<string, readonly Linter.Config[]>> = {
     withJest: presets.withJest,
     withNext: presets.withNext,
-    withoutActionlint: presets.withoutActionlint,
     withoutCodex: presets.withoutCodex,
     withoutCopilot: presets.withoutCopilot,
     withoutDocusaurus2: presets.withoutDocusaurus2,
@@ -290,7 +292,6 @@ describe("eslint-config-nick2bad4u presets", () => {
     });
 
     it.each([
-        ["withoutActionlint", ["actionlint"]],
         ["withoutCodex", ["codex"]],
         ["withoutCopilot", ["copilot"]],
         ["withoutDocusaurus2", ["docusaurus-2"]],
@@ -345,13 +346,10 @@ describe("eslint-config-nick2bad4u presets", () => {
     );
 
     it("keeps full preset rules in the all preset", () => {
-        expect.assertions(8);
+        expect.assertions(7);
 
         const allPreset = presets.all as readonly Linter.Config[];
 
-        expect(
-            getRuleNamesForPlugin(allPreset, "actionlint").length
-        ).toBeGreaterThan(0);
         expect(
             getRuleNamesForPlugin(allPreset, "copilot").length
         ).toBeGreaterThan(0);
@@ -875,16 +873,6 @@ describe("eslint-config-nick2bad4u presets", () => {
                 createPlugin: () =>
                     createSingleConfigLocalPlugin(
                         "all",
-                        "actionlint",
-                        "actionlint/local-only"
-                    ),
-                overrideName: "actionlint",
-                ruleName: "actionlint/local-only",
-            },
-            {
-                createPlugin: () =>
-                    createSingleConfigLocalPlugin(
-                        "all",
                         "github-actions",
                         "github-actions/local-only"
                     ),
@@ -1174,7 +1162,7 @@ describe("selected rule defaults", () => {
     });
 });
 
-describe("etc-misc v2 rule ownership", () => {
+describe("etc-misc v3 rule ownership", () => {
     it("uses the real all preset inventory without enabling deprecated rules", () => {
         expect.assertions(5);
 
@@ -1219,7 +1207,7 @@ describe("etc-misc v2 rule ownership", () => {
     });
 
     it("keeps canonical upstream behavior owners enabled exactly once", async () => {
-        expect.assertions(7);
+        expect.assertions(9);
 
         const eslint = new ESLint({
             cwd: repositoryRoot,
@@ -1233,18 +1221,47 @@ describe("etc-misc v2 rule ownership", () => {
             "src/test/example.test.ts"
         )) as Linter.Config | undefined;
         const canonicalRuleOwners = [
+            "@stylistic/no-multiple-empty-lines",
             "@typescript-eslint/array-type",
             "@typescript-eslint/consistent-type-exports",
+            "@typescript-eslint/member-ordering",
             "@typescript-eslint/no-base-to-string",
             "@typescript-eslint/no-mixed-enums",
             "@typescript-eslint/no-unnecessary-type-parameters",
             "@typescript-eslint/no-unused-vars",
+            "@typescript-eslint/only-throw-error",
+            "@typescript-eslint/prefer-promise-reject-errors",
+            "@typescript-eslint/prefer-readonly-parameter-types",
+            "@typescript-eslint/use-unknown-in-catch-callback-variable",
+            "id-match",
+            "no-restricted-exports",
+            "perfectionist/sort-arrays",
             "perfectionist/sort-exports",
             "perfectionist/sort-imports",
+            "perfectionist/sort-named-exports",
+            "perfectionist/sort-objects",
             "unicorn/no-unreadable-iife",
             "unicorn/no-unused-properties",
+            "unicorn/no-useless-template-literals",
             "unicorn/prefer-includes",
             "unicorn/throw-new-error",
+        ] as const;
+        const deprecatedEtcMiscRuleNames = [
+            "etc-misc/consistent-empty-lines",
+            "etc-misc/jsx-no-jsx-as-prop",
+            "etc-misc/jsx-no-new-array-as-prop",
+            "etc-misc/jsx-no-new-function-as-prop",
+            "etc-misc/jsx-no-new-object-as-prop",
+            "etc-misc/no-implicit-any-catch",
+            "etc-misc/no-underscore-export",
+            "etc-misc/no-unnecessary-template-literal",
+            "etc-misc/restrict-identifier-characters",
+            "etc-misc/sort-array",
+            "etc-misc/sort-call-signature",
+            "etc-misc/sort-construct-signature",
+            "etc-misc/sort-export-specifiers",
+            "etc-misc/sort-keys",
+            "etc-misc/throw-error",
         ] as const;
         const intentionallyUnownedPluginNames = [
             "compat",
@@ -1252,6 +1269,16 @@ describe("etc-misc v2 rule ownership", () => {
             "simple-import-sort",
             "unused-imports",
         ] as const;
+        const readonlyParameterRule =
+            effectiveConfig?.rules?.[
+                "@typescript-eslint/prefer-readonly-parameter-types"
+            ];
+        const readonlyParameterOptions = assertNonArrayObject(
+            Array.isArray(readonlyParameterRule)
+                ? readonlyParameterRule[1]
+                : undefined,
+            "Expected prefer-readonly-parameter-types to have options."
+        );
 
         expect(
             canonicalRuleOwners.filter(
@@ -1263,6 +1290,16 @@ describe("etc-misc v2 rule ownership", () => {
                 Object.hasOwn(effectiveConfig?.plugins ?? {}, pluginName)
             )
         ).toStrictEqual([]);
+        expect(
+            deprecatedEtcMiscRuleNames.filter((ruleName) =>
+                isRuleEnabled(effectiveConfig?.rules?.[ruleName])
+            )
+        ).toStrictEqual([]);
+        expect(readonlyParameterOptions).toMatchObject({
+            checkParameterProperties: true,
+            ignoreInferredTypes: true,
+            treatMethodsAsReadonly: true,
+        });
         expect(
             effectiveConfig?.rules?.[
                 "@eslint-community/eslint-comments/no-unused-disable"
@@ -1282,7 +1319,7 @@ describe("etc-misc v2 rule ownership", () => {
         ).toBe(false);
     });
 
-    it("preserves intrinsic JSX defaults and assigns overlapping React behavior once", async () => {
+    it("keeps deprecated React allocation checks and their umbrella rule opt-in", async () => {
         expect.assertions(10);
 
         const eslint = new ESLint({
@@ -1301,10 +1338,9 @@ describe("etc-misc v2 rule ownership", () => {
         ] as const;
 
         for (const ruleName of intrinsicAllocationRuleNames) {
-            expect(effectiveConfig?.rules?.[ruleName]).toStrictEqual([
-                1,
-                { nativeAllowList: "all" },
-            ]);
+            expect(isRuleEnabled(effectiveConfig?.rules?.[ruleName])).toBe(
+                false
+            );
         }
 
         expect(
@@ -1341,6 +1377,97 @@ describe("etc-misc v2 rule ownership", () => {
                 ]
             )
         ).toBe(false);
+    });
+
+    it("reports migrated behavior through one upstream owner", async () => {
+        expect.assertions(2);
+
+        const eslint = new ESLint({
+            cwd: ruleOwnershipFixtureWorkspaceRoot,
+            overrideConfig: createConfig({
+                plugins: {
+                    "file-progress": false,
+                    "file-progress-2": false,
+                    secretlint: false,
+                },
+                rootDirectory: ruleOwnershipFixtureWorkspaceRoot,
+                sonarjs: false,
+                tsconfigPaths: ["./tsconfig.json"],
+            }),
+            overrideConfigFile: true,
+        });
+        const [typescriptResult] = await eslint.lintText(
+            `export function inspect(values: string[]): void {
+    const labels = ["beta", "alpha"] as const;
+    void labels;
+
+    if (values.length === 0) {
+        throw "reason";
+    }
+
+    void Promise.reject("reason");
+    void Promise.resolve().catch((reason: any): any => reason);
+}
+`,
+            { filePath: "src/index.ts" }
+        );
+        const [reactResult] = await eslint.lintText(
+            `declare function Widget(properties: Readonly<Record<string, unknown>>): JSX.Element;
+
+export const View = (): JSX.Element => (
+    <Widget
+        callback={() => undefined}
+        child={<span />}
+        items={[]}
+        options={{}}
+    />
+);
+`,
+            { filePath: "src/view.tsx" }
+        );
+        const readonlyAndErrorRuleNames = new Set([
+            "@typescript-eslint/only-throw-error",
+            "@typescript-eslint/prefer-promise-reject-errors",
+            "@typescript-eslint/prefer-readonly-parameter-types",
+            "@typescript-eslint/use-unknown-in-catch-callback-variable",
+            "etc-misc/no-implicit-any-catch",
+            "etc-misc/sort-array",
+            "etc-misc/throw-error",
+            "perfectionist/sort-arrays",
+        ]);
+        const reactAllocationRuleNames = new Set([
+            "etc-misc/jsx-no-jsx-as-prop",
+            "etc-misc/jsx-no-new-array-as-prop",
+            "etc-misc/jsx-no-new-function-as-prop",
+            "etc-misc/jsx-no-new-object-as-prop",
+            "etc-misc/no-unstable-react-values",
+        ]);
+
+        expect(
+            typescriptResult?.messages
+                .map((message) => message.ruleId)
+                .filter(
+                    (ruleName): ruleName is string =>
+                        ruleName !== null &&
+                        readonlyAndErrorRuleNames.has(ruleName)
+                )
+                .toSorted((left, right) => left.localeCompare(right))
+        ).toStrictEqual([
+            "@typescript-eslint/only-throw-error",
+            "@typescript-eslint/prefer-promise-reject-errors",
+            "@typescript-eslint/prefer-readonly-parameter-types",
+            "@typescript-eslint/use-unknown-in-catch-callback-variable",
+            "perfectionist/sort-arrays",
+        ]);
+        expect(
+            reactResult?.messages
+                .map((message) => message.ruleId)
+                .filter(
+                    (ruleName): ruleName is string =>
+                        ruleName !== null &&
+                        reactAllocationRuleNames.has(ruleName)
+                )
+        ).toStrictEqual([]);
     });
 
     it("removes Etc-Misc completely from the effective opt-out preset", async () => {

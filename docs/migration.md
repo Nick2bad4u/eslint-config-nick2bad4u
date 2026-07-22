@@ -1,5 +1,42 @@
 # Migration guide — `eslint-config-nick2bad4u`
 
+## Version 10 rule ownership changes
+
+Version 10 requires `eslint-plugin-etc-misc` v3 and stops enabling its
+deprecated duplicate rules. Maintained upstream rules from typescript-eslint,
+Perfectionist, Stylistic, Unicorn, and ESLint core now own the corresponding
+catch/error, readonly-parameter, sorting, spacing, template-literal, identifier,
+and export diagnostics.
+
+The Perfectionist array policy remains intentionally scoped to literal arrays
+inside direct TypeScript `as` assertions; ordinary array order can be semantic
+and is no longer sorted by the deprecated broad Etc-Misc rule.
+
+The four deprecated `etc-misc/jsx-no-*-as-prop` allocation checks are disabled,
+and `etc-misc/no-unstable-react-values` remains opt-in. This intentionally
+removes default identity-stability diagnostics for render-local JSX, arrays,
+functions, and objects; React Compiler makes those checks unsuitable as a
+blanket default. Enable `etc-misc/no-unstable-react-values` explicitly if a
+project still wants that policy.
+
+`etc-misc/no-unnecessary-initialization` remains enabled at warning severity
+because it retains distinct behavior.
+
+Version 10 also removes the legacy `@docusaurus/eslint-plugin` integration.
+That package embeds typescript-eslint v5, whose ESLint peer range ends at v8,
+and therefore produces an invalid production dependency tree under this
+config's required ESLint v10. The maintained `eslint-plugin-docusaurus-2`
+integration, Docusaurus globals, generated-module aliases, and workspace file
+handling remain enabled. The old `@docusaurus/no-html-links` and
+`@docusaurus/prefer-docusaurus-heading` diagnostics are no longer provided.
+
+The `eslint-plugin-actionlint` integration and `withoutActionlint` preset are
+also removed. Its runtime wrapper installs `github-actionlint`, which currently
+pins a vulnerable `adm-zip` release with no consumer-propagating override or
+upstream fix. Continue running the native `actionlint` CLI in CI for workflow
+validation; the shared config's maintained `eslint-plugin-github-actions-2`
+rules remain enabled.
+
 This guide walks a project from a local hand-written ESLint flat config to the
 shared `eslint-config-nick2bad4u` package.
 
@@ -27,7 +64,6 @@ its own config files:
 ```powershell
 # Run from the target project root.
 $bundledLintPackages = @(
-    "@docusaurus/eslint-plugin",
     "@eslint-community/eslint-plugin-eslint-comments",
     "@eslint-react/eslint-plugin",
     "@eslint/config-helpers",
@@ -274,7 +310,6 @@ All presets are exposed on the default export as `.configs` and as the named
 | `recommended`               | Alias for `all`.                                                                   |
 | `base`                      | Shared config without explicit source-rule plugin sections.                        |
 | `withNext`                  | Full shared config with the recommended Next.js rules enabled.                     |
-| `withoutActionlint`         | Full shared config without Actionlint rules.                                       |
 | `withoutCodex`              | Full shared config without Codex plugin rules.                                     |
 | `withoutCopilot`            | Full shared config without Copilot rules.                                          |
 | `withoutDocusaurus2`        | Full shared config without Docusaurus 2 plugin rules.                              |

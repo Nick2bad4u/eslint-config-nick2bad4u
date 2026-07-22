@@ -130,7 +130,6 @@ from the named `presets` export.
 | `withJest`                  | Full shared config using Jest instead of Vitest for test files.                    |
 | `withNext`                  | Full shared config with the recommended Next.js rules enabled.                     |
 | `withSonarJS`               | Deprecated alias for `all`; SonarJS is enabled by default.                         |
-| `withoutActionlint`         | Full shared config without Actionlint rules.                                       |
 | `withoutCodex`              | Full shared config without Codex plugin rules.                                     |
 | `withoutCopilot`            | Full shared config without Copilot rules.                                          |
 | `withoutDocusaurus2`        | Full shared config without Docusaurus 2 plugin rules.                              |
