@@ -660,11 +660,22 @@ function hasConfigRules<TConfig extends object>(
 } {
     return objectHasOwn(config, "rules");
 }
-const vueScopedCssRecommendedRules =
-    vueScopedCss.configs.recommended.find(hasConfigRules)?.rules ?? {};
-const vuejsAccessibilityRecommendedRules =
-    vuejsAccessibility.configs["flat/recommended"].find(hasConfigRules)
-        ?.rules ?? {};
+const vueScopedCssRules = {
+    ...vueScopedCss.configs.recommended.find(hasConfigRules)?.rules,
+    "vue-scoped-css/no-deprecated-v-enter-v-leave-class": "warn",
+    "vue-scoped-css/require-selector-used-inside": "warn",
+} satisfies NonNullable<EslintConfig["rules"]>;
+
+const vuejsAccessibilityRules = {
+    ...vuejsAccessibility.configs["flat/recommended"].find(hasConfigRules)
+        ?.rules,
+    // @NOTE The documented behavior applies specifically to `aria-hidden="true"`,
+    // but v2.5.0 also reports `aria-hidden="false"` and dynamic bindings.
+    // Disabled because false and statically indeterminate values should not be reported.
+    // @see {@link https://vue-a11y.github.io/eslint-plugin-vuejs-accessibility/rules/no-aria-hidden-on-focusable.html}
+    "vuejs-accessibility/no-aria-hidden-on-focusable": "off",
+    "vuejs-accessibility/no-role-presentation-on-focusable": "error",
+} satisfies NonNullable<EslintConfig["rules"]>;
 
 // #endregion 🏗️ Setup and Public Types
 // #region 🛠️ Config
@@ -3896,10 +3907,9 @@ export const createConfig = (
                 ...vue.configs.essential.rules,
                 ...vue.configs.recommended.rules,
                 ...vue.configs["strongly-recommended"].rules,
-                ...(vueScopedCssPlugin !== null &&
-                    vueScopedCssRecommendedRules),
+                ...(vueScopedCssPlugin !== null && vueScopedCssRules),
                 ...(vuejsAccessibilityPlugin !== null &&
-                    vuejsAccessibilityRecommendedRules),
+                    vuejsAccessibilityRules),
                 "vue/block-lang": "warn",
                 "vue/camelcase": "warn",
                 "vue/comment-directive": "warn",

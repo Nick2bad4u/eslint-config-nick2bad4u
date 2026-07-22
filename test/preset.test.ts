@@ -1367,8 +1367,8 @@ describe("etc-misc v2 rule ownership", () => {
 });
 
 describe("vue preset integration", () => {
-    it("enables the maintained recommended scoped-CSS and accessibility rules", () => {
-        expect.assertions(6);
+    it("enables the maintained scoped-CSS and accessibility rules", () => {
+        expect.assertions(10);
 
         const vueConfig = findConfigByName(
             presets.all,
@@ -1380,16 +1380,34 @@ describe("vue preset integration", () => {
         );
         expect(
             getRuleNamesForPlugin(presets.all, "vue-scoped-css")
-        ).toHaveLength(12);
+        ).toHaveLength(14);
         expect(
             getRuleNamesForPlugin(presets.all, "vuejs-accessibility")
-        ).toHaveLength(20);
+        ).toHaveLength(22);
         expect(vueConfig?.rules?.["vue-scoped-css/no-unused-selector"]).toBe(
             "warn"
         );
+        expect(
+            vueConfig?.rules?.[
+                "vue-scoped-css/no-deprecated-v-enter-v-leave-class"
+            ]
+        ).toBe("warn");
+        expect(
+            vueConfig?.rules?.["vue-scoped-css/require-selector-used-inside"]
+        ).toBe("warn");
         expect(vueConfig?.rules?.["vuejs-accessibility/alt-text"]).toBe(
             "error"
         );
+        expect(
+            vueConfig?.rules?.[
+                "vuejs-accessibility/no-aria-hidden-on-focusable"
+            ]
+        ).toBe("off");
+        expect(
+            vueConfig?.rules?.[
+                "vuejs-accessibility/no-role-presentation-on-focusable"
+            ]
+        ).toBe("error");
         expect(
             vueConfig?.rules?.["vuejs-accessibility/no-onchange"]
         ).toBeUndefined();
