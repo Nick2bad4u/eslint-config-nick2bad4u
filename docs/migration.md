@@ -1,5 +1,45 @@
 # Migration guide — `eslint-config-nick2bad4u`
 
+## Version 11 owned Actionlint and Docusaurus rules
+
+Version 11 restores workflow diagnostics through the maintained
+`eslint-plugin-actionlint` package. Its Actionlint binary bridge is now owned
+inside that plugin, verifies upstream release checksums, and no longer installs
+the vulnerable `github-actionlint` wrapper. The restored `withoutActionlint`
+preset disables only the `actionlint` namespace; GitHub Actions 2 remains
+enabled unless `withoutGitHubActions2` is selected separately.
+
+Version 11 requires ESLint `^10.7.0`, the first ESLint 10 range accepted by
+every plugin in the shipped runtime dependency graph. Earlier ESLint 10
+versions produce an invalid peer-dependency tree and are not supported.
+
+The Docusaurus integration now owns the four rules previously supplied by
+`@docusaurus/eslint-plugin`. Existing projects should replace the former rule
+IDs as follows:
+
+- `@docusaurus/no-html-links` → `docusaurus-2/no-html-links`
+- `@docusaurus/no-untranslated-text` → `docusaurus-2/no-untranslated-text`
+- `@docusaurus/prefer-docusaurus-heading` →
+  `docusaurus-2/prefer-docusaurus-heading`
+- `@docusaurus/string-literal-i18n-messages` →
+  `docusaurus-2/string-literal-i18n-messages`
+
+The shared default restores the link and heading checks at warning severity.
+Both translation rules remain off by default to avoid imposing an i18n policy
+on every Docusaurus project. Projects that want that policy can append
+`docusaurus2.configs.i18n` explicitly.
+
+```js
+import { presets } from "eslint-config-nick2bad4u";
+import docusaurus2 from "eslint-plugin-docusaurus-2";
+
+export default [...presets.all, docusaurus2.configs.i18n];
+```
+
+Install `eslint-plugin-docusaurus-2` directly when importing it from a project
+config; do not rely on a package manager exposing the shared config's
+transitive copy.
+
 ## Version 10 rule ownership changes
 
 Version 10 requires `eslint-plugin-etc-misc` v3 and stops enabling its
@@ -43,7 +83,7 @@ shared `eslint-config-nick2bad4u` package.
 ## Prerequisites
 
 - Node.js `^22.22.3 || ^24.16.0 || >=26.3.0`
-- ESLint `^10.0.0`
+- ESLint `^10.7.0`
 - TypeScript `^5.0.0 || ^6.0.3`
 - npm, pnpm, or yarn support for installing peer dependencies
 - A project-level `tsconfig.json` for type-aware linting through project service
@@ -82,6 +122,7 @@ $bundledLintPackages = @(
     "eslint-config-prettier",
     "eslint-import-resolver-node",
     "eslint-import-resolver-typescript",
+    "eslint-plugin-actionlint",
     "eslint-plugin-array-func",
     "eslint-plugin-astro",
     "eslint-plugin-canonical",
@@ -310,6 +351,7 @@ All presets are exposed on the default export as `.configs` and as the named
 | `recommended`               | Alias for `all`.                                                                   |
 | `base`                      | Shared config without explicit source-rule plugin sections.                        |
 | `withNext`                  | Full shared config with the recommended Next.js rules enabled.                     |
+| `withoutActionlint`         | Full shared config without Actionlint rules.                                       |
 | `withoutCodex`              | Full shared config without Codex plugin rules.                                     |
 | `withoutCopilot`            | Full shared config without Copilot rules.                                          |
 | `withoutDocusaurus2`        | Full shared config without Docusaurus 2 plugin rules.                              |
@@ -368,7 +410,7 @@ The same pattern applies to other namespaces with matching `without*` presets.
 Install or update the peer dependencies in the consuming project:
 
 ```powershell
-npm install --save-dev eslint@^10.0.0 typescript@^6.0.3
+npm install --save-dev eslint@^10.7.0 typescript@^6.0.3
 ```
 
 TypeScript `^5.0.0` is also supported when the project has not migrated to

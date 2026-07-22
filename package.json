@@ -138,6 +138,7 @@
         "eslint-formatter-visualstudio": "^9.0.1",
         "eslint-import-resolver-node": "^0.4.0",
         "eslint-import-resolver-typescript": "^4.4.5",
+        "eslint-plugin-actionlint": "^1.0.3",
         "eslint-plugin-array-func": "^5.1.1",
         "eslint-plugin-astro": "^3.0.1",
         "eslint-plugin-canonical": "^5.1.3",
@@ -147,7 +148,7 @@
         "eslint-plugin-css-modules": "^2.12.0",
         "eslint-plugin-de-morgan": "^2.1.3",
         "eslint-plugin-depend": "^1.5.0",
-        "eslint-plugin-docusaurus-2": "^1.0.3",
+        "eslint-plugin-docusaurus-2": "^2.0.0",
         "eslint-plugin-eslint-plugin": "^7.5.0",
         "eslint-plugin-etc-misc": "^3.0.0",
         "eslint-plugin-file-progress-2": "^5.1.6",
@@ -247,7 +248,7 @@
         "yamllint-config-nick2bad4u": "^1.1.1"
     },
     "peerDependencies": {
-        "eslint": "^10.0.0",
+        "eslint": "^10.7.0",
         "typescript": "^5.0.0 || ^6.0.3"
     },
     "peerDependenciesMeta": {

@@ -26,6 +26,7 @@ import vitest from "@vitest/eslint-plugin";
 import gitignore from "eslint-config-flat-gitignore";
 import prettierOverrides from "eslint-config-prettier";
 import { createTypeScriptImportResolver } from "eslint-import-resolver-typescript";
+import actionlint from "eslint-plugin-actionlint";
 import arrayFunc from "eslint-plugin-array-func";
 import astro from "eslint-plugin-astro";
 import canonical from "eslint-plugin-canonical";
@@ -519,6 +520,8 @@ export interface Nick2Bad4UEslintConfigPresets {
     readonly withJest: EslintConfig[];
     /** Full shared config with the recommended Next.js rules enabled. */
     readonly withNext: EslintConfig[];
+    /** Full shared config without Actionlint rules. */
+    readonly withoutActionlint: EslintConfig[];
     readonly withoutCodex: EslintConfig[];
     readonly withoutCopilot: EslintConfig[];
     readonly withoutDocusaurus2: EslintConfig[];
@@ -784,6 +787,19 @@ export const createConfig = (
         "typefest",
         typefestPlugin
     );
+    const actionlintPlugin = resolveTypedPlugin(
+        pluginOverrideEntries,
+        "actionlint",
+        actionlint
+    );
+    const actionlintAllConfigInput = safeCastTo<EslintConfigInput | undefined>(
+        actionlintPlugin?.configs.all
+    );
+    const actionlintAllConfigs = isEslintConfigArray(actionlintAllConfigInput)
+        ? actionlintAllConfigInput
+        : isDefined(actionlintAllConfigInput)
+          ? [actionlintAllConfigInput]
+          : [];
     const codexPlugin = resolveTypedPlugin(
         pluginOverrideEntries,
         "codex",
@@ -1465,6 +1481,10 @@ export const createConfig = (
                           ...docusaurus2Plugin.configs.experimental.rules,
                           "docusaurus-2/local-search-will-not-work-in-dev":
                               "off",
+                          "docusaurus-2/no-html-links": "warn",
+                          "docusaurus-2/no-untranslated-text": "off",
+                          "docusaurus-2/prefer-docusaurus-heading": "warn",
+                          "docusaurus-2/string-literal-i18n-messages": "off",
                       },
                   },
                   {
@@ -1537,6 +1557,8 @@ export const createConfig = (
             : copilotPlugin.configs["all-without-language-plugins"]),
         // MARK: 🛡️ SDL
         ...(sdlPlugin === null ? [] : [sdlPlugin.configs.required]),
+        // MARK: 🦑 Actionlint
+        ...actionlintAllConfigs,
         // MARK: 🦑 GitHub Actions
         ...(githubActionsPlugin === null
             ? []
@@ -4536,6 +4558,11 @@ const sharedConfigs: Nick2Bad4UEslintConfigPresets = {
     // Some packages register shorter runtime namespaces than their package
     // names. Disable both the real namespace and the package-family alias so
     // consumers can choose the obvious withoutX preset name.
+    withoutActionlint: createConfig({
+        plugins: {
+            actionlint: false,
+        },
+    }),
     withoutCodex: createConfig({
         plugins: {
             codex: false,

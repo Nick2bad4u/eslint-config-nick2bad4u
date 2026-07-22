@@ -201,6 +201,7 @@ const getParserOptionsGlobalsEntries = (
 const presetByName: Readonly<Record<string, readonly Linter.Config[]>> = {
     withJest: presets.withJest,
     withNext: presets.withNext,
+    withoutActionlint: presets.withoutActionlint,
     withoutCodex: presets.withoutCodex,
     withoutCopilot: presets.withoutCopilot,
     withoutDocusaurus2: presets.withoutDocusaurus2,
@@ -292,6 +293,7 @@ describe("eslint-config-nick2bad4u presets", () => {
     });
 
     it.each([
+        ["withoutActionlint", ["actionlint"]],
         ["withoutCodex", ["codex"]],
         ["withoutCopilot", ["copilot"]],
         ["withoutDocusaurus2", ["docusaurus-2"]],
@@ -346,10 +348,13 @@ describe("eslint-config-nick2bad4u presets", () => {
     );
 
     it("keeps full preset rules in the all preset", () => {
-        expect.assertions(7);
+        expect.assertions(8);
 
         const allPreset = presets.all as readonly Linter.Config[];
 
+        expect(
+            getRuleNamesForPlugin(allPreset, "actionlint").length
+        ).toBeGreaterThan(0);
         expect(
             getRuleNamesForPlugin(allPreset, "copilot").length
         ).toBeGreaterThan(0);
@@ -868,6 +873,16 @@ describe("eslint-config-nick2bad4u presets", () => {
                 }),
                 overrideName: "repo",
                 ruleName: "repo-compliance/local-only",
+            },
+            {
+                createPlugin: () =>
+                    createSingleConfigLocalPlugin(
+                        "all",
+                        "actionlint",
+                        "actionlint/local-only"
+                    ),
+                overrideName: "actionlint",
+                ruleName: "actionlint/local-only",
             },
             {
                 createPlugin: () =>

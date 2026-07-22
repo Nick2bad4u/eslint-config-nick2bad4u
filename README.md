@@ -16,7 +16,7 @@ plugins and parsers that the shared config enables.
 | Tool       | Supported range                        | Why it is required                                              |
 | ---------- | -------------------------------------- | --------------------------------------------------------------- |
 | Node.js    | `^22.22.3 \|\| ^24.16.0 \|\| >=26.3.0` | Runtime for ESLint, the config package, and repository scripts. |
-| ESLint     | `^10.0.0`                              | Peer dependency supplied by each consuming project.             |
+| ESLint     | `^10.7.0`                              | Peer dependency supplied by each consuming project.             |
 | TypeScript | `^5.0.0 \|\| ^6.0.3`                   | Peer dependency used by TypeScript-aware lint rules.            |
 
 Repository development also expects npm `>=11.0.0`; consumers can use the package
@@ -130,6 +130,7 @@ from the named `presets` export.
 | `withJest`                  | Full shared config using Jest instead of Vitest for test files.                    |
 | `withNext`                  | Full shared config with the recommended Next.js rules enabled.                     |
 | `withSonarJS`               | Deprecated alias for `all`; SonarJS is enabled by default.                         |
+| `withoutActionlint`         | Full shared config without Actionlint rules.                                       |
 | `withoutCodex`              | Full shared config without Codex plugin rules.                                     |
 | `withoutCopilot`            | Full shared config without Copilot rules.                                          |
 | `withoutDocusaurus2`        | Full shared config without Docusaurus 2 plugin rules.                              |

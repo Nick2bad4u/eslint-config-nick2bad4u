@@ -16,6 +16,7 @@ const fixturePaths = [
     ".github/agents/fixture.agent.md",
     ".github/workflow-templates/reusable.properties.json",
     ".github/workflows/ci.yml",
+    ".github/workflows/invalid.yml",
     ".pre-commit-config.yaml",
     ".remarkrc.mjs",
     ".spellcheck.yml",

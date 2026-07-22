@@ -1,0 +1,8 @@
+name: "Invalid fixture workflow"
+on:
+    workflow_dispatch:
+
+jobs:
+    missing-runner:
+        steps:
+            - run: "echo missing runs-on"

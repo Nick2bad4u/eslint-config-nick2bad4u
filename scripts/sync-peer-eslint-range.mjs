@@ -29,15 +29,15 @@ const packageJsonPath = fileURLToPath(
     new URL("../package.json", import.meta.url)
 );
 /**
- * The minimum supported ESLint peer range. Patch/minor development dependency
- * bumps inside ESLint 10 must not narrow consumer support to the exact current
- * development floor.
+ * The minimum supported ESLint peer range. This floor must satisfy every
+ * runtime plugin peer dependency shipped by the shared config, otherwise a
+ * clean consumer install produces an invalid dependency tree.
  *
  * @type {string}
  *
  * @see resolvePeerFloorRange
  */
-const minimumSupportedEslintRange = "^10.0.0";
+const minimumSupportedEslintRange = "^10.7.0";
 
 /**
  * Read and parse package.json.
@@ -124,8 +124,8 @@ const resolvePeerFloorRange = (existingPeerRange) => {
 
 /**
  * Append the development dependency range only when it covers a different major
- * than the floor range. `^10.0.0 || ^10.6.0` is redundant and should stay
- * collapsed to `^10.0.0`.
+ * than the floor range. `^10.7.0 || ^10.8.0` is redundant and should stay
+ * collapsed to `^10.7.0`.
  *
  * @type {(peerFloorRange: string, devDependencyRange: string) => string}
  *
