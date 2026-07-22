@@ -25,6 +25,20 @@ const getRuleNamesForPlugin = (
         )
     );
 
+const getRuleEntriesWithoutPlugin = (
+    configEntries: readonly Linter.Config[],
+    pluginName: string
+): [string, NonNullable<Linter.Config["rules"]>[string]][] =>
+    configEntries
+        .flatMap((configEntry) =>
+            Object.entries(configEntry.rules ?? {}).filter(
+                ([ruleName]) => !ruleName.startsWith(`${pluginName}/`)
+            )
+        )
+        .toSorted(([leftRuleName], [rightRuleName]) =>
+            leftRuleName.localeCompare(rightRuleName)
+        );
+
 const getRuleSeverity = (ruleConfig: unknown): unknown =>
     Array.isArray(ruleConfig) ? ruleConfig[0] : ruleConfig;
 
@@ -58,15 +72,50 @@ const createIntegrationConfig = () =>
 
 describe("owned Actionlint and Docusaurus integrations", () => {
     it("keeps GitHub Actions 2 enabled in the Actionlint opt-out", () => {
-        expect.assertions(2);
+        expect.assertions(3);
 
         expect(
             getRuleNamesForPlugin(presets.withoutActionlint, "actionlint")
         ).toStrictEqual([]);
         expect(
             getRuleNamesForPlugin(presets.withoutActionlint, "github-actions")
-                .length
-        ).toBeGreaterThan(0);
+        ).toStrictEqual(getRuleNamesForPlugin(presets.all, "github-actions"));
+        expect(
+            getRuleEntriesWithoutPlugin(presets.withoutActionlint, "actionlint")
+        ).toStrictEqual(getRuleEntriesWithoutPlugin(presets.all, "actionlint"));
+    });
+
+    it("keeps Actionlint enabled in the GitHub Actions 2 opt-out", () => {
+        expect.assertions(2);
+
+        expect(
+            getRuleNamesForPlugin(
+                presets.withoutGitHubActions2,
+                "github-actions"
+            )
+        ).toStrictEqual([]);
+        expect(
+            getRuleNamesForPlugin(presets.withoutGitHubActions2, "actionlint")
+        ).toStrictEqual(getRuleNamesForPlugin(presets.all, "actionlint"));
+    });
+
+    it("keeps Actionlint enabled in the Docusaurus 2 opt-out", () => {
+        expect.assertions(3);
+
+        expect(
+            getRuleNamesForPlugin(presets.withoutDocusaurus2, "docusaurus-2")
+        ).toStrictEqual([]);
+        expect(
+            getRuleNamesForPlugin(presets.withoutDocusaurus2, "actionlint")
+        ).toStrictEqual(getRuleNamesForPlugin(presets.all, "actionlint"));
+        expect(
+            getRuleEntriesWithoutPlugin(
+                presets.withoutDocusaurus2,
+                "docusaurus-2"
+            )
+        ).toStrictEqual(
+            getRuleEntriesWithoutPlugin(presets.all, "docusaurus-2")
+        );
     });
 
     it("uses owned Docusaurus rules with opt-in i18n defaults", () => {
@@ -113,7 +162,6 @@ describe("owned Actionlint and Docusaurus integrations", () => {
         expect(workflowConfig?.rules?.["actionlint/actionlint"]).toBe("error");
         expect(configurationConfig?.files).toStrictEqual([
             "**/.github/actionlint.{yml,yaml}",
-            "**/actionlint.{yml,yaml}",
             "**/ActionLintConfig.{yml,yaml}",
         ]);
         expect(
@@ -143,8 +191,35 @@ describe("owned Actionlint and Docusaurus integrations", () => {
             ) ?? [];
 
         expect(getActionlintMessages(validResult)).toStrictEqual([]);
-        expect(getActionlintMessages(invalidResult).length).toBeGreaterThan(0);
+        expect(getActionlintMessages(invalidResult)).toHaveLength(1);
     }, 120_000);
+
+    it("runs owned Actionlint config-authoring rules on real config files", async () => {
+        expect.assertions(2);
+
+        const eslint = new ESLint({
+            cwd: fixtureWorkspaceRoot,
+            overrideConfig: createIntegrationConfig(),
+            overrideConfigFile: true,
+        });
+        const [validResult, invalidResult] = await eslint.lintFiles([
+            ".github/actionlint.yaml",
+            "ActionLintConfig.yaml",
+        ]);
+        const getActionlintMessages = (
+            result: typeof validResult | undefined
+        ) =>
+            result?.messages.filter(
+                (message) => message.ruleId?.startsWith("actionlint/") === true
+            ) ?? [];
+
+        expect(getActionlintMessages(validResult)).toStrictEqual([]);
+        expect(
+            getActionlintMessages(invalidResult).map(({ ruleId }) => ruleId)
+        ).toStrictEqual([
+            "actionlint/disallow-actionlint-unknown-config-properties",
+        ]);
+    });
 
     it("reports each owned default Docusaurus diagnostic once", async () => {
         expect.assertions(2);

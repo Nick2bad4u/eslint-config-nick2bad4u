@@ -1,0 +1,7 @@
+config-variables:
+    - "NODE_ENV"
+paths:
+    - ".github/workflows/*.yml"
+self-hosted-runner:
+    labels:
+        - "linux"
