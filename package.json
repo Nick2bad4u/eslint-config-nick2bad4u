@@ -40,6 +40,11 @@
     },
     "main": "./dist/preset.js",
     "types": "./index.d.ts",
+    "directories": {
+        "doc": "docs",
+        "example": "examples",
+        "test": "test"
+    },
     "files": [
         "docs/**/*.md",
         "dist/preset.js",
@@ -284,10 +289,5 @@
         "esbuild@0.28.1": true,
         "fsevents@2.3.3": true,
         "unrs-resolver@1.12.2": true
-    },
-    "directories": {
-        "doc": "docs",
-        "example": "examples",
-        "test": "test"
     }
 }
