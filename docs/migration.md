@@ -1,5 +1,37 @@
 # Migration guide — `eslint-config-nick2bad4u`
 
+## Version 12 independent Jest and Vitest integrations
+
+Version 12 makes Jest and Vitest independent factory options. Vitest remains
+enabled by default and Jest remains disabled by default, but `jest: true` no
+longer turns Vitest off. Existing factory users that require Jest only should
+add `vitest: false`:
+
+```js
+import { createConfig } from "eslint-config-nick2bad4u";
+
+export default createConfig({
+ jest: true,
+ vitest: false,
+});
+```
+
+The `withJest` preset retains that Jest-only behavior for compatibility.
+Mixed-runner repositories should pass non-overlapping `files` arrays to the
+`jest` and `vitest` options. The shared Testing Library and test override
+sections use the union of those enabled framework scopes.
+
+Enabled Jest integrations now use `eslint-plugin-jest`'s complete `flat/all`
+preset instead of `flat/recommended`. This adds every current Jest rule and may
+introduce additional diagnostics when `eslint-plugin-jest` adds rules in a
+future non-major release. Projects that need a smaller or stable rule inventory
+should keep `jest: false` and compose their own Jest configuration.
+
+The new `withoutVitest` preset is equivalent to
+`createConfig({ vitest: false })`. Passing both `jest: false` and
+`vitest: false` disables both framework plugins, globals, rules, and settings
+without removing the framework-neutral test overrides.
+
 ## Version 11 owned Actionlint and Docusaurus rules
 
 Version 11 restores workflow diagnostics through the maintained
@@ -139,6 +171,7 @@ $bundledLintPackages = @(
     "eslint-plugin-github-actions-2",
     "eslint-plugin-immutable-2",
     "eslint-plugin-import-x",
+    "eslint-plugin-jest",
     "eslint-plugin-jsdoc",
     "eslint-plugin-jsonc",
     "eslint-plugin-listeners",
@@ -170,7 +203,6 @@ $bundledLintPackages = @(
     "eslint-plugin-tsdoc-require-2",
     "eslint-plugin-typedoc",
     "eslint-plugin-typefest",
-    "eslint-plugin-undefined-css-classes",
     "eslint-plugin-unicorn",
     "eslint-plugin-vue",
     "eslint-plugin-write-good-comments-2",

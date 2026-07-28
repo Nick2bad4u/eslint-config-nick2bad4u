@@ -32,6 +32,7 @@ import astro from "eslint-plugin-astro";
 import canonical from "eslint-plugin-canonical";
 import casePolice from "eslint-plugin-case-police";
 import commentLength from "eslint-plugin-comment-length";
+import compat from "eslint-plugin-compat";
 import copilot from "eslint-plugin-copilot";
 import cssModules from "eslint-plugin-css-modules";
 import deMorgan from "eslint-plugin-de-morgan";
@@ -78,7 +79,6 @@ import tsdoc from "eslint-plugin-tsdoc";
 import tsdocRequire from "eslint-plugin-tsdoc-require-2";
 import typedoc from "eslint-plugin-typedoc";
 import typefestPlugin from "eslint-plugin-typefest";
-import undefinedCSS from "eslint-plugin-undefined-css-classes";
 import unicorn from "eslint-plugin-unicorn";
 import vue from "eslint-plugin-vue";
 import vueScopedCss from "eslint-plugin-vue-scoped-css";
@@ -96,6 +96,7 @@ import {
     arrayJoin,
     isDefined,
     isEmpty,
+    isPresent,
     keyIn,
     objectEntries,
     objectFromEntries,
@@ -491,7 +492,7 @@ export interface Nick2Bad4UEslintConfigOptions {
      * `tsconfig.json`; broad TypeScript globs also match declaration files.
      */
     readonly allowDefaultProjectFilePatterns?: readonly string[];
-    /** Use Jest instead of Vitest for test and benchmark files. */
+    /** Enable all Jest rules for test and benchmark files. Defaults to `false`. */
     readonly jest?: boolean | Nick2Bad4UJestOptions;
     /** Enable the recommended Next.js rules, with optional monorepo scoping. */
     readonly next?: boolean | Nick2Bad4UNextOptions;
@@ -503,6 +504,8 @@ export interface Nick2Bad4UEslintConfigOptions {
     readonly sonarjs?: boolean | Nick2Bad4USonarJSOptions;
     /** TypeScript project files relative to `rootDirectory`. */
     readonly tsconfigPaths?: readonly string[];
+    /** Configure the default-on Vitest rules, or pass `false` to disable them. */
+    readonly vitest?: boolean | Nick2Bad4UVitestOptions;
 }
 
 /**
@@ -516,7 +519,7 @@ export interface Nick2Bad4UEslintConfigPresets {
     readonly all: EslintConfig[];
     readonly base: EslintConfig[];
     readonly recommended: EslintConfig[];
-    /** Full shared config using Jest instead of Vitest for test files. */
+    /** Jest-only compatibility preset for test and benchmark files. */
     readonly withJest: EslintConfig[];
     /** Full shared config with the recommended Next.js rules enabled. */
     readonly withNext: EslintConfig[];
@@ -546,6 +549,8 @@ export interface Nick2Bad4UEslintConfigPresets {
     readonly withoutTypedoc: EslintConfig[];
     readonly withoutTypefest: EslintConfig[];
     readonly withoutVite: EslintConfig[];
+    /** Full shared config without Vitest rules. */
+    readonly withoutVitest: EslintConfig[];
     readonly withoutWriteGoodComments2: EslintConfig[];
     readonly withoutYamllint: EslintConfig[];
     /** Compatibility alias for `all`; SonarJS is enabled by default. */
@@ -571,6 +576,12 @@ export interface Nick2Bad4UNextOptions {
 /** Options for scoping the default-on SonarJS rule section. */
 export interface Nick2Bad4USonarJSOptions {
     /** File globs that replace the standard JavaScript and TypeScript globs. */
+    readonly files?: readonly string[];
+}
+
+/** Options for scoping the default-on Vitest rule section. */
+export interface Nick2Bad4UVitestOptions {
+    /** File globs that replace the standard test and benchmark globs. */
     readonly files?: readonly string[];
 }
 
@@ -733,6 +744,13 @@ export const createConfig = (
         options.rootDirectory ?? processEnvironment["ESLINT_CONFIG_ROOT"] ?? "."
     );
     const tsconfigPaths = options.tsconfigPaths ?? DEFAULT_TSCONFIG_PATHS;
+    const vitestOptions = options.vitest;
+    const hasVitestOptions = typeof vitestOptions === "object";
+    const vitestFiles =
+        hasVitestOptions && isDefined(vitestOptions.files)
+            ? [...vitestOptions.files]
+            : [...TEST_FILE_PATTERNS];
+    const shouldEnableVitest = vitestOptions !== false;
     const jestOptions = options.jest;
     const hasJestOptions = typeof jestOptions === "object";
     const jestFiles =
@@ -744,9 +762,13 @@ export const createConfig = (
             ? jestOptions.version
             : undefined;
     const shouldEnableJest = jestOptions === true || hasJestOptions;
-    const testFilePatterns = shouldEnableJest
-        ? jestFiles
-        : [...TEST_FILE_PATTERNS];
+    const enabledTestFilePatterns = [
+        ...(shouldEnableVitest ? vitestFiles : []),
+        ...(shouldEnableJest ? jestFiles : []),
+    ];
+    const testFilePatterns = isEmpty(enabledTestFilePatterns)
+        ? [...TEST_FILE_PATTERNS]
+        : [...new Set(enabledTestFilePatterns)];
     const nextOptions = options.next;
     const hasNextOptions = typeof nextOptions === "object";
     const nextFiles =
@@ -821,6 +843,11 @@ export const createConfig = (
             }
         }
     }
+    const compatPlugin = resolveTypedPlugin(
+        pluginOverrideEntries,
+        "compat",
+        compat
+    );
     const copilotPlugin = resolveTypedPlugin(
         pluginOverrideEntries,
         "copilot",
@@ -861,6 +888,11 @@ export const createConfig = (
         jsonSchemaValidator
     );
     const jestPlugin = resolveTypedPlugin(pluginOverrideEntries, "jest", jest);
+    const vitestPlugin = resolveTypedPlugin(
+        pluginOverrideEntries,
+        "vitest",
+        vitest
+    );
     const remarkPlugin = resolveTypedPlugin(
         pluginOverrideEntries,
         "remark",
@@ -1292,6 +1324,10 @@ export const createConfig = (
                 // @see {@link https://github.com/mysticatea/eslint-plugin-node/issues/69}
                 "n/no-hide-core-modules": "off",
                 "n/no-missing-import": "off",
+                // Modern ESM owns the default policy. Libraries promising
+                // synchronous require(ESM) compatibility can re-enable this
+                // published-module safeguard in a narrower config entry.
+                "n/no-top-level-await": "off",
                 // @Deprecated Rule: Old alias for hashbang
                 // @see {@link https://github.com/eslint-community/eslint-plugin-n/issues/529}
                 "n/shebang": "off",
@@ -1349,6 +1385,23 @@ export const createConfig = (
                 "canonical/sort-react-dependencies": "warn",
             },
         },
+        ...(isPresent(compatPlugin)
+            ? [
+                  {
+                      // MARK: 🌐 Compat
+                      files: [...GLOBAL_FILE_PATTERNS],
+                      name: "🌐 Compat: Opt-In",
+                      plugins: {
+                          compat: compatPlugin,
+                      },
+                      rules: {
+                          // Browser targets are project-specific. Consumers
+                          // can enable this rule after defining Browserslist.
+                          "compat/compat": "off",
+                      },
+                  },
+              ]
+            : []),
         ...listenerStrictConfigs.map((config, configIndex) => ({
             ...config,
             // MARK: 🎧 Listeners
@@ -1450,6 +1503,8 @@ export const createConfig = (
                         "type",
                     ],
                 ],
+                "eslint-plugin/no-incomplete-meta-schema": "error",
+                "eslint-plugin/no-incorrect-meta-schema": "error",
                 "eslint-plugin/no-matching-violation-suggest-message-ids":
                     "error",
                 "eslint-plugin/no-property-in-node": "warn",
@@ -1885,12 +1940,12 @@ export const createConfig = (
                       },
                   },
               ]),
-        {
+        ...noBarrelFiles.configs["flat/recommended"].map((config) => ({
             // MARK: 🛢️ No Barrel Files
-            ...noBarrelFiles.flat,
+            ...config,
             files: [...GLOBAL_FILE_PATTERNS],
             name: "🛢️ No Barrel Files",
-        },
+        })),
         {
             // MARK: 🐓 Nitpick
             ...nitpick.configs.recommended,
@@ -2109,39 +2164,6 @@ export const createConfig = (
                 // Note: These rules are confirmed to work, upstream typing is wrong
                 // @ts-expect-error -- TypeScript ESLint flat config typing issue
                 ...cssModules.configs["recommended"].rules,
-            },
-        },
-        {
-            files: ["**/*.css"],
-            ignores: ["docs/**", "**/test*/**"],
-            name: "🎨 Undefined CSS Classes: recommended",
-            plugins: {
-                "undefined-css-classes": undefinedCSS,
-            },
-            rules: {
-                "undefined-css-classes/no-undefined-css-classes": [
-                    "error",
-                    {
-                        // Allow dynamic classes with template literals (default: true)
-                        allowDynamicClasses: true,
-                        // Glob patterns for CSS files to scan
-                        cssFiles: ["**/*.css"],
-                        // Patterns to exclude from scanning
-                        excludePatterns: [
-                            "**/node_modules/**",
-                            "**/dist/**",
-                            "**/build/**",
-                        ],
-                        // Regex patterns for classes to ignore
-                        ignoreClassPatterns: ["^custom-", "^legacy-"],
-                        // Ignore Tailwind CSS classes (default: true)
-                        ignoreTailwind: true,
-                        // Only ignore Tailwind if config file exists (default: true)
-                        requireTailwindConfig: true,
-                        // Base directory for CSS file resolution
-                        // baseDir: rootDirectory,
-                    },
-                ],
             },
         },
         // #endregion 🎨 CSS Files
@@ -2982,35 +3004,21 @@ export const createConfig = (
         // #endregion 🌍 Global Rules After Plugin Configs
         // #region 🧪 Test & Benchmark Files
         // ═══════════════════════════════════════════════════════════════════════════════
-        ...(shouldEnableJest
-            ? jestPlugin === null
-                ? []
-                : [
-                      {
-                          ...jest.configs["flat/recommended"],
-                          files: [...jestFiles],
-                          name: "🃏 Jest: Recommended",
-                          plugins: {
-                              jest: jestPlugin,
-                          },
-                          rules: {
-                              ...jest.configs["flat/recommended"].rules,
-                          },
-                          ...(isDefined(jestVersion) && {
-                              settings: {
-                                  jest: {
-                                      version: jestVersion,
-                                  },
-                              },
-                          }),
-                      },
-                  ]
-            : [
+        ...(shouldEnableVitest && isPresent(vitestPlugin)
+            ? [
                   {
                       // MARK: 🧪 Vitest
                       ...vitest.configs.all,
-                      files: [...TEST_FILE_PATTERNS],
+                      files: [...vitestFiles],
+                      languageOptions: {
+                          globals: {
+                              ...vitest.configs.env.languageOptions.globals,
+                          },
+                      },
                       name: "🧪 Vitest: all",
+                      plugins: {
+                          vitest: vitestPlugin,
+                      },
                       rules: {
                           ...vitest.configs.all.rules,
                           "vitest/max-expects": ["warn", { max: 20 }], // Encourage more focused tests, but allow flexibility when needed
@@ -3021,8 +3029,36 @@ export const createConfig = (
                           "vitest/require-test-timeout": "off", // Allow flexibility in test timeouts, especially for integration tests or tests with external dependencies
                           "vitest/warn-todo": "warn",
                       },
+                      settings: {
+                          vitest: {
+                              typecheck: true,
+                          },
+                      },
                   },
-              ]),
+              ]
+            : []),
+        ...(shouldEnableJest && isPresent(jestPlugin)
+            ? [
+                  {
+                      ...jest.configs["flat/all"],
+                      files: [...jestFiles],
+                      name: "🃏 Jest: All Rules",
+                      ...(isDefined(jestVersion) && {
+                          settings: {
+                              jest: {
+                                  version: jestVersion,
+                              },
+                          },
+                      }),
+                      plugins: {
+                          jest: jestPlugin,
+                      },
+                      rules: {
+                          ...jest.configs["flat/all"].rules,
+                      },
+                  },
+              ]
+            : []),
         {
             // MARK: 👨‍🔬 Testing Library
             ...testingLibrary.configs["flat/dom"],
@@ -3067,9 +3103,6 @@ export const createConfig = (
                     ...globals.builtin,
                     ...globals.nodeBuiltin,
                     ...globals.commonjs,
-                    ...(shouldEnableJest
-                        ? globals.jest
-                        : vitest.environments.env.globals),
                     createTypedRuleSelectorAwarePassThrough: "readonly",
                 },
                 parser: tseslint.parser,
@@ -3123,7 +3156,7 @@ export const createConfig = (
                 "no-useless-assignment": "off",
                 "security/detect-non-literal-fs-filename": "off",
                 ...(shouldEnableSonarJS &&
-                    sonarjsPlugin !== null && {
+                    isPresent(sonarjsPlugin) && {
                         "sonarjs/no-duplicate-string": "off",
                     }),
                 "typedoc/require-exported-doc-comment": "off", // Allow non-exported functions in tests without doc comments
@@ -3158,11 +3191,6 @@ export const createConfig = (
                         "electron-devtools-installer",
                     ],
                 },
-                ...(!shouldEnableJest && {
-                    vitest: {
-                        typecheck: true,
-                    },
-                }),
             },
         },
         {
@@ -3849,7 +3877,6 @@ export const createConfig = (
             languageOptions: {
                 globals: {
                     ...globals.browser,
-                    ...globals.vitest,
                     ...globals.commonjs,
                     ...globals.nodeBuiltin,
                 },
@@ -4162,6 +4189,7 @@ export const createConfig = (
         ...(shouldEnableNext
             ? [
                   {
+                      ...next.configs.recommended,
                       files: nextFiles,
                       languageOptions: {
                           parser: tseslint.parser,
@@ -4177,9 +4205,6 @@ export const createConfig = (
                               warnOnUnsupportedTypeScriptVersion: true,
                           },
                       },
-                      name: "⚛️ Next.js: Recommended",
-                      plugins: next.configs.recommended.plugins,
-                      rules: { ...next.configs.recommended.rules },
                       ...(isDefined(nextRootDirectory) && {
                           settings: {
                               next: {
@@ -4187,6 +4212,8 @@ export const createConfig = (
                               },
                           },
                       }),
+                      name: "⚛️ Next.js: Recommended",
+                      rules: { ...next.configs.recommended.rules },
                   },
               ]
             : []),
@@ -4323,6 +4350,15 @@ export const createConfig = (
             name: "☕ JavaScript: JS/MJS/CJS ⛔ Overrides",
             rules: {
                 "@typescript-eslint/explicit-module-boundary-types": "off",
+            },
+        },
+        {
+            files: ["**/*.{cjs,cts}"],
+            name: "📦 CommonJS: Top-level await ⛔ Overrides",
+            rules: {
+                // Top-level await is ESM-only. Unicorn already ignores .cjs,
+                // and this explicit override closes its equivalent .cts gap.
+                "unicorn/prefer-top-level-await": "off",
             },
         },
         {
@@ -4553,7 +4589,9 @@ const sharedConfigs: Nick2Bad4UEslintConfigPresets = {
     // Keep recommended as a direct alias of all until this package has a
     // smaller opinionated preset surface worth exposing separately.
     recommended: allConfigs,
-    withJest: createConfig({ jest: true }),
+    // Preserve the existing Jest-only preset while the factory now allows
+    // Jest and Vitest to be scoped independently.
+    withJest: createConfig({ jest: true, vitest: false }),
     withNext: createConfig({ next: true }),
     // Some packages register shorter runtime namespaces than their package
     // names. Disable both the real namespace and the package-family alias so
@@ -4670,6 +4708,7 @@ const sharedConfigs: Nick2Bad4UEslintConfigPresets = {
             vite: false,
         },
     }),
+    withoutVitest: createConfig({ vitest: false }),
     withoutWriteGoodComments2: createConfig({
         plugins: {
             "write-good-comments": false,

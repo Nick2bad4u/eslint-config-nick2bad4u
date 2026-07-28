@@ -47,9 +47,4 @@ declare module "eslint-plugin-redos" {
     export default plugin;
 }
 
-declare module "eslint-plugin-undefined-css-classes" {
-    const plugin: EslintPluginShim;
-    export default plugin;
-}
-
 /* eslint-enable @typescript-eslint/consistent-type-imports -- Re-enable after ambient module shims. */

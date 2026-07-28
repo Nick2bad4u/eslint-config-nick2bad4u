@@ -1,6 +1,8 @@
 import next from "@next/eslint-plugin-next";
+import vitestPlugin from "@vitest/eslint-plugin";
 import { ESLint, type Linter } from "eslint";
 import astro from "eslint-plugin-astro";
+import compat from "eslint-plugin-compat";
 import etcMiscPlugin from "eslint-plugin-etc-misc";
 import jest from "eslint-plugin-jest";
 import {
@@ -224,6 +226,7 @@ const presetByName: Readonly<Record<string, readonly Linter.Config[]>> = {
     withoutTypedoc: presets.withoutTypedoc,
     withoutTypefest: presets.withoutTypefest,
     withoutVite: presets.withoutVite,
+    withoutVitest: presets.withoutVitest,
     withoutWriteGoodComments2: presets.withoutWriteGoodComments2,
     withoutYamllint: presets.withoutYamllint,
     withSonarJS: presets.withSonarJS,
@@ -237,6 +240,19 @@ const findConfigByName = (
     configName: string
 ): Linter.Config | undefined =>
     configEntries.find((configEntry) => configEntry.name === configName);
+
+const getConfigByNameOrThrow = (
+    configEntries: readonly Linter.Config[],
+    configName: string
+): Linter.Config => {
+    const configEntry = findConfigByName(configEntries, configName);
+
+    if (configEntry === undefined) {
+        throw new Error(`Expected config entry "${configName}".`);
+    }
+
+    return configEntry;
+};
 
 const createLocalConfig = (
     pluginName: string,
@@ -315,6 +331,7 @@ describe("eslint-config-nick2bad4u presets", () => {
         ["withoutTypedoc", ["typedoc"]],
         ["withoutTypefest", ["typefest"]],
         ["withoutVite", ["vite"]],
+        ["withoutVitest", ["vitest"]],
         [
             "withoutWriteGoodComments2",
             ["write-good-comments", "write-good-comments-2"],
@@ -403,6 +420,33 @@ describe("eslint-config-nick2bad4u presets", () => {
                 "listeners/no-inline-function-event-listener"
             ]
         ).toBe("error");
+    });
+
+    it("composes the No Barrel Files config array as top-level entries", async () => {
+        expect.assertions(4);
+
+        const noBarrelFilesConfig = getConfigByNameOrThrow(
+            presets.all,
+            "🛢️ No Barrel Files"
+        );
+
+        expect(Object.hasOwn(noBarrelFilesConfig, "0")).toBe(false);
+        expect(noBarrelFilesConfig.plugins).toHaveProperty("no-barrel-files");
+        expect(noBarrelFilesConfig.rules).toMatchObject({
+            "no-barrel-files/no-barrel-files": "error",
+            "no-barrel-files/prefer-source-imports": "error",
+        });
+
+        const eslint = new ESLint({
+            cwd: ruleOwnershipFixtureWorkspaceRoot,
+            overrideConfig: [noBarrelFilesConfig],
+            overrideConfigFile: true,
+        });
+        const [lintResult] = await eslint.lintFiles(["src/barrel.ts"]);
+
+        expect(lintResult?.messages.map(({ ruleId }) => ruleId)).toStrictEqual([
+            "no-barrel-files/no-barrel-files",
+        ]);
     });
 
     it("keeps the Node plugin available when withoutSdl2 removes SDL namespaces", () => {
@@ -708,6 +752,29 @@ describe("eslint-config-nick2bad4u presets", () => {
         ]);
     });
 
+    it("prefers top-level await only in ECMAScript modules", () => {
+        expect.assertions(5);
+
+        const nodeConfig = findConfigByName(presets.all, "🍹 Node: All");
+        const unicornConfig = findConfigByName(presets.all, "🦄 Unicorn: All");
+        const commonjsConfig = findConfigByName(
+            presets.all,
+            "📦 CommonJS: Top-level await ⛔ Overrides"
+        );
+
+        expect(nodeConfig?.rules?.["n/no-top-level-await"]).toBe("off");
+        expect(unicornConfig?.rules?.["unicorn/prefer-top-level-await"]).toBe(
+            "error"
+        );
+        expect(commonjsConfig?.files).toStrictEqual(["**/*.{cjs,cts}"]);
+        expect(commonjsConfig?.rules?.["unicorn/prefer-top-level-await"]).toBe(
+            "off"
+        );
+        expect(commonjsConfig?.rules).not.toHaveProperty(
+            "n/no-top-level-await"
+        );
+    });
+
     it("enforces arrow callbacks across global JavaScript and TypeScript files", () => {
         expect.assertions(1);
 
@@ -801,7 +868,9 @@ describe("eslint-config-nick2bad4u presets", () => {
             ]
         ).toBe("off");
     });
+});
 
+describe("plugin replacement integration", () => {
     it("supports local source-rule plugin replacement via createConfig", () => {
         expect.assertions(1);
 
@@ -1095,6 +1164,96 @@ describe("eslint-config-nick2bad4u presets", () => {
     });
 });
 
+describe("compat integration", () => {
+    it("registers the plugin while leaving its rule disabled by default", () => {
+        expect.assertions(4);
+
+        const compatConfig = findConfigByName(presets.all, "🌐 Compat: Opt-In");
+
+        expect(compatConfig?.plugins?.["compat"]).toBe(compat);
+        expect(compatConfig?.rules?.["compat/compat"]).toBe("off");
+        expect(getRegisteredPluginNames(presets.all)).toContain("compat");
+        expect(Reflect.has(presets, "withoutCompat")).toBe(false);
+    });
+
+    it("lets projects enable the rule with ordinary flat-config precedence", async () => {
+        expect.assertions(4);
+
+        const eslint = new ESLint({
+            cwd: repositoryRoot,
+            overrideConfig: [
+                ...createConfig({ rootDirectory: repositoryRoot }),
+                {
+                    files: ["src/**/*.{js,ts}"],
+                    name: "Project browser compatibility",
+                    rules: {
+                        "compat/compat": "warn",
+                    },
+                    settings: {
+                        browsers: ["ie 11"],
+                    },
+                },
+            ],
+            overrideConfigFile: true,
+        });
+        const effectiveConfig = (await eslint.calculateConfigForFile(
+            "src/preset.ts"
+        )) as Linter.Config | undefined;
+        const [lintResult] = await eslint.lintText(
+            'fetch("https://example.com");',
+            { filePath: "src/preset.ts" }
+        );
+        const compatMessages = lintResult?.messages.filter(
+            ({ ruleId }) => ruleId === "compat/compat"
+        );
+
+        expect(effectiveConfig?.plugins?.["compat"]).toBe(compat);
+        expect(getRuleSeverity(effectiveConfig?.rules?.["compat/compat"])).toBe(
+            1
+        );
+        expect(effectiveConfig?.settings?.["browsers"]).toStrictEqual([
+            "ie 11",
+        ]);
+        expect(compatMessages).toHaveLength(1);
+    });
+
+    it("supports replacing or disabling the registered plugin", () => {
+        expect.assertions(5);
+
+        const localCompatPlugin = { ...compat };
+        const replacedConfigs = createConfig({
+            plugins: {
+                compat: localCompatPlugin,
+            },
+        });
+        const disabledConfigs = createConfig({
+            plugins: {
+                compat: false,
+            },
+        });
+
+        expect(
+            findConfigByName(replacedConfigs, "🌐 Compat: Opt-In")?.plugins?.[
+                "compat"
+            ]
+        ).toBe(localCompatPlugin);
+        expect(
+            findConfigByName(replacedConfigs, "🌐 Compat: Opt-In")?.rules?.[
+                "compat/compat"
+            ]
+        ).toBe("off");
+        expect(
+            findConfigByName(disabledConfigs, "🌐 Compat: Opt-In")
+        ).toBeUndefined();
+        expect(getRegisteredPluginNames(disabledConfigs)).not.toContain(
+            "compat"
+        );
+        expect(getRuleNamesForPlugin(disabledConfigs, "compat")).toStrictEqual(
+            []
+        );
+    });
+});
+
 describe("selected rule defaults", () => {
     it("enables the selected low-noise rules at warning severity", () => {
         expect.assertions(3);
@@ -1279,7 +1438,6 @@ describe("etc-misc v3 rule ownership", () => {
             "etc-misc/throw-error",
         ] as const;
         const intentionallyUnownedPluginNames = [
-            "compat",
             "no-secrets",
             "simple-import-sort",
             "unused-imports",
@@ -1577,56 +1735,82 @@ describe("vue preset integration", () => {
     });
 });
 
-describe("jest preset integration", () => {
+describe("jest and Vitest integration", () => {
     it("keeps Jest absent and Vitest enabled by default", () => {
-        expect.assertions(3);
+        expect.assertions(7);
+
+        const vitestConfig = findConfigByName(presets.all, "🧪 Vitest: all");
+        const vitestSettings = assertNonArrayObject(
+            vitestConfig?.settings?.["vitest"],
+            "Expected the default Vitest config to define settings.vitest."
+        );
 
         expect(getRegisteredPluginNames(presets.all)).not.toContain("jest");
         expect(getRuleNamesForPlugin(presets.all, "jest")).toStrictEqual([]);
-        expect(findConfigByName(presets.all, "🧪 Vitest: all")?.name).toBe(
-            "🧪 Vitest: all"
-        );
-    });
-
-    it("replaces Vitest with the stable Jest recommended config", () => {
-        expect.assertions(5);
-
-        const configEntries = createConfig({ jest: true });
-        const jestConfig = findConfigByName(
-            configEntries,
-            "🃏 Jest: Recommended"
-        );
-
-        expect(jestConfig?.files).toStrictEqual([
+        expect(vitestConfig?.plugins?.["vitest"]).toBe(vitestPlugin);
+        expect(vitestConfig?.files).toStrictEqual([
             "test/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
             "tests/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
             "src/test/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
             "benchmarks/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
             "benchmark/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
         ]);
-        expect(jestConfig?.plugins?.["jest"]).toBe(jest);
-        expect(jestConfig?.rules).toStrictEqual(
-            jest.configs["flat/recommended"].rules
-        );
+        expect(vitestConfig?.languageOptions?.["globals"]).toMatchObject({
+            vi: "writable",
+            vitest: "writable",
+        });
+        expect(vitestSettings["typecheck"]).toBe(true);
         expect(
-            findConfigByName(configEntries, "🧪 Vitest: all")
-        ).toBeUndefined();
-        expect(getRuleNamesForPlugin(configEntries, "vitest")).toStrictEqual(
-            []
-        );
+            isRuleEnabled(vitestConfig?.rules?.["vitest/no-focused-tests"])
+        ).toBe(true);
     });
 
-    it("supports custom files and an explicit Jest version", () => {
-        expect.assertions(4);
+    it("enables Jest without disabling the default Vitest integration", () => {
+        expect.assertions(6);
 
-        const files = ["packages/*/jest/**/*.{ts,tsx}"] as const;
+        const configEntries = createConfig({ jest: true });
+        const jestConfig = findConfigByName(
+            configEntries,
+            "🃏 Jest: All Rules"
+        );
+        const vitestConfig = findConfigByName(configEntries, "🧪 Vitest: all");
+        const testingLibraryConfig = findConfigByName(
+            configEntries,
+            "👨‍🔬 Testing Library: DOM"
+        );
+
+        expect(jestConfig?.plugins?.["jest"]).toBe(jest);
+        expect(jestConfig?.rules).toStrictEqual(jest.configs["flat/all"].rules);
+        expect(vitestConfig?.plugins?.["vitest"]).toBe(vitestPlugin);
+        expect(getRuleNamesForPlugin(configEntries, "jest")).not.toHaveLength(
+            0
+        );
+        expect(getRuleNamesForPlugin(configEntries, "vitest")).not.toHaveLength(
+            0
+        );
+        expect(testingLibraryConfig?.files).toStrictEqual([
+            "test/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
+            "tests/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
+            "src/test/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
+            "benchmarks/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
+            "benchmark/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
+        ]);
+    });
+
+    it("supports independent Jest and Vitest file scopes", () => {
+        expect.assertions(8);
+
+        const vitestFiles = ["packages/vitest/test/**/*.{ts,tsx}"] as const;
+        const jestFiles = ["packages/jest/test/**/*.{ts,tsx}"] as const;
         const configEntries = createConfig({
-            jest: { files, version: "30.0.0" },
+            jest: { files: jestFiles, version: "30.0.0" },
+            vitest: { files: vitestFiles },
         });
         const jestConfig = findConfigByName(
             configEntries,
-            "🃏 Jest: Recommended"
+            "🃏 Jest: All Rules"
         );
+        const vitestConfig = findConfigByName(configEntries, "🧪 Vitest: all");
         const testingLibraryConfig = findConfigByName(
             configEntries,
             "👨‍🔬 Testing Library: DOM"
@@ -1640,20 +1824,230 @@ describe("jest preset integration", () => {
             "Expected the enabled Jest config to define settings.jest."
         );
 
-        expect(jestConfig?.files).toStrictEqual([...files]);
-        expect(testingLibraryConfig?.files).toStrictEqual([...files]);
-        expect(testOverrides?.files).toStrictEqual([...files]);
+        expect(vitestConfig?.files).toStrictEqual([...vitestFiles]);
+        expect(jestConfig?.files).toStrictEqual([...jestFiles]);
+        expect(testingLibraryConfig?.files).toStrictEqual([
+            ...vitestFiles,
+            ...jestFiles,
+        ]);
+        expect(testOverrides?.files).toStrictEqual([
+            ...vitestFiles,
+            ...jestFiles,
+        ]);
         expect(jestSettings["version"]).toBe("30.0.0");
+        expect(vitestConfig?.languageOptions?.["globals"]).toHaveProperty("vi");
+        expect(jestConfig?.languageOptions?.["globals"]).toHaveProperty("jest");
+        expect(vitestConfig?.languageOptions?.["globals"]).not.toHaveProperty(
+            "jest"
+        );
     });
 
-    it("maps withJest as a complete opt-in preset", () => {
-        expect.assertions(3);
+    it("keeps each framework out of the other's effective config", async () => {
+        expect.assertions(10);
+
+        const configEntries = createConfig({
+            jest: {
+                files: ["packages/jest/test/**/*.{ts,tsx}"],
+                version: "30.0.0",
+            },
+            rootDirectory: repositoryRoot,
+            vitest: {
+                files: ["packages/vitest/test/**/*.{ts,tsx}"],
+            },
+        });
+        const eslint = new ESLint({
+            cwd: repositoryRoot,
+            overrideConfig: configEntries,
+            overrideConfigFile: true,
+        });
+        const effectiveVitestConfig = (await eslint.calculateConfigForFile(
+            "packages/vitest/test/example.test.ts"
+        )) as Linter.Config | undefined;
+        const effectiveJestConfig = (await eslint.calculateConfigForFile(
+            "packages/jest/test/example.test.ts"
+        )) as Linter.Config | undefined;
+
+        expect(effectiveVitestConfig?.plugins).toHaveProperty("vitest");
+        expect(effectiveVitestConfig?.plugins).not.toHaveProperty("jest");
+        expect(
+            effectiveVitestConfig?.languageOptions?.["globals"]
+        ).toHaveProperty("vi");
+        expect(
+            effectiveVitestConfig?.languageOptions?.["globals"]
+        ).not.toHaveProperty("jest");
+        expect(effectiveVitestConfig?.settings).toMatchObject({
+            vitest: { typecheck: true },
+        });
+        expect(effectiveJestConfig?.plugins).toHaveProperty("jest");
+        expect(effectiveJestConfig?.plugins).not.toHaveProperty("vitest");
+        expect(
+            effectiveJestConfig?.languageOptions?.["globals"]
+        ).toHaveProperty("jest");
+        expect(
+            effectiveJestConfig?.languageOptions?.["globals"]
+        ).not.toHaveProperty("vi");
+        expect(effectiveJestConfig?.settings).toMatchObject({
+            jest: { version: "30.0.0" },
+        });
+    });
+
+    it("supports disabling Vitest while enabling Jest", () => {
+        expect.assertions(5);
+
+        const configEntries = createConfig({ jest: true, vitest: false });
+        const jestConfig = findConfigByName(
+            configEntries,
+            "🃏 Jest: All Rules"
+        );
+
+        expect(jestConfig?.files).toStrictEqual([
+            "test/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
+            "tests/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
+            "src/test/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
+            "benchmarks/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
+            "benchmark/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
+        ]);
+        expect(jestConfig?.plugins?.["jest"]).toBe(jest);
+        expect(jestConfig?.rules).toStrictEqual(jest.configs["flat/all"].rules);
+        expect(
+            findConfigByName(configEntries, "🧪 Vitest: all")
+        ).toBeUndefined();
+        expect(getRuleNamesForPlugin(configEntries, "vitest")).toStrictEqual(
+            []
+        );
+    });
+
+    it("supports disabling both framework integrations independently", async () => {
+        expect.assertions(9);
+
+        const configEntries = createConfig({
+            jest: false,
+            rootDirectory: repositoryRoot,
+            vitest: false,
+        });
+        const testOverrides = findConfigByName(
+            configEntries,
+            "🧪 Tests: Tests, Benchmarks ⛔ Overrides"
+        );
+        const eslint = new ESLint({
+            cwd: repositoryRoot,
+            overrideConfig: configEntries,
+            overrideConfigFile: true,
+        });
+        const effectivePlaywrightConfig = (await eslint.calculateConfigForFile(
+            "test/e2e/example.test.ts"
+        )) as Linter.Config | undefined;
+
+        expect(
+            findConfigByName(configEntries, "🃏 Jest: All Rules")
+        ).toBeUndefined();
+        expect(
+            findConfigByName(configEntries, "🧪 Vitest: all")
+        ).toBeUndefined();
+        expect(getRuleNamesForPlugin(configEntries, "jest")).toStrictEqual([]);
+        expect(getRuleNamesForPlugin(configEntries, "vitest")).toStrictEqual(
+            []
+        );
+        expect(testOverrides?.files).toStrictEqual([
+            "test/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
+            "tests/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
+            "src/test/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
+            "benchmarks/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
+            "benchmark/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
+        ]);
+        expect(effectivePlaywrightConfig?.plugins).not.toHaveProperty("jest");
+        expect(effectivePlaywrightConfig?.plugins).not.toHaveProperty("vitest");
+        expect(
+            effectivePlaywrightConfig?.languageOptions?.["globals"]
+        ).not.toHaveProperty("jest");
+        expect(
+            effectivePlaywrightConfig?.languageOptions?.["globals"]
+        ).not.toHaveProperty("vi");
+    });
+
+    it("keeps plugin overrides independent", () => {
+        expect.assertions(8);
+
+        const configsWithoutJest = createConfig({
+            jest: true,
+            plugins: { jest: false },
+        });
+        const configsWithoutVitest = createConfig({
+            jest: true,
+            plugins: { vitest: false },
+        });
+
+        expect(
+            findConfigByName(configsWithoutJest, "🃏 Jest: All Rules")
+        ).toBeUndefined();
+        expect(
+            findConfigByName(configsWithoutJest, "🧪 Vitest: all")?.name
+        ).toBe("🧪 Vitest: all");
+        expect(getRuleNamesForPlugin(configsWithoutJest, "jest")).toStrictEqual(
+            []
+        );
+        expect(
+            getRuleNamesForPlugin(configsWithoutJest, "vitest")
+        ).not.toHaveLength(0);
+        expect(
+            findConfigByName(configsWithoutVitest, "🧪 Vitest: all")
+        ).toBeUndefined();
+        expect(
+            findConfigByName(configsWithoutVitest, "🃏 Jest: All Rules")?.name
+        ).toBe("🃏 Jest: All Rules");
+        expect(
+            getRuleNamesForPlugin(configsWithoutVitest, "vitest")
+        ).toStrictEqual([]);
+        expect(
+            getRuleNamesForPlugin(configsWithoutVitest, "jest")
+        ).not.toHaveLength(0);
+    });
+
+    it("supports replacing either framework plugin independently", () => {
+        expect.assertions(4);
+
+        const localJestPlugin = { ...jest };
+        const localVitestPlugin = { ...vitestPlugin };
+        const configEntries = createConfig({
+            jest: true,
+            plugins: {
+                jest: localJestPlugin,
+                vitest: localVitestPlugin,
+            },
+        });
+        const jestConfig = findConfigByName(
+            configEntries,
+            "🃏 Jest: All Rules"
+        );
+        const vitestConfig = findConfigByName(configEntries, "🧪 Vitest: all");
+
+        expect(jestConfig?.plugins?.["jest"]).toBe(localJestPlugin);
+        expect(vitestConfig?.plugins?.["vitest"]).toBe(localVitestPlugin);
+        expect(getRuleNamesForPlugin(configEntries, "jest")).not.toHaveLength(
+            0
+        );
+        expect(getRuleNamesForPlugin(configEntries, "vitest")).not.toHaveLength(
+            0
+        );
+    });
+
+    it("keeps withJest as a Jest-only compatibility preset", () => {
+        expect.assertions(6);
 
         expect(getPresetByName("withJest")).toBe(presets.withJest);
         expect(nickTwoBadFourU.configs.withJest).toBe(presets.withJest);
         expect(
-            findConfigByName(presets.withJest, "🃏 Jest: Recommended")?.rules
-        ).toStrictEqual(jest.configs["flat/recommended"].rules);
+            findConfigByName(presets.withJest, "🃏 Jest: All Rules")?.rules
+        ).toStrictEqual(jest.configs["flat/all"].rules);
+        expect(
+            findConfigByName(presets.withJest, "🃏 Jest: All Rules")?.rules
+        ).toHaveProperty("jest/prefer-expect-assertions");
+        expect(
+            findConfigByName(presets.withJest, "🧪 Vitest: all")
+        ).toBeUndefined();
+        expect(getRuleNamesForPlugin(presets.withJest, "vitest")).toStrictEqual(
+            []
+        );
     });
 });
 

@@ -59,6 +59,7 @@ export const presets: Nick2Bad4UEslintConfigPresets = Object.freeze({
     withoutTypedoc: sharedConfigs.withoutTypedoc,
     withoutTypefest: sharedConfigs.withoutTypefest,
     withoutVite: sharedConfigs.withoutVite,
+    withoutVitest: sharedConfigs.withoutVitest,
     withoutWriteGoodComments2: sharedConfigs.withoutWriteGoodComments2,
     withoutYamllint: sharedConfigs.withoutYamllint,
     withSonarJS: sharedConfigs.withSonarJS,

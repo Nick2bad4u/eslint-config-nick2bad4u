@@ -29,7 +29,7 @@ export interface Nick2Bad4UEslintConfigOptions {
      */
     readonly allowDefaultProjectFilePatterns?: readonly string[];
 
-    /** Use Jest instead of Vitest for test and benchmark files. */
+    /** Enable all Jest rules for test and benchmark files. Defaults to `false`. */
     readonly jest?: boolean | Nick2Bad4UJestOptions;
 
     /** Enable the recommended Next.js rules, with optional monorepo scoping. */
@@ -60,6 +60,9 @@ export interface Nick2Bad4UEslintConfigOptions {
      * `tsconfig.json`.
      */
     readonly tsconfigPaths?: readonly string[];
+
+    /** Configure the default-on Vitest rules, or pass `false` to disable them. */
+    readonly vitest?: boolean | Nick2Bad4UVitestOptions;
 }
 
 /** Public plugin override values accepted by `createConfig`. */
@@ -93,7 +96,7 @@ export interface Nick2Bad4UEslintConfigPresets {
     /** Alias for `all`; kept for familiar preset naming. */
     readonly recommended: Linter.Config[];
 
-    /** Full shared config using Jest instead of Vitest for test files. */
+    /** Jest-only compatibility preset for test and benchmark files. */
     readonly withJest: Linter.Config[];
 
     /** Full shared config with the recommended Next.js rules enabled. */
@@ -172,6 +175,9 @@ export interface Nick2Bad4UEslintConfigPresets {
     /** Full shared config without Vite plugin rules. */
     readonly withoutVite: Linter.Config[];
 
+    /** Full shared config without Vitest rules. */
+    readonly withoutVitest: Linter.Config[];
+
     /** Full shared config without Write Good Comments 2 rules. */
     readonly withoutWriteGoodComments2: Linter.Config[];
 
@@ -203,6 +209,12 @@ export interface Nick2Bad4UNextOptions {
 /** Options for scoping the default-on SonarJS rule section. */
 export interface Nick2Bad4USonarJSOptions {
     /** File globs that replace the standard JavaScript and TypeScript globs. */
+    readonly files?: readonly string[];
+}
+
+/** Options for scoping the default-on Vitest rule section. */
+export interface Nick2Bad4UVitestOptions {
+    /** File globs that replace the standard test and benchmark globs. */
     readonly files?: readonly string[];
 }
 

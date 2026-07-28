@@ -105,12 +105,38 @@ export default createConfig({
 | Option                            | Type                                | Default                      | Use it when                                                                                                          |
 | --------------------------------- | ----------------------------------- | ---------------------------- | -------------------------------------------------------------------------------------------------------------------- |
 | `allowDefaultProjectFilePatterns` | `readonly string[]`                 | Root JS/CJS/MJS globs        | Root config files are intentionally outside the nearest `tsconfig.json`; keep this list tiny and avoid broad globs.  |
-| `jest`                            | `boolean \| { files?, version? }`   | `false`                      | Replace the default Vitest rules and globals with Jest's stable recommended preset.                                  |
+| `jest`                            | `boolean \| { files?, version? }`   | `false`                      | Enable Jest's complete `flat/all` preset independently, optionally on custom file globs.                             |
 | `next`                            | `boolean \| { files?, rootDir? }`   | `false`                      | Enable Next.js recommended rules; set both fields when a monorepo uses nonstandard app roots.                        |
 | `rootDirectory`                   | `string`                            | `process.cwd()`              | ESLint runs outside the project root or a monorepo package needs its own root.                                       |
 | `sonarjs`                         | `boolean \| { files? }`             | `true`                       | Pass `false` to disable SonarJS, or `{ files }` to replace its JavaScript and TypeScript globs.                      |
 | `tsconfigPaths`                   | `readonly string[]`                 | `["./tsconfig.eslint.json"]` | Import resolver project paths; this does not replace TypeScript parser project-service discovery of `tsconfig.json`. |
+| `vitest`                          | `boolean \| { files? }`             | `true`                       | Pass `false` to disable Vitest, or `{ files }` to scope it independently from Jest.                                  |
 | `plugins`                         | `Readonly<Record<string, unknown>>` | `{}`                         | You need to dogfood a local plugin build or disable packaged plugin rules by namespace.                              |
+
+### Browser compatibility
+
+The shared config registers `eslint-plugin-compat`, but keeps
+`compat/compat` disabled because browser targets are project-specific. A browser
+project can opt in with an ordinary trailing flat-config entry:
+
+```js
+import nick2bad4u from "eslint-config-nick2bad4u";
+
+export default [
+ ...nick2bad4u.configs.all,
+ {
+  files: ["src/**/*.{js,jsx,ts,tsx}"],
+  name: "Project browser compatibility",
+  rules: {
+   "compat/compat": "warn",
+  },
+ },
+];
+```
+
+Define the project targets in a dedicated Browserslist configuration file
+before enabling the rule. There is no `withoutCompat` preset because the rule
+is already off by default.
 
 An example copy-paste config is available at
 [`examples/eslint.config.create.mjs`](./examples/eslint.config.create.mjs).
@@ -122,46 +148,47 @@ Detailed configuration examples live in the
 All presets are available from the default export as `nick2bad4u.configs.*` and
 from the named `presets` export.
 
-| Preset                      | Purpose                                                                            |
-| --------------------------- | ---------------------------------------------------------------------------------- |
-| `all`                       | Full shared config, including packaged Typefest and Etc-Misc source-rule sections. |
-| `recommended`               | Alias for `all`; provided for familiar preset naming.                              |
-| `base`                      | Shared config without explicit source-rule plugin sections.                        |
-| `withJest`                  | Full shared config using Jest instead of Vitest for test files.                    |
-| `withNext`                  | Full shared config with the recommended Next.js rules enabled.                     |
-| `withSonarJS`               | Deprecated alias for `all`; SonarJS is enabled by default.                         |
-| `withoutActionlint`         | Full shared config without Actionlint rules.                                       |
-| `withoutCodex`              | Full shared config without Codex plugin rules.                                     |
-| `withoutCopilot`            | Full shared config without Copilot rules.                                          |
-| `withoutDocusaurus2`        | Full shared config without Docusaurus 2 plugin rules.                              |
-| `withoutEtcMisc`            | Full shared config without the Etc-Misc source-rule section.                       |
-| `withoutFileProgress2`      | Full shared config without File Progress 2 rules.                                  |
-| `withoutGitHubActions2`     | Full shared config without GitHub Actions 2 rules.                                 |
-| `withoutGithubActions2`     | Deprecated alias for `withoutGitHubActions2`.                                      |
-| `withoutImmutable2`         | Full shared config without Immutable 2 rules.                                      |
-| `withoutRemark`             | Full shared config without Remark plugin rules.                                    |
-| `withoutRepo`               | Full shared config without Repo plugin rules.                                      |
-| `withoutRuntimeCleanup`     | Full shared config without Runtime Cleanup plugin rules.                           |
-| `withoutSdl2`               | Full shared config without SDL 2 rules.                                            |
-| `withoutSecretlint`         | Full shared config without Secretlint plugin rules.                                |
-| `withoutSonarJS`            | Full shared config without SonarJS rules.                                          |
-| `withoutStylelint2`         | Full shared config without Stylelint 2 rules.                                      |
-| `withoutTestSignal`         | Full shared config without Test Signal plugin rules.                               |
-| `withoutTombi`              | Full shared config without Tombi plugin rules.                                     |
-| `withoutTsconfig`           | Full shared config without tsconfig-validation rules.                              |
-| `withoutTsdocRequire2`      | Full shared config without TSDoc Require 2 rules.                                  |
-| `withoutTypedoc`            | Full shared config without TypeDoc rules.                                          |
-| `withoutTypefest`           | Full shared config without the Typefest source-rule section.                       |
-| `withoutVite`               | Full shared config without Vite plugin rules.                                      |
-| `withoutWriteGoodComments2` | Full shared config without Write Good Comments 2 rules.                            |
-| `withoutYamllint`           | Full shared config without Yamllint plugin rules.                                  |
+| Preset                      | Purpose                                                                             |
+| --------------------------- | ----------------------------------------------------------------------------------- |
+| `all`                       | Full shared config, including packaged Typefest and Etc-Misc source-rule sections.  |
+| `recommended`               | Alias for `all`; provided for familiar preset naming.                               |
+| `base`                      | Shared config without explicit source-rule plugin sections.                         |
+| `withJest`                  | Jest-only compatibility preset; use the factory to enable Jest and Vitest together. |
+| `withNext`                  | Full shared config with the recommended Next.js rules enabled.                      |
+| `withSonarJS`               | Deprecated alias for `all`; SonarJS is enabled by default.                          |
+| `withoutActionlint`         | Full shared config without Actionlint rules.                                        |
+| `withoutCodex`              | Full shared config without Codex plugin rules.                                      |
+| `withoutCopilot`            | Full shared config without Copilot rules.                                           |
+| `withoutDocusaurus2`        | Full shared config without Docusaurus 2 plugin rules.                               |
+| `withoutEtcMisc`            | Full shared config without the Etc-Misc source-rule section.                        |
+| `withoutFileProgress2`      | Full shared config without File Progress 2 rules.                                   |
+| `withoutGitHubActions2`     | Full shared config without GitHub Actions 2 rules.                                  |
+| `withoutGithubActions2`     | Deprecated alias for `withoutGitHubActions2`.                                       |
+| `withoutImmutable2`         | Full shared config without Immutable 2 rules.                                       |
+| `withoutRemark`             | Full shared config without Remark plugin rules.                                     |
+| `withoutRepo`               | Full shared config without Repo plugin rules.                                       |
+| `withoutRuntimeCleanup`     | Full shared config without Runtime Cleanup plugin rules.                            |
+| `withoutSdl2`               | Full shared config without SDL 2 rules.                                             |
+| `withoutSecretlint`         | Full shared config without Secretlint plugin rules.                                 |
+| `withoutSonarJS`            | Full shared config without SonarJS rules.                                           |
+| `withoutStylelint2`         | Full shared config without Stylelint 2 rules.                                       |
+| `withoutTestSignal`         | Full shared config without Test Signal plugin rules.                                |
+| `withoutTombi`              | Full shared config without Tombi plugin rules.                                      |
+| `withoutTsconfig`           | Full shared config without tsconfig-validation rules.                               |
+| `withoutTsdocRequire2`      | Full shared config without TSDoc Require 2 rules.                                   |
+| `withoutTypedoc`            | Full shared config without TypeDoc rules.                                           |
+| `withoutTypefest`           | Full shared config without the Typefest source-rule section.                        |
+| `withoutVite`               | Full shared config without Vite plugin rules.                                       |
+| `withoutVitest`             | Full shared config without Vitest rules.                                            |
+| `withoutWriteGoodComments2` | Full shared config without Write Good Comments 2 rules.                             |
+| `withoutYamllint`           | Full shared config without Yamllint plugin rules.                                   |
 
 Use a `without*` preset when a repository does not use that surface or when it
 needs to provide a local build of that plugin for dogfooding.
 
 Vue scoped-CSS and accessibility recommendations are enabled by default only
 for the existing Vue SFC file block. SonarJS is also enabled by default on code
-files; Jest remains opt-in because it replaces the default Vitest integration.
+files. Vitest is enabled by default, while Jest is an independent opt-in.
 
 ## TypeScript project setup
 

@@ -88,12 +88,42 @@ export default createConfig({
 | Option                            | Default                      | Guidance                                                                                                             |
 | --------------------------------- | ---------------------------- | -------------------------------------------------------------------------------------------------------------------- |
 | `allowDefaultProjectFilePatterns` | Root JS/CJS/MJS globs        | Root globs passed to `parserOptions.projectService.allowDefaultProject`. Only include files outside `tsconfig.json`. |
-| `jest`                            | `false`                      | Pass `true` to replace Vitest on standard test globs, or `{ files, version }` for custom Jest projects.              |
+| `jest`                            | `false`                      | Pass `true` to add Jest on standard test globs, or `{ files, version }` for custom Jest projects.                    |
 | `next`                            | `false`                      | Pass `true` for standard Next.js roots or `{ files, rootDir }` for a monorepo.                                       |
 | `rootDirectory`                   | `process.cwd()`              | Set this when ESLint runs from outside the package root.                                                             |
 | `sonarjs`                         | `true`                       | Pass `false` to disable SonarJS, or `{ files }` to replace its standard code globs.                                  |
 | `tsconfigPaths`                   | `["./tsconfig.eslint.json"]` | Import resolver project paths. The parser still uses project-service discovery of nearest `tsconfig.json`.           |
+| `vitest`                          | `true`                       | Pass `false` to disable Vitest, or `{ files }` to replace its standard test and benchmark globs.                     |
 | `plugins`                         | `{}`                         | Pass a plugin object to replace a namespace, or `false`/`null` to disable it.                                        |
+
+### Browser compatibility
+
+`eslint-plugin-compat` is registered under the `compat` namespace, while its
+single `compat/compat` rule remains off by default. Browser compatibility
+depends on the consuming project's supported browsers, so enable the rule only
+after defining those targets in a dedicated
+[Browserslist configuration file](https://github.com/browserslist/browserslist#config-file):
+
+```js
+import nick2bad4u from "eslint-config-nick2bad4u";
+
+export default [
+ ...nick2bad4u.configs.all,
+ {
+  files: ["src/**/*.{js,jsx,ts,tsx}"],
+  name: "Project browser compatibility",
+  rules: {
+   "compat/compat": "warn",
+  },
+ },
+];
+```
+
+Normal flat-config precedence changes the rule from `off` to `warn` for the
+selected browser files. A `withoutCompat` preset is intentionally unnecessary:
+projects that do not opt in receive no Compat diagnostics. The generic plugin
+override can still remove its dormant registration with
+`createConfig({ plugins: { compat: false } })`.
 
 ### Root directory
 
@@ -125,6 +155,19 @@ React allocation checks can be enabled explicitly when a project still needs
 them, and invalid void-element nesting remains owned by the React DOM rules.
 Use `withoutEtcMisc` when a repository needs to remove the entire source-rule
 section or register a local Etc-Misc build.
+
+### Top-level await
+
+The shared config prefers top-level `await` in ECMAScript modules and disables
+`n/no-top-level-await`. Top-level `await` is a stable part of modern Node ESM,
+while the Node rule enforces the narrower contract that published ESM must
+remain synchronously loadable through `require(esm)`.
+
+`unicorn/prefer-top-level-await` is disabled for `.cjs` and `.cts` files because
+they are CommonJS. A library that deliberately promises synchronous
+`require(esm)` interoperability should reverse both rules in the same published
+ESM scope: enable `n/no-top-level-await` and disable
+`unicorn/prefer-top-level-await`.
 
 ### Next.js
 
@@ -160,11 +203,15 @@ export default createConfig({
 });
 ```
 
-### Jest
+### Jest and Vitest
 
-Jest is opt-in because the shared default uses Vitest. Enabling Jest replaces
-the Vitest plugin rules, globals, and settings on the test and benchmark globs;
-it does not layer both test-framework plugins onto the same files.
+Vitest is enabled by default and Jest is opt-in. The factory controls them
+independently: enabling Jest does not disable Vitest, and each integration can
+have its own file globs. The shared Testing Library and test override blocks use
+the union of the enabled framework globs.
+
+The `withJest` preset remains Jest-only for compatibility with its existing
+behavior:
 
 ```js
 import nick2bad4u from "eslint-config-nick2bad4u";
@@ -172,22 +219,31 @@ import nick2bad4u from "eslint-config-nick2bad4u";
 export default nick2bad4u.configs.withJest;
 ```
 
-Use the factory for nonstandard paths or when a monorepo needs to pin the Jest
-version used by version-sensitive lint rules.
+Use the factory to enable both frameworks. Give them disjoint file globs in a
+mixed-runner monorepo so Jest and Vitest rules and globals do not apply to the
+same files:
 
 ```js
 import { createConfig } from "eslint-config-nick2bad4u";
 
 export default createConfig({
  jest: {
-  files: ["packages/*/test/**/*.{js,jsx,ts,tsx}"],
+  files: ["packages/jest/test/**/*.{js,jsx,ts,tsx}"],
   version: "30.0.0",
+ },
+ vitest: {
+  files: ["packages/vitest/test/**/*.{js,jsx,ts,tsx}"],
  },
 });
 ```
 
-The preset intentionally uses Jest's stable `recommended` config. It does not
-use `all`, whose rule membership can change outside major releases.
+The Jest integration uses the complete `flat/all` config. Unlike `recommended`,
+Jest can add rules to `all` in any release, so dependency updates can introduce
+new diagnostics without a major `eslint-plugin-jest` version change.
+
+Disable only Vitest with `createConfig({ vitest: false })` or the
+`withoutVitest` preset. Passing both `jest: false` and `vitest: false` removes
+both framework integrations while retaining the shared test-file overrides.
 
 ### SonarJS
 
