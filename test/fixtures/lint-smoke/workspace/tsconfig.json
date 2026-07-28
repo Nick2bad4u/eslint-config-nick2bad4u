@@ -13,6 +13,7 @@
         "types": []
     },
     "exclude": ["node_modules/**"],
+    "files": ["components/Island.astro/script.js"],
     "include": [
         ".storybook/**/*.ts",
         "**/*",

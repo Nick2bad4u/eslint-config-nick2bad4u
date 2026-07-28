@@ -1,0 +1,18 @@
+concurrency:
+    cancel-in-progress: true
+    group: "fixture-release-${{ github.ref }}"
+
+jobs:
+    call-release:
+        name: "Call reusable release workflow"
+        permissions: {}
+        uses: "example/example/.github/workflows/release.yml@main"
+
+name: "Fixture Release Caller"
+
+on:
+    workflow_dispatch:
+
+permissions: {}
+
+run-name: "Fixture release caller"
