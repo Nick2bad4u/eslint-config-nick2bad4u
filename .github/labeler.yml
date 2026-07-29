@@ -11,6 +11,7 @@
 
 # Limit changed-files based labels to 5
 changed-files-labels-limit: 5
+
 # Limit changed-files based labels to 100 files changed (default is 1000)
 max-files-changed: 100
 
