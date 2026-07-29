@@ -6,7 +6,7 @@ jobs:
     call-release:
         name: "Call reusable release workflow"
         permissions: {}
-        uses: "example/example/.github/workflows/release.yml@main"
+        uses: "example/example/.github/workflows/release.yml@0123456789abcdef0123456789abcdef01234567"
 
 name: "Fixture Release Caller"
 

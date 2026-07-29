@@ -418,7 +418,14 @@ describe("isolated runtime integrations", () => {
         const effectiveConfig = (await eslint.calculateConfigForFile(
             jestFixturePath
         )) as Linter.Config | undefined;
-        const [lintResult] = await eslint.lintFiles([jestFixturePath]);
+        const [lintResult] = await eslint.lintText(
+            [
+                'describe("Jest fixture", () => {',
+                '    it.only("detects a focused test", () => undefined);',
+                "});",
+            ].join("\n"),
+            { filePath: jestFixturePath }
+        );
 
         expect(effectiveConfig?.plugins).toHaveProperty("jest");
         expect(effectiveConfig?.plugins).not.toHaveProperty("vitest");
