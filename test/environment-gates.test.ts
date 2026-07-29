@@ -405,6 +405,7 @@ describe("isolated runtime integrations", () => {
                     files: ["packages/jest/test/**/*.ts"],
                     languageOptions: {
                         parserOptions: {
+                            disallowAutomaticSingleRunInference: true,
                             project: "./tsconfig.json",
                             projectService: false,
                             tsconfigRootDir: fixtureWorkspaceRoot,
