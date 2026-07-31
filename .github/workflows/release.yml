@@ -112,6 +112,22 @@ jobs:
                   cache: "npm"
                   cache-dependency-path: "package-lock.json"
 
+            - name: "Setup pinned npm"
+              working-directory: "${{ runner.temp }}"
+              run: |
+                  set -euo pipefail
+                  npm_package_manager="$(
+                    node "$GITHUB_WORKSPACE/scripts/sync-npm-version.mjs" --print-package-manager
+                  )"
+                  npm install --global --ignore-scripts "$npm_package_manager"
+                  hash -r
+                  actual_npm_version="$(npm --version)"
+                  expected_npm_version="${npm_package_manager#npm@}"
+                  if [ "$actual_npm_version" != "$expected_npm_version" ]; then
+                    echo "Expected npm $expected_npm_version, received $actual_npm_version." >&2
+                    exit 1
+                  fi
+
             - name: "Install dependencies"
               run: "npm ci --force --ignore-scripts"
 

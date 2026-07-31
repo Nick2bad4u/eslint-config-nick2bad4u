@@ -100,8 +100,10 @@
         "lint:yamllint": "yamllint -c .yamllint .",
         "package:check": "npm pack --dry-run",
         "release:check": "npm run release:verify",
-        "release:verify": "npm run build && npm run test && npm run lint:all:nocache && npm run lint:package:strict && npm run sync:peer-eslint-range && npm run sync:peer-typescript-range && npm run sync:node-version-files",
+        "release:verify": "npm run build && npm run test && npm run lint:all:nocache && npm run lint:package:strict && npm run sync:npm-version:check && npm run sync:peer-eslint-range && npm run sync:peer-typescript-range && npm run sync:node-version-files",
         "sync:node-version-files": "node scripts/sync-node-version-files.mjs",
+        "sync:npm-version": "node scripts/sync-npm-version.mjs",
+        "sync:npm-version:check": "node scripts/sync-npm-version.mjs --check",
         "sync:peer-eslint-range": "node scripts/sync-peer-eslint-range.mjs",
         "sync:peer-typescript-range": "node scripts/sync-peer-typescript-range.mjs",
         "test": "npm run build:runtime && npx vitest run",
@@ -111,7 +113,7 @@
         "types:update": "npx typesync",
         "update-actions": "npx actions-up --yes --style sha --quiet",
         "update-all": "npm run update-deps && npm run update-actions",
-        "update-deps": "npx ncu --configFileName .ncurc.json --configFilePath node_modules/ncu-config-nick2bad4u && npx cross-env npm_config_allow_scripts= npm update --force && npx cross-env npm_config_allow_scripts= npm install --force && npm run sync:peer-eslint-range && npm run sync:node-version-files && npm run sync:peer-typescript-range",
+        "update-deps": "npx ncu --configFileName .ncurc.json --configFilePath node_modules/ncu-config-nick2bad4u && npx cross-env npm_config_allow_scripts= npm update --force && npx cross-env npm_config_allow_scripts= npm install --force && npm run sync:peer-eslint-range && npm run sync:node-version-files && npm run sync:peer-typescript-range && npm run sync:npm-version",
         "verify": "npm run release:verify"
     },
     "overrides": {
@@ -119,7 +121,7 @@
     },
     "dependencies": {
         "@eslint-community/eslint-plugin-eslint-comments": "^4.7.2",
-        "@eslint-react/eslint-plugin": "^5.18.0",
+        "@eslint-react/eslint-plugin": "^5.18.1",
         "@eslint/config-helpers": "^0.7.0",
         "@eslint/css": "^1.4.0",
         "@eslint/js": "^10.0.1",
@@ -162,7 +164,7 @@
         "eslint-plugin-immutable-2": "^1.2.5",
         "eslint-plugin-import-x": "^4.17.1",
         "eslint-plugin-jest": "^29.16.0",
-        "eslint-plugin-jsdoc": "^63.3.1",
+        "eslint-plugin-jsdoc": "^63.3.2",
         "eslint-plugin-json-schema-validator-2": "^7.0.10",
         "eslint-plugin-jsonc": "^3.3.0",
         "eslint-plugin-listeners": "^1.6.0",
@@ -170,7 +172,7 @@
         "eslint-plugin-module-interop": "^0.3.1",
         "eslint-plugin-n": "^18.2.2",
         "eslint-plugin-nitpick": "^0.12.2",
-        "eslint-plugin-no-barrel-files": "^2.1.0",
+        "eslint-plugin-no-barrel-files": "^2.2.0",
         "eslint-plugin-no-unsanitized": "^4.1.5",
         "eslint-plugin-node-dependencies": "^2.2.0",
         "eslint-plugin-package-json": "^1.6.2",
@@ -215,7 +217,7 @@
     },
     "devDependencies": {
         "@arethetypeswrong/cli": "^0.18.5",
-        "@eslint/config-inspector": "^3.1.0",
+        "@eslint/config-inspector": "^3.1.1",
         "@microsoft/tsdoc-config": "^0.18.1",
         "@types/eslint-plugin-security": "^3.0.1",
         "@types/node": "^26.1.2",
@@ -235,7 +237,7 @@
         "npm-package-json-lint-config-nick2bad4u": "^1.0.4",
         "picocolors": "^1.1.1",
         "prettier": "^3.9.6",
-        "prettier-config-nick2bad4u": "^1.1.1",
+        "prettier-config-nick2bad4u": "^2.0.1",
         "publint": "^0.3.22",
         "remark": "^15.0.1",
         "remark-cli": "^12.0.1",
@@ -248,7 +250,7 @@
         "stylelint-define-config": "^17.14.0",
         "tsdoc-config-nick2bad4u": "^1.0.6",
         "typescript": "^6.0.3",
-        "vite": "^8.1.5",
+        "vite": "^8.2.0",
         "vitest": "^4.1.10",
         "yamllint-config-nick2bad4u": "^1.1.1"
     },
@@ -264,7 +266,7 @@
             "optional": false
         }
     },
-    "packageManager": "npm@12.0.1",
+    "packageManager": "npm@12.0.2",
     "engines": {
         "node": "^22.22.3 || ^24.16.0 || >=26.3.0"
     },
@@ -276,7 +278,7 @@
         },
         "packageManager": {
             "name": "npm",
-            "version": ">=11.0.0",
+            "version": ">=12",
             "onFail": "error"
         }
     },
