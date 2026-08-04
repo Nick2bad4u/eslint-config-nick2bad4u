@@ -1219,6 +1219,8 @@ export const createConfig = (
             name: "🦄 Unicorn: All",
             rules: {
                 ...unicorn.configs.all.rules,
+                // `arrow-body-style` already owns this policy through the JS all config.
+                "unicorn/consistent-arrow-return-style": "off",
                 "unicorn/consistent-boolean-name": [
                     "error",
                     {
@@ -1303,11 +1305,19 @@ export const createConfig = (
                         },
                     },
                 ],
+                "unicorn/iteration-fallback-style": ["error", "guard"],
                 "unicorn/name-replacements": "off", // Noisy and low quality
                 "unicorn/no-asterisk-prefix-in-documentation-comments": "off",
+                // The dedicated plugin also owns direct-source import enforcement.
+                "unicorn/no-barrel-files": "off",
                 "unicorn/no-keyword-prefix": "off", // Too hostile for TypeScript/domain names like typeNode and errorMessage
                 "unicorn/no-null": "off", // Noisy and low quality
+                "unicorn/no-unsafe-sqlite-interpolation": "error",
                 "unicorn/no-useless-undefined": "off",
+                "unicorn/single-line-block-comment-style": [
+                    "error",
+                    "single-line",
+                ],
                 "unicorn/try-complexity": ["error", { max: 3 }],
             },
         },
@@ -3662,6 +3672,8 @@ export const createConfig = (
                 "no-unused-vars": "off",
                 "yml/file-extension": "off",
                 "yml/key-name-casing": "off",
+                // `require-string-key` already rejects boolean keys and more.
+                "yml/no-boolean-key": "off",
                 "yml/plain-scalar": "off",
                 "yml/quotes": "off",
                 "yml/require-string-key": "error",

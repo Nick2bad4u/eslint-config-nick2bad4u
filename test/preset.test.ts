@@ -423,7 +423,7 @@ describe("eslint-config-nick2bad4u presets", () => {
     });
 
     it("composes the No Barrel Files config array as top-level entries", async () => {
-        expect.assertions(4);
+        expect.assertions(5);
 
         const noBarrelFilesConfig = getConfigByNameOrThrow(
             presets.all,
@@ -447,6 +447,37 @@ describe("eslint-config-nick2bad4u presets", () => {
         expect(lintResult?.messages.map(({ ruleId }) => ruleId)).toStrictEqual([
             "no-barrel-files/no-barrel-files",
         ]);
+
+        const [consumerLintResult] = await eslint.lintFiles([
+            "src/barrel-consumer.js",
+        ]);
+
+        expect(
+            consumerLintResult?.messages.map(({ ruleId }) => ruleId)
+        ).toStrictEqual(["no-barrel-files/prefer-source-imports"]);
+    });
+
+    it("configures the Unicorn v73 rules with explicit owners and styles", () => {
+        expect.assertions(5);
+
+        const unicornConfig = getConfigByNameOrThrow(
+            presets.all,
+            "🦄 Unicorn: All"
+        );
+
+        expect(
+            unicornConfig.rules?.["unicorn/consistent-arrow-return-style"]
+        ).toBe("off");
+        expect(
+            unicornConfig.rules?.["unicorn/iteration-fallback-style"]
+        ).toStrictEqual(["error", "guard"]);
+        expect(unicornConfig.rules?.["unicorn/no-barrel-files"]).toBe("off");
+        expect(
+            unicornConfig.rules?.["unicorn/no-unsafe-sqlite-interpolation"]
+        ).toBe("error");
+        expect(
+            unicornConfig.rules?.["unicorn/single-line-block-comment-style"]
+        ).toStrictEqual(["error", "single-line"]);
     });
 
     it("keeps the Node plugin available when withoutSdl2 removes SDL namespaces", () => {

@@ -1,6 +1,4 @@
-/*
- * This is the Secretlint configuration file for the project.
- */
+/* This is the Secretlint configuration file for the project. */
 const sharedConfig = require("secretlint-config-nick2bad4u/secretlintrc.json"),
     /**
      * @type {import("@secretlint/types").SecretLintConfigDescriptor}

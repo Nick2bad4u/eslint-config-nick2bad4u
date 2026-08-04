@@ -93,9 +93,12 @@ const fixturePaths = [
 
 const intentionallyExcludedFixturePaths = [
     ".gitignore",
-    // This intentionally invalid fixture is covered by its focused No Barrel
-    // Files regression instead of the parser/rule-loading smoke matrix.
+    // These files form the intentionally invalid No Barrel Files fixtures and
+    // are covered by focused regressions instead of the general smoke matrix.
+    "src/barrel-consumer.js",
     "src/barrel.ts",
+    "src/javascript-barrel.js",
+    "src/javascript-source.js",
 ] as const;
 
 const FIXTURE_SCOPE_SETTING_PREFIX = "__fixture-scope:";
