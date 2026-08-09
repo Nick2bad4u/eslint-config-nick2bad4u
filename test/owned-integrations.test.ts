@@ -8,6 +8,12 @@ import { createConfig, presets } from "../src/preset";
 const fixtureWorkspaceRoot = fileURLToPath(
     new URL("fixtures/lint-smoke/workspace", import.meta.url)
 );
+const docusaurusContentRuleNames = [
+    "docusaurus-2/no-deprecated-admonition-title-syntax",
+    "docusaurus-2/no-deprecated-heading-id-syntax",
+    "docusaurus-2/no-deprecated-html-comments-in-mdx",
+    "docusaurus-2/require-mermaid-elk-package-installed",
+] as const;
 
 const findConfigByName = (
     configEntries: readonly Linter.Config[],
@@ -262,6 +268,57 @@ describe("owned Actionlint and Docusaurus integrations", () => {
                 ].includes(message.ruleId ?? "")
             )
         ).toStrictEqual([]);
+    });
+
+    it("keeps owned Docusaurus content rules active under GFM", async () => {
+        expect.assertions(2);
+
+        const eslint = new ESLint({
+            cwd: fixtureWorkspaceRoot,
+            overrideConfig: createIntegrationConfig(),
+            overrideConfigFile: true,
+        });
+        const fixtureFile = "docs/docusaurus/content/guide.md" as const;
+        const effectiveConfig =
+            await eslint.calculateConfigForFile(fixtureFile);
+        const [result] = await eslint.lintText(
+            [
+                "```mermaid",
+                "---",
+                "config:",
+                "  layout: elk",
+                "---",
+                "flowchart LR",
+                "  A --> B",
+                "```",
+            ].join("\n"),
+            { filePath: fixtureFile }
+        );
+
+        expect(
+            docusaurusContentRuleNames.map((ruleName) => ({
+                ruleName,
+                severity: getEffectiveRuleSeverity(effectiveConfig, ruleName),
+            }))
+        ).toStrictEqual(
+            docusaurusContentRuleNames.map((ruleName) => ({
+                ruleName,
+                severity: 2,
+            }))
+        );
+        expect(
+            result?.messages
+                .filter(
+                    (message) =>
+                        message.ruleId?.startsWith("docusaurus-2/") === true
+                )
+                .map(({ ruleId, severity }) => ({ ruleId, severity }))
+        ).toStrictEqual([
+            {
+                ruleId: "docusaurus-2/require-mermaid-elk-package-installed",
+                severity: 2,
+            },
+        ]);
     });
 
     it("supports explicit Docusaurus i18n config composition", async () => {
