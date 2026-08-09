@@ -1558,6 +1558,24 @@ export const createConfig = (
                       ignores: [...DOCUSAURUS_IGNORES],
                       name: "🦖 Docusaurus 2: Content",
                   },
+                  {
+                      // eslint-plugin-docusaurus-2 2.0.2 declares these raw-text
+                      // content rules as JavaScript-only. Keep them enabled for
+                      // MDX, but disable them when the final ESLint language is
+                      // markdown/gfm so ESLint 10 can validate the merged config.
+                      files: ["**/docs/docusaurus/**/*.md"],
+                      ignores: [...DOCUSAURUS_IGNORES],
+                      name: "🦖 Docusaurus 2: Markdown Language ⛔ Overrides",
+                      rules: {
+                          "docusaurus-2/no-deprecated-admonition-title-syntax":
+                              "off",
+                          "docusaurus-2/no-deprecated-heading-id-syntax": "off",
+                          "docusaurus-2/no-deprecated-html-comments-in-mdx":
+                              "off",
+                          "docusaurus-2/require-mermaid-elk-package-installed":
+                              "off",
+                      },
+                  },
               ]),
         // ═══════════════════════════════════════════════════════════════════════════════
         // #endregion 🦖 Docusaurus 2 Configs
