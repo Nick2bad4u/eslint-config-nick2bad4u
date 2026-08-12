@@ -1507,6 +1507,7 @@ export const createConfig = (
                         "docs",
                         "fixable",
                         "hasSuggestions",
+                        "languages",
                         "messages",
                         "replacedBy",
                         "schema",
