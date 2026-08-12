@@ -1286,6 +1286,33 @@ describe("compat integration", () => {
 });
 
 describe("selected rule defaults", () => {
+    it("keeps modern ESLint rule metadata ordering compatible with languages", () => {
+        expect.assertions(1);
+
+        const eslintPluginConfig = findConfigByName(
+            presets.all,
+            "🍭 ESLint Plugin: Recommended"
+        );
+
+        expect(
+            eslintPluginConfig?.rules?.["eslint-plugin/meta-property-ordering"]
+        ).toStrictEqual([
+            "error",
+            [
+                "defaultOptions",
+                "deprecated",
+                "docs",
+                "fixable",
+                "hasSuggestions",
+                "languages",
+                "messages",
+                "replacedBy",
+                "schema",
+                "type",
+            ],
+        ]);
+    });
+
     it("enables the selected low-noise rules at warning severity", () => {
         expect.assertions(3);
 
