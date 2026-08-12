@@ -56,8 +56,8 @@ const isCiEnvironment = process.env["CI"] === "true",
     testFilePatterns = ["test/**/*.{test,spec}.{ts,tsx,js,mjs,cjs,mts,cts}"],
     /** Canonical include patterns for Vitest type-test discovery. */
     typecheckTestFilePatterns = [
-        "**/*.{test,spec}-d.{ts,tsx,mts,cts}",
-        "**/*.{test,spec}.{ts,tsx,mts,cts}",
+        "test/**/*.{test,spec}-d.{ts,tsx,mts,cts}",
+        "test/**/*.{test,spec}.{ts,tsx,mts,cts}",
     ],
     /**
      * Shared reporter list for test runs with optional hanging-process

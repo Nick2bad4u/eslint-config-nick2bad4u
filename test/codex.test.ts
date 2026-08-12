@@ -89,6 +89,38 @@ describe("codex preset integration", () => {
         ).toBe("1.1.0");
     });
 
+    it("scopes hook validation to the canonical Codex hooks file", async () => {
+        expect.assertions(2);
+
+        const eslint = new ESLint({
+            overrideConfig: presets.all,
+            overrideConfigFile: true,
+        });
+        const [codexHooksResult, githubHooksResult] = await Promise.all([
+            eslint.lintText("{}", { filePath: ".codex/hooks.json" }),
+            eslint.lintText("{}", { filePath: ".github/hooks/hooks.json" }),
+        ]);
+        const getCodexMessages = (results: readonly ESLint.LintResult[]) =>
+            results.flatMap((result) =>
+                result.messages.filter(
+                    (message) => message.ruleId?.startsWith("codex/") === true
+                )
+            );
+
+        expect(
+            getCodexMessages(codexHooksResult).map(({ messageId, ruleId }) => ({
+                messageId,
+                ruleId,
+            }))
+        ).toStrictEqual([
+            {
+                messageId: "missingHooksObject",
+                ruleId: "codex/require-valid-hook-structure",
+            },
+        ]);
+        expect(getCodexMessages(githubHooksResult)).toStrictEqual([]);
+    });
+
     it("keeps AGENTS documents on the Codex document-language path", async () => {
         expect.assertions(2);
 
