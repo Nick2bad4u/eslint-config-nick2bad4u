@@ -64,6 +64,20 @@ npm run lint:package:strict
 npm run lint:all
 ```
 
+## Temporary dependency pins
+
+`npm-package-json-lint` is pinned to `10.4.1` because `10.5.0` can combine
+`ajv-errors` with a differently hoisted Ajv copy and emit invalid validator
+code. The local package-json lint and ESLint configurations contain the
+corresponding narrow exceptions to the normal caret-range policy.
+
+Remove both the exact pin and its local lint exception only after a published
+`npm-package-json-lint` release contains the fixes from
+[upstream PR #1922](https://github.com/tclindner/npm-package-json-lint/pull/1922)
+and [upstream PR #1923](https://github.com/tclindner/npm-package-json-lint/pull/1923).
+Verify the replacement release through `npm ci`, `npm run lint:package:strict`,
+and `npm run release:verify` before restoring a caret range.
+
 ## Add a `without*` preset
 
 Add a dedicated `without*` preset when consumers need to dogfood a local plugin
