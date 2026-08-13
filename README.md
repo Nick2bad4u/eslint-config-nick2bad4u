@@ -186,9 +186,11 @@ from the named `presets` export.
 Use a `without*` preset when a repository does not use that surface or when it
 needs to provide a local build of that plugin for dogfooding.
 
-Vue scoped-CSS and accessibility recommendations are enabled by default only
-for the existing Vue SFC file block. SonarJS is also enabled by default on code
-files. Vitest is enabled by default, while Jest is an independent opt-in.
+Astro and Vue component linting are temporarily excluded from the shared
+preset. Repositories using either framework must append the upstream framework
+flat config locally; see [Astro and Vue](docs/configuration.md#astro-and-vue).
+SonarJS remains enabled by default on code files. Vitest is enabled by default,
+while Jest is an independent opt-in.
 
 ## TypeScript project setup
 

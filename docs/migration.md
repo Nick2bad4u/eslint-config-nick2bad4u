@@ -123,6 +123,18 @@ shared `eslint-config-nick2bad4u` package.
 Keep `eslint` and `typescript` installed in the consuming project. They are peer
 dependencies so each repository controls its own compiler and linter versions.
 
+### Astro and Vue projects
+
+The shared preset temporarily no longer supplies Astro or Vue component
+parsers, plugins, file scopes, or rules. Keep the corresponding packages in the
+consuming repository and append the upstream flat config after this package's
+preset. See [Astro and Vue](configuration.md#astro-and-vue) for the supported
+composition pattern and upstream setup guides.
+
+Without a local framework config, `.astro` and `.vue` files are not supported
+lint surfaces. Do not remove their direct framework lint dependencies during
+the cleanup below.
+
 ## Step 1 — Review direct lint dependencies
 
 The shared config ships the ESLint plugins, parsers, and helper configs it uses.
@@ -156,7 +168,6 @@ $bundledLintPackages = @(
     "eslint-import-resolver-typescript",
     "eslint-plugin-actionlint",
     "eslint-plugin-array-func",
-    "eslint-plugin-astro",
     "eslint-plugin-canonical",
     "eslint-plugin-case-police",
     "eslint-plugin-comment-length",
@@ -204,14 +215,12 @@ $bundledLintPackages = @(
     "eslint-plugin-typedoc",
     "eslint-plugin-typefest",
     "eslint-plugin-unicorn",
-    "eslint-plugin-vue",
     "eslint-plugin-write-good-comments-2",
     "eslint-plugin-yml",
     "globals",
     "jsonc-eslint-parser",
     "toml-eslint-parser",
     "typescript-eslint",
-    "vue-eslint-parser",
     "yaml-eslint-parser"
 )
 

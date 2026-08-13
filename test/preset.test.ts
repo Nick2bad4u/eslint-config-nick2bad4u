@@ -1,7 +1,6 @@
 import next from "@next/eslint-plugin-next";
 import vitestPlugin from "@vitest/eslint-plugin";
 import { ESLint, type Linter } from "eslint";
-import astro from "eslint-plugin-astro";
 import compat from "eslint-plugin-compat";
 import etcMiscPlugin from "eslint-plugin-etc-misc";
 import jest from "eslint-plugin-jest";
@@ -1724,71 +1723,32 @@ export const View = (): JSX.Element => (
     });
 });
 
-describe("vue preset integration", () => {
-    it("enables the maintained scoped-CSS and accessibility rules", () => {
-        expect.assertions(10);
+describe("disabled Vue integration", () => {
+    it("omits Vue configs, plugins, and rules from the shared preset", () => {
+        expect.assertions(7);
 
-        const vueConfig = findConfigByName(
-            presets.all,
-            "🖖 Vue SFCs: **/*.vue"
+        const registeredPluginNames = getRegisteredPluginNames(presets.all);
+        const enabledVueRuleNames = presets.all.flatMap((configEntry) =>
+            Object.entries(configEntry.rules ?? {}).flatMap(
+                ([ruleName, ruleConfig]) =>
+                    ruleName.startsWith("vue/") && isRuleEnabled(ruleConfig)
+                        ? [ruleName]
+                        : []
+            )
         );
 
-        expect(Object.keys(vueConfig?.plugins ?? {})).toStrictEqual(
-            expect.arrayContaining(["vue-scoped-css", "vuejs-accessibility"])
-        );
         expect(
-            getRuleNamesForPlugin(presets.all, "vue-scoped-css")
-        ).toHaveLength(14);
-        expect(
-            getRuleNamesForPlugin(presets.all, "vuejs-accessibility")
-        ).toHaveLength(22);
-        expect(vueConfig?.rules?.["vue-scoped-css/no-unused-selector"]).toBe(
-            "warn"
-        );
-        expect(
-            vueConfig?.rules?.[
-                "vue-scoped-css/no-deprecated-v-enter-v-leave-class"
-            ]
-        ).toBe("warn");
-        expect(
-            vueConfig?.rules?.["vue-scoped-css/require-selector-used-inside"]
-        ).toBe("warn");
-        expect(vueConfig?.rules?.["vuejs-accessibility/alt-text"]).toBe(
-            "error"
-        );
-        expect(
-            vueConfig?.rules?.[
-                "vuejs-accessibility/no-aria-hidden-on-focusable"
-            ]
-        ).toBe("off");
-        expect(
-            vueConfig?.rules?.[
-                "vuejs-accessibility/no-role-presentation-on-focusable"
-            ]
-        ).toBe("error");
-        expect(
-            vueConfig?.rules?.["vuejs-accessibility/no-onchange"]
+            findConfigByName(presets.all, "🖖 Vue SFCs: **/*.vue")
         ).toBeUndefined();
-    });
-
-    it("supports disabling either added Vue namespace", () => {
-        expect.assertions(4);
-
-        const configEntries = createConfig({
-            plugins: {
-                "vue-scoped-css": false,
-                "vuejs-accessibility": false,
-            },
-        });
-        const registeredPluginNames = getRegisteredPluginNames(configEntries);
-
+        expect(registeredPluginNames).not.toContain("vue");
         expect(registeredPluginNames).not.toContain("vue-scoped-css");
         expect(registeredPluginNames).not.toContain("vuejs-accessibility");
+        expect(enabledVueRuleNames).toStrictEqual([]);
         expect(
-            getRuleNamesForPlugin(configEntries, "vue-scoped-css")
+            getRuleNamesForPlugin(presets.all, "vue-scoped-css")
         ).toStrictEqual([]);
         expect(
-            getRuleNamesForPlugin(configEntries, "vuejs-accessibility")
+            getRuleNamesForPlugin(presets.all, "vuejs-accessibility")
         ).toStrictEqual([]);
     });
 });
@@ -2357,74 +2317,18 @@ describe("next.js preset integration", () => {
     });
 });
 
-describe("astro preset integration", () => {
-    it("keeps the complete base, supported rules, and disabled JSX-a11y wrappers", () => {
-        expect.assertions(5);
+describe("disabled Astro integration", () => {
+    it("omits Astro configs, plugins, and rules from the shared preset", () => {
+        expect.assertions(3);
 
-        const presetConfigNames = new Set(
-            presets.all.map((configEntry) => configEntry.name)
-        );
-        const missingAstroBaseConfigNames = astro.configs.base
-            .map((configEntry) => configEntry.name)
-            .filter((configName) => !presetConfigNames.has(configName));
-        // JSX accessibility wrappers are not self-contained and their optional peer
-        // does not support this package's ESLint major yet.
-        const supportedAstroRuleNames = Object.entries(astro.rules)
-            .filter(([ruleName, rule]) => {
-                const deprecated = rule.meta?.deprecated;
-
-                return (
-                    !ruleName.startsWith("jsx-a11y/") &&
-                    (deprecated === undefined || deprecated === false)
-                );
-            })
-            .map(([ruleName]) => `astro/${ruleName}`)
-            .toSorted((left, right) => left.localeCompare(right));
-        const astroJsxA11yRuleNames = Object.keys(astro.rules)
-            .filter((ruleName) => ruleName.startsWith("jsx-a11y/"))
-            .map((ruleName) => `astro/${ruleName}`)
-            .toSorted((left, right) => left.localeCompare(right));
-        const unsortedExpectedConfiguredAstroRuleNames = [
-            ...supportedAstroRuleNames,
-            ...astroJsxA11yRuleNames,
-        ];
-        const expectedConfiguredAstroRuleNames =
-            unsortedExpectedConfiguredAstroRuleNames.toSorted((left, right) =>
-                left.localeCompare(right)
-            );
-        const astroComponentConfig = findConfigByName(
-            presets.all,
-            "🚀 Astro Components: **/*.astro"
-        );
-        const astroComponentRules = astroComponentConfig?.rules ?? {};
-        const astroTypeScriptBaseConfig = findConfigByName(
-            presets.all,
-            "astro/base/typescript"
-        );
-        const astroTypeScriptParserOptions = assertNonArrayObject(
-            astroTypeScriptBaseConfig?.languageOptions?.["parserOptions"],
-            "Expected the Astro TypeScript base config to define parser options."
+        const astroConfigEntries = presets.all.filter(
+            (configEntry) =>
+                configEntry.name?.startsWith("astro/") === true ||
+                configEntry.name === "🚀 Astro Components: **/*.astro"
         );
 
-        expect(missingAstroBaseConfigNames).toStrictEqual([]);
-        expect(
-            getRuleNamesForPlugin(presets.all, "astro").toSorted(
-                (left, right) => left.localeCompare(right)
-            )
-        ).toStrictEqual(expectedConfiguredAstroRuleNames);
-        expect(
-            supportedAstroRuleNames.filter(
-                (ruleName) => !isRuleEnabled(astroComponentRules[ruleName])
-            )
-        ).toStrictEqual([]);
-        expect(
-            astroJsxA11yRuleNames.map((ruleName) => [
-                ruleName,
-                astroComponentRules[ruleName],
-            ])
-        ).toStrictEqual(
-            astroJsxA11yRuleNames.map((ruleName) => [ruleName, "off"])
-        );
-        expect(Reflect.get(astroTypeScriptParserOptions, "project")).toBeNull();
+        expect(astroConfigEntries).toStrictEqual([]);
+        expect(getRegisteredPluginNames(presets.all)).not.toContain("astro");
+        expect(getRuleNamesForPlugin(presets.all, "astro")).toStrictEqual([]);
     });
 });

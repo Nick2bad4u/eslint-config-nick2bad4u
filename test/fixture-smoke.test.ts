@@ -36,8 +36,6 @@ const fixturePaths = [
     "assets/js/site.js",
     "benchmarks/throughput.bench.ts",
     "checks/home.pw.ts",
-    "components/Counter.vue",
-    "components/Hero.astro",
     "components/Island.astro/script.js",
     "components/Island.astro/script.ts",
     "config/settings.json",
@@ -93,6 +91,10 @@ const fixturePaths = [
 
 const intentionallyExcludedFixturePaths = [
     ".gitignore",
+    // Astro and Vue.js integrations are temporarily disabled.
+    // Consumers must add local flat configs before linting these components.
+    "components/Counter.vue",
+    "components/Hero.astro",
     // These files form the intentionally invalid No Barrel Files fixtures and
     // are covered by focused regressions instead of the general smoke matrix.
     "src/barrel-consumer.js",
@@ -104,10 +106,9 @@ const intentionallyExcludedFixturePaths = [
 const FIXTURE_SCOPE_SETTING_PREFIX = "__fixture-scope:";
 
 const fixtureTypeScriptProject = {
-    files: ["**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts,vue}"],
+    files: ["**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}"],
     languageOptions: {
         parserOptions: {
-            extraFileExtensions: [".vue"],
             project: "./tsconfig.json",
             projectService: false,
             tsconfigRootDir: fixtureWorkspaceRoot,

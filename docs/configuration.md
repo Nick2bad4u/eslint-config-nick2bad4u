@@ -272,24 +272,39 @@ export default createConfig({
 });
 ```
 
-### Vue
+### Astro and Vue
 
-The Vue file block includes the recommended rules from
-`eslint-plugin-vue-scoped-css` and `eslint-plugin-vuejs-accessibility`. They are
-default-on because they apply only where the existing Vue SFC parser block
-matches. Disable either namespace through the plugin override API when a Vue
-project relies on dynamic selectors or another accessibility analyzer.
+Astro and Vue component linting are temporarily excluded from the shared
+config. Merely installing a framework plugin does not restore the former
+behavior: the consuming repository must append the plugin's flat config so the
+framework parser, file scopes, plugins, and rules are all registered.
+
+Install only the framework packages the repository uses, then append their
+recommended configurations after the shared preset:
+
+```powershell
+npm install --save-dev eslint-plugin-astro eslint-plugin-vue
+```
 
 ```js
-import { createConfig } from "eslint-config-nick2bad4u";
+import astro from "eslint-plugin-astro";
+import vue from "eslint-plugin-vue";
+import nick2bad4u from "eslint-config-nick2bad4u";
 
-export default createConfig({
- plugins: {
-  "vue-scoped-css": false,
-  "vuejs-accessibility": false,
- },
-});
+export default [
+ ...nick2bad4u.configs.all,
+ ...astro.configs.recommended,
+ ...vue.configs["flat/recommended"],
+];
 ```
+
+See the upstream [Astro user guide](https://ota-meshi.github.io/eslint-plugin-astro/user-guide/)
+and [Vue user guide](https://eslint.vuejs.org/user-guide/) for TypeScript,
+accessibility, editor, and framework-version-specific options. Projects that
+want the former scoped-CSS or Vue accessibility extensions must also configure
+[`eslint-plugin-vue-scoped-css`](https://future-architect.github.io/eslint-plugin-vue-scoped-css/user-guide/)
+and [`eslint-plugin-vuejs-accessibility`](https://vue-a11y.github.io/eslint-plugin-vuejs-accessibility/)
+locally.
 
 The TypeDoc package-header rule remains off in the shared preset because a
 single generic source glob would incorrectly require `@packageDocumentation`

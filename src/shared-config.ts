@@ -28,7 +28,6 @@ import prettierOverrides from "eslint-config-prettier";
 import { createTypeScriptImportResolver } from "eslint-import-resolver-typescript";
 import actionlint from "eslint-plugin-actionlint";
 import arrayFunc from "eslint-plugin-array-func";
-import astro from "eslint-plugin-astro";
 import canonical from "eslint-plugin-canonical";
 import casePolice from "eslint-plugin-case-police";
 import commentLength from "eslint-plugin-comment-length";
@@ -80,9 +79,6 @@ import tsdocRequire from "eslint-plugin-tsdoc-require-2";
 import typedoc from "eslint-plugin-typedoc";
 import typefestPlugin from "eslint-plugin-typefest";
 import unicorn from "eslint-plugin-unicorn";
-import vue from "eslint-plugin-vue";
-import vueScopedCss from "eslint-plugin-vue-scoped-css";
-import vuejsAccessibility from "eslint-plugin-vuejs-accessibility";
 import writeGoodComments from "eslint-plugin-write-good-comments-2";
 import yamllint from "eslint-plugin-yamllint";
 import yml from "eslint-plugin-yml";
@@ -108,6 +104,20 @@ import {
 } from "ts-extras";
 import tseslint from "typescript-eslint";
 import * as yamlEslintParser from "yaml-eslint-parser";
+
+// Framework integrations are temporarily disabled.
+// Review target: 2026-11-13.
+// The full implementation remains commented near the framework config blocks.
+//
+// Astro usage is low.
+// Its parser loads @astrojs/compiler-rs into long-lived VS Code processes.
+// On Windows, that can cause npm CI EPERM failures while replacing the binding.
+// Disabled import: `import astro from "eslint-plugin-astro";`.
+//
+// Vue.js has low usage and a large dependency tree, so consumers own its lint setup.
+// Disabled import: `import vue from "eslint-plugin-vue";`.
+// Disabled import: `import vueScopedCss from "eslint-plugin-vue-scoped-css";`.
+// Disabled import: `import vuejsAccessibility from "eslint-plugin-vuejs-accessibility";`.
 
 /**
  * Captured environment variable map for config-time feature gates.
@@ -698,30 +708,30 @@ function getNamedConfigRules(
 
     return typeof rules === "object" && rules !== null ? rules : {};
 }
-function hasConfigRules<TConfig extends object>(
-    config: TConfig
-): config is TConfig & {
-    readonly rules: NonNullable<EslintConfig["rules"]>;
-} {
-    return objectHasOwn(config, "rules");
-}
-const vueScopedCssRules = {
-    ...vueScopedCss.configs.recommended.find(hasConfigRules)?.rules,
-    "vue-scoped-css/no-deprecated-v-enter-v-leave-class": "warn",
-    "vue-scoped-css/require-selector-used-inside": "warn",
-} satisfies NonNullable<EslintConfig["rules"]>;
+// Disabled code: function hasConfigRules<TConfig extends object>(
+//     config: TConfig
+// ): config is TConfig & {
+//     readonly rules: NonNullable<EslintConfig["rules"]>;
+// } {
+//     return objectHasOwn(config, "rules");
+// }
+// const vueScopedCssRules = {
+//     ...vueScopedCss.configs.recommended.find(hasConfigRules)?.rules,
+//     "vue-scoped-css/no-deprecated-v-enter-v-leave-class": "warn",
+//     "vue-scoped-css/require-selector-used-inside": "warn",
+// } satisfies NonNullable<EslintConfig["rules"]>;
 
-const vuejsAccessibilityRules = {
-    ...vuejsAccessibility.configs["flat/recommended"].find(hasConfigRules)
-        ?.rules,
-    // @NOTE The documented behavior applies specifically to `aria-hidden="true"`,
-    // but v2.5.0 also reports `aria-hidden="false"` and dynamic bindings.
-    // Disabled because false and statically indeterminate values should not be reported.
-    // @NOTE Re-enable when the plugin is updated and the rule is fixed. Current version: 2.5.0
-    // @see {@link https://vue-a11y.github.io/eslint-plugin-vuejs-accessibility/rules/no-aria-hidden-on-focusable.html}
-    "vuejs-accessibility/no-aria-hidden-on-focusable": "off",
-    "vuejs-accessibility/no-role-presentation-on-focusable": "error",
-} satisfies NonNullable<EslintConfig["rules"]>;
+// const vuejsAccessibilityRules = {
+//     ...vuejsAccessibility.configs["flat/recommended"].find(hasConfigRules)
+//         ?.rules,
+//     // @NOTE The documented behavior applies specifically to `aria-hidden="true"`,
+//     // but v2.5.0 also reports `aria-hidden="false"` and dynamic bindings.
+//     // Disabled because false and statically indeterminate values should not be reported.
+//     // @NOTE Re-enable when the plugin is updated and the rule is fixed. Current version: 2.5.0
+//     // @see {@link https://vue-a11y.github.io/eslint-plugin-vuejs-accessibility/rules/no-aria-hidden-on-focusable.html}
+//     "vuejs-accessibility/no-aria-hidden-on-focusable": "off",
+//     "vuejs-accessibility/no-role-presentation-on-focusable": "error",
+// } satisfies NonNullable<EslintConfig["rules"]>;
 
 // #endregion 🏗️ Setup and Public Types
 // #region 🛠️ Config
@@ -953,16 +963,17 @@ export const createConfig = (
         "typedoc",
         typedoc
     );
-    const vueScopedCssPlugin = resolveTypedPlugin(
-        pluginOverrideEntries,
-        "vue-scoped-css",
-        vueScopedCss
-    );
-    const vuejsAccessibilityPlugin = resolveTypedPlugin(
-        pluginOverrideEntries,
-        "vuejs-accessibility",
-        vuejsAccessibility
-    );
+
+    // Disabled code: const vueScopedCssPlugin = resolveTypedPlugin(
+    //     pluginOverrideEntries,
+    //     "vue-scoped-css",
+    //     vueScopedCss
+    // );
+    // Disabled code: const vuejsAccessibilityPlugin = resolveTypedPlugin(
+    //     pluginOverrideEntries,
+    //     "vuejs-accessibility",
+    //     vuejsAccessibility
+    // );
     const writeGoodCommentsPlugin = resolveTypedPluginByAlias(
         pluginOverrideEntries,
         ["write-good-comments", "write-good-comments-2"],
@@ -3975,228 +3986,233 @@ export const createConfig = (
             },
         },
         // #endregion 📖 Storybook Files
-        // #region 🖖 Vue.js Files
-        // ═══════════════════════════════════════════════════════════════════════════════
-        {
-            ...vue.configs["flat/base"][1],
-            files: [
-                "**/*.vue",
-                "*.vue.js",
-                "*.vue.ts",
-            ],
-            languageOptions: {
-                ...vue.configs["flat/base"][1]?.languageOptions,
-                parserOptions: {
-                    extraFileExtensions: [".vue"],
-                    parser: tseslint.parser,
-                    sourceType: "module",
-                },
-            },
-            name: "🖖 Vue SFCs: **/*.vue",
-            plugins: {
-                ...vue.configs["flat/base"][1]?.plugins,
-                ...(vueScopedCssPlugin !== null && {
-                    "vue-scoped-css": vueScopedCssPlugin,
-                }),
-                ...(vuejsAccessibilityPlugin !== null && {
-                    "vuejs-accessibility": vuejsAccessibilityPlugin,
-                }),
-            },
-            rules: {
-                ...vue.configs.essential.rules,
-                ...vue.configs.recommended.rules,
-                ...vue.configs["strongly-recommended"].rules,
-                ...(vueScopedCssPlugin !== null && vueScopedCssRules),
-                ...(vuejsAccessibilityPlugin !== null &&
-                    vuejsAccessibilityRules),
-                "vue/block-lang": "warn",
-                "vue/camelcase": "warn",
-                "vue/comment-directive": "warn",
-                "vue/component-api-style": "warn",
-                "vue/component-definition-name-casing": "warn",
-                "vue/component-name-in-template-casing": "warn",
-                "vue/component-options-name-casing": "warn",
-                "vue/custom-event-name-casing": "warn",
-                "vue/define-emits-declaration": "warn",
-                "vue/define-macros-order": "warn",
-                "vue/define-props-declaration": "warn",
-                "vue/define-props-destructuring": "warn",
-                "vue/dot-notation": "warn",
-                "vue/enforce-style-attribute": "warn",
-                "vue/eqeqeq": "warn",
-                "vue/html-button-has-type": "warn",
-                "vue/html-comment-content-newline": "warn",
-                "vue/html-comment-content-spacing": "warn",
-                "vue/html-comment-indent": "warn",
-                "vue/jsx-uses-vars": "warn",
-                "vue/match-component-file-name": "warn",
-                "vue/match-component-import-name": "warn",
-                "vue/max-lines-per-block": "warn",
-                "vue/max-props": "warn",
-                "vue/max-template-depth": "warn",
-                "vue/new-line-between-multi-line-property": "warn",
-                "vue/next-tick-style": "warn",
-                "vue/no-bare-strings-in-template": "warn",
-                "vue/no-boolean-default": "warn",
-                "vue/no-console": "warn",
-                "vue/no-constant-condition": "warn",
-                "vue/no-custom-modifiers-on-v-model": "warn",
-                "vue/no-duplicate-attr-inheritance": "warn",
-                "vue/no-duplicate-class-names": "warn",
-                "vue/no-empty-component-block": "warn",
-                "vue/no-empty-pattern": "warn",
-                "vue/no-implicit-coercion": "warn",
-                "vue/no-import-compiler-macros": "warn",
-                "vue/no-irregular-whitespace": "warn",
-                "vue/no-literals-in-template": "warn",
-                "vue/no-loss-of-precision": "warn",
-                "vue/no-multiple-objects-in-class": "warn",
-                "vue/no-multiple-template-root": "warn",
-                "vue/no-mutating-props": "warn",
-                "vue/no-negated-condition": "warn",
-                "vue/no-negated-v-if-condition": "warn",
-                "vue/no-potential-component-option-typo": "warn",
-                "vue/no-ref-object-reactivity-loss": "warn",
-                "vue/no-restricted-block": "warn",
-                "vue/no-restricted-call-after-await": "warn",
-                "vue/no-restricted-class": "warn",
-                "vue/no-restricted-component-names": "warn",
-                "vue/no-restricted-component-options": "warn",
-                "vue/no-restricted-custom-event": "warn",
-                "vue/no-restricted-html-elements": "warn",
-                "vue/no-restricted-props": "warn",
-                "vue/no-restricted-static-attribute": "warn",
-                "vue/no-restricted-syntax": "warn",
-                "vue/no-restricted-v-bind": "warn",
-                "vue/no-restricted-v-on": "warn",
-                "vue/no-root-v-if": "warn",
-                "vue/no-setup-props-reactivity-loss": "warn",
-                "vue/no-sparse-arrays": "warn",
-                "vue/no-static-inline-styles": "warn",
-                "vue/no-template-target-blank": "warn",
-                "vue/no-this-in-before-route-enter": "warn",
-                "vue/no-undef-components": "warn",
-                "vue/no-undef-directives": "warn",
-                "vue/no-undef-properties": "warn",
-                "vue/no-unsupported-features": "warn",
-                "vue/no-unused-emit-declarations": "warn",
-                "vue/no-unused-properties": "warn",
-                "vue/no-unused-refs": "warn",
-                "vue/no-use-v-else-with-v-for": "warn",
-                "vue/no-useless-concat": "warn",
-                "vue/no-useless-mustaches": "warn",
-                "vue/no-useless-v-bind": "warn",
-                // Deprecated rule
-                // @see {@link https://eslint.vuejs.org/rules/no-v-for-template-key.html}
-                "vue/no-v-for-template-key": "off",
-                // Deprecated rule
-                // @see {@link https://eslint.vuejs.org/rules/no-v-model-argument.html}
-                "vue/no-v-model-argument": "off",
-                "vue/no-v-text": "warn",
-                "vue/object-shorthand": "warn",
-                "vue/padding-line-between-blocks": "warn",
-                "vue/padding-line-between-tags": "warn",
-                "vue/padding-lines-in-component-definition": "warn",
-                "vue/prefer-define-options": "warn",
-                "vue/prefer-prop-type-boolean-first": "warn",
-                "vue/prefer-separate-static-class": "warn",
-                "vue/prefer-single-event-payload": "warn",
-                "vue/prefer-template": "warn",
-                "vue/prefer-true-attribute-shorthand": "warn",
-                "vue/prefer-use-template-ref": "warn",
-                "vue/prefer-v-model": "warn",
-                "vue/require-default-export": "warn",
-                "vue/require-direct-export": "warn",
-                "vue/require-emit-validator": "warn",
-                "vue/require-explicit-slots": "warn",
-                "vue/require-expose": "warn",
-                "vue/require-macro-variable-name": "warn",
-                "vue/require-name-property": "warn",
-                "vue/require-prop-comment": "warn",
-                "vue/require-typed-object-prop": "warn",
-                "vue/require-typed-ref": "warn",
-                "vue/restricted-component-names": "warn",
-                "vue/slot-name-casing": "warn",
-                "vue/sort-keys": "warn",
-                "vue/static-class-names-order": "warn",
-                "vue/v-for-delimiter-style": "warn",
-                "vue/v-if-else-key": "warn",
-                "vue/v-on-handler-style": "warn",
-            },
-        },
-        // #endregion 🖖 Vue.js Files
-        // #region 🚀 Astro Files
-        // ═══════════════════════════════════════════════════════════════════════════════
-        ...astro.configs.base,
-        {
-            files: ["*.astro", "**/*.astro"],
-            name: "🚀 Astro Components: **/*.astro",
-            rules: {
-                // @NOTE: eslint-plugin-jsx-a11y should not be enabled until ESLint 10 support lands.
-                // @see {@link https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/issues/1075}
-                // @see {@link https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/releases}
-                // The Astro JSX accessibility wrappers require eslint-plugin-jsx-a11y,
-                // whose v6.10.2 peer range only supports ESLint through v9. Enabling the
-                // wrappers without that optional peer emits one dependency warning per rule.
-                "astro/jsx-a11y/alt-text": "off",
-                "astro/jsx-a11y/anchor-ambiguous-text": "off",
-                "astro/jsx-a11y/anchor-has-content": "off",
-                "astro/jsx-a11y/anchor-is-valid": "off",
-                "astro/jsx-a11y/aria-activedescendant-has-tabindex": "off",
-                "astro/jsx-a11y/aria-props": "off",
-                "astro/jsx-a11y/aria-proptypes": "off",
-                "astro/jsx-a11y/aria-role": "off",
-                "astro/jsx-a11y/aria-unsupported-elements": "off",
-                "astro/jsx-a11y/autocomplete-valid": "off",
-                "astro/jsx-a11y/click-events-have-key-events": "off",
-                "astro/jsx-a11y/control-has-associated-label": "off",
-                "astro/jsx-a11y/heading-has-content": "off",
-                "astro/jsx-a11y/html-has-lang": "off",
-                "astro/jsx-a11y/iframe-has-title": "off",
-                "astro/jsx-a11y/img-redundant-alt": "off",
-                "astro/jsx-a11y/interactive-supports-focus": "off",
-                "astro/jsx-a11y/label-has-associated-control": "off",
-                "astro/jsx-a11y/lang": "off",
-                "astro/jsx-a11y/media-has-caption": "off",
-                "astro/jsx-a11y/mouse-events-have-key-events": "off",
-                "astro/jsx-a11y/no-access-key": "off",
-                "astro/jsx-a11y/no-aria-hidden-on-focusable": "off",
-                "astro/jsx-a11y/no-autofocus": "off",
-                "astro/jsx-a11y/no-distracting-elements": "off",
-                "astro/jsx-a11y/no-interactive-element-to-noninteractive-role":
-                    "off",
-                "astro/jsx-a11y/no-noninteractive-element-interactions": "off",
-                "astro/jsx-a11y/no-noninteractive-element-to-interactive-role":
-                    "off",
-                "astro/jsx-a11y/no-noninteractive-tabindex": "off",
-                "astro/jsx-a11y/no-redundant-roles": "off",
-                "astro/jsx-a11y/no-static-element-interactions": "off",
-                "astro/jsx-a11y/prefer-tag-over-role": "off",
-                "astro/jsx-a11y/role-has-required-aria-props": "off",
-                "astro/jsx-a11y/role-supports-aria-props": "off",
-                "astro/jsx-a11y/scope": "off",
-                "astro/jsx-a11y/tabindex-no-positive": "off",
-                "astro/missing-client-only-directive-value": "warn",
-                "astro/no-conflict-set-directives": "warn",
-                "astro/no-deprecated-astro-canonicalurl": "warn",
-                "astro/no-deprecated-astro-fetchcontent": "warn",
-                "astro/no-deprecated-astro-resolve": "warn",
-                "astro/no-deprecated-getentrybyslug": "warn",
-                "astro/no-exports-from-components": "warn",
-                "astro/no-prerender-export-outside-pages": "warn",
-                "astro/no-set-html-directive": "warn",
-                "astro/no-set-text-directive": "warn",
-                "astro/no-unsafe-inline-scripts": "warn",
-                "astro/no-unused-css-selector": "warn",
-                "astro/no-unused-define-vars-in-style": "warn",
-                "astro/prefer-class-list-directive": "warn",
-                "astro/prefer-object-class-list": "warn",
-                "astro/prefer-split-class-list": "warn",
-                "astro/semi": "warn",
-                "astro/sort-attributes": "warn",
-            },
-        },
-        // #endregion 🚀 Astro Files
+        // Astro and Vue.js integrations are temporarily disabled.
+        // The review target and rationale are documented beside the imports.
+        // Consumers must provide their own framework flat configs.
+        //
+        // Disabled implementation retained temporarily for easy restoration.
+        // prettier-ignore-start
+        // // #region 🖖 Vue.js Files
+        // // ═══════════════════════════════════════════════════════════════════════════════
+        // {
+        //     ...vue.configs["flat/base"][1],
+        //     files: [
+        //         "**/*.vue",
+        //         "*.vue.js",
+        //         "*.vue.ts",
+        //     ],
+        //     languageOptions: {
+        //         ...vue.configs["flat/base"][1]?.languageOptions,
+        //         parserOptions: {
+        //             extraFileExtensions: [".vue"],
+        //             parser: tseslint.parser,
+        //             sourceType: "module",
+        //         },
+        //     },
+        //     name: "🖖 Vue SFCs: **/*.vue",
+        //     plugins: {
+        //         ...vue.configs["flat/base"][1]?.plugins,
+        //         ...(vueScopedCssPlugin !== null && {
+        //             "vue-scoped-css": vueScopedCssPlugin,
+        //         }),
+        //         ...(vuejsAccessibilityPlugin !== null && {
+        //             "vuejs-accessibility": vuejsAccessibilityPlugin,
+        //         }),
+        //     },
+        //     rules: {
+        //         ...vue.configs.essential.rules,
+        //         ...vue.configs.recommended.rules,
+        //         ...vue.configs["strongly-recommended"].rules,
+        //         ...(vueScopedCssPlugin !== null && vueScopedCssRules),
+        //         ...(vuejsAccessibilityPlugin !== null &&
+        //             vuejsAccessibilityRules),
+        //         "vue/block-lang": "warn",
+        //         "vue/camelcase": "warn",
+        //         "vue/comment-directive": "warn",
+        //         "vue/component-api-style": "warn",
+        //         "vue/component-definition-name-casing": "warn",
+        //         "vue/component-name-in-template-casing": "warn",
+        //         "vue/component-options-name-casing": "warn",
+        //         "vue/custom-event-name-casing": "warn",
+        //         "vue/define-emits-declaration": "warn",
+        //         "vue/define-macros-order": "warn",
+        //         "vue/define-props-declaration": "warn",
+        //         "vue/define-props-destructuring": "warn",
+        //         "vue/dot-notation": "warn",
+        //         "vue/enforce-style-attribute": "warn",
+        //         "vue/eqeqeq": "warn",
+        //         "vue/html-button-has-type": "warn",
+        //         "vue/html-comment-content-newline": "warn",
+        //         "vue/html-comment-content-spacing": "warn",
+        //         "vue/html-comment-indent": "warn",
+        //         "vue/jsx-uses-vars": "warn",
+        //         "vue/match-component-file-name": "warn",
+        //         "vue/match-component-import-name": "warn",
+        //         "vue/max-lines-per-block": "warn",
+        //         "vue/max-props": "warn",
+        //         "vue/max-template-depth": "warn",
+        //         "vue/new-line-between-multi-line-property": "warn",
+        //         "vue/next-tick-style": "warn",
+        //         "vue/no-bare-strings-in-template": "warn",
+        //         "vue/no-boolean-default": "warn",
+        //         "vue/no-console": "warn",
+        //         "vue/no-constant-condition": "warn",
+        //         "vue/no-custom-modifiers-on-v-model": "warn",
+        //         "vue/no-duplicate-attr-inheritance": "warn",
+        //         "vue/no-duplicate-class-names": "warn",
+        //         "vue/no-empty-component-block": "warn",
+        //         "vue/no-empty-pattern": "warn",
+        //         "vue/no-implicit-coercion": "warn",
+        //         "vue/no-import-compiler-macros": "warn",
+        //         "vue/no-irregular-whitespace": "warn",
+        //         "vue/no-literals-in-template": "warn",
+        //         "vue/no-loss-of-precision": "warn",
+        //         "vue/no-multiple-objects-in-class": "warn",
+        //         "vue/no-multiple-template-root": "warn",
+        //         "vue/no-mutating-props": "warn",
+        //         "vue/no-negated-condition": "warn",
+        //         "vue/no-negated-v-if-condition": "warn",
+        //         "vue/no-potential-component-option-typo": "warn",
+        //         "vue/no-ref-object-reactivity-loss": "warn",
+        //         "vue/no-restricted-block": "warn",
+        //         "vue/no-restricted-call-after-await": "warn",
+        //         "vue/no-restricted-class": "warn",
+        //         "vue/no-restricted-component-names": "warn",
+        //         "vue/no-restricted-component-options": "warn",
+        //         "vue/no-restricted-custom-event": "warn",
+        //         "vue/no-restricted-html-elements": "warn",
+        //         "vue/no-restricted-props": "warn",
+        //         "vue/no-restricted-static-attribute": "warn",
+        //         "vue/no-restricted-syntax": "warn",
+        //         "vue/no-restricted-v-bind": "warn",
+        //         "vue/no-restricted-v-on": "warn",
+        //         "vue/no-root-v-if": "warn",
+        //         "vue/no-setup-props-reactivity-loss": "warn",
+        //         "vue/no-sparse-arrays": "warn",
+        //         "vue/no-static-inline-styles": "warn",
+        //         "vue/no-template-target-blank": "warn",
+        //         "vue/no-this-in-before-route-enter": "warn",
+        //         "vue/no-undef-components": "warn",
+        //         "vue/no-undef-directives": "warn",
+        //         "vue/no-undef-properties": "warn",
+        //         "vue/no-unsupported-features": "warn",
+        //         "vue/no-unused-emit-declarations": "warn",
+        //         "vue/no-unused-properties": "warn",
+        //         "vue/no-unused-refs": "warn",
+        //         "vue/no-use-v-else-with-v-for": "warn",
+        //         "vue/no-useless-concat": "warn",
+        //         "vue/no-useless-mustaches": "warn",
+        //         "vue/no-useless-v-bind": "warn",
+        //         // Deprecated rule
+        //         // @see {@link https://eslint.vuejs.org/rules/no-v-for-template-key.html}
+        //         "vue/no-v-for-template-key": "off",
+        //         // Deprecated rule
+        //         // @see {@link https://eslint.vuejs.org/rules/no-v-model-argument.html}
+        //         "vue/no-v-model-argument": "off",
+        //         "vue/no-v-text": "warn",
+        //         "vue/object-shorthand": "warn",
+        //         "vue/padding-line-between-blocks": "warn",
+        //         "vue/padding-line-between-tags": "warn",
+        //         "vue/padding-lines-in-component-definition": "warn",
+        //         "vue/prefer-define-options": "warn",
+        //         "vue/prefer-prop-type-boolean-first": "warn",
+        //         "vue/prefer-separate-static-class": "warn",
+        //         "vue/prefer-single-event-payload": "warn",
+        //         "vue/prefer-template": "warn",
+        //         "vue/prefer-true-attribute-shorthand": "warn",
+        //         "vue/prefer-use-template-ref": "warn",
+        //         "vue/prefer-v-model": "warn",
+        //         "vue/require-default-export": "warn",
+        //         "vue/require-direct-export": "warn",
+        //         "vue/require-emit-validator": "warn",
+        //         "vue/require-explicit-slots": "warn",
+        //         "vue/require-expose": "warn",
+        //         "vue/require-macro-variable-name": "warn",
+        //         "vue/require-name-property": "warn",
+        //         "vue/require-prop-comment": "warn",
+        //         "vue/require-typed-object-prop": "warn",
+        //         "vue/require-typed-ref": "warn",
+        //         "vue/restricted-component-names": "warn",
+        //         "vue/slot-name-casing": "warn",
+        //         "vue/sort-keys": "warn",
+        //         "vue/static-class-names-order": "warn",
+        //         "vue/v-for-delimiter-style": "warn",
+        //         "vue/v-if-else-key": "warn",
+        //         "vue/v-on-handler-style": "warn",
+        //     },
+        // },
+        // // #endregion 🖖 Vue.js Files
+        // // #region 🚀 Astro Files
+        // // ═══════════════════════════════════════════════════════════════════════════════
+        // ...astro.configs.base,
+        // {
+        //     files: ["*.astro", "**/*.astro"],
+        //     name: "🚀 Astro Components: **/*.astro",
+        //     rules: {
+        //         // @NOTE: eslint-plugin-jsx-a11y should not be enabled until ESLint 10 support lands.
+        //         // @see {@link https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/issues/1075}
+        //         // @see {@link https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/releases}
+        //         // The Astro JSX accessibility wrappers require eslint-plugin-jsx-a11y.
+        //         // Its v6.10.2 peer range supports ESLint only through v9.
+        //         // Enabling wrappers without that peer emits one warning per rule.
+        //         "astro/jsx-a11y/alt-text": "off",
+        //         "astro/jsx-a11y/anchor-ambiguous-text": "off",
+        //         "astro/jsx-a11y/anchor-has-content": "off",
+        //         "astro/jsx-a11y/anchor-is-valid": "off",
+        //         "astro/jsx-a11y/aria-activedescendant-has-tabindex": "off",
+        //         "astro/jsx-a11y/aria-props": "off",
+        //         "astro/jsx-a11y/aria-proptypes": "off",
+        //         "astro/jsx-a11y/aria-role": "off",
+        //         "astro/jsx-a11y/aria-unsupported-elements": "off",
+        //         "astro/jsx-a11y/autocomplete-valid": "off",
+        //         "astro/jsx-a11y/click-events-have-key-events": "off",
+        //         "astro/jsx-a11y/control-has-associated-label": "off",
+        //         "astro/jsx-a11y/heading-has-content": "off",
+        //         "astro/jsx-a11y/html-has-lang": "off",
+        //         "astro/jsx-a11y/iframe-has-title": "off",
+        //         "astro/jsx-a11y/img-redundant-alt": "off",
+        //         "astro/jsx-a11y/interactive-supports-focus": "off",
+        //         "astro/jsx-a11y/label-has-associated-control": "off",
+        //         "astro/jsx-a11y/lang": "off",
+        //         "astro/jsx-a11y/media-has-caption": "off",
+        //         "astro/jsx-a11y/mouse-events-have-key-events": "off",
+        //         "astro/jsx-a11y/no-access-key": "off",
+        //         "astro/jsx-a11y/no-aria-hidden-on-focusable": "off",
+        //         "astro/jsx-a11y/no-autofocus": "off",
+        //         "astro/jsx-a11y/no-distracting-elements": "off",
+        //         "astro/jsx-a11y/no-interactive-element-to-noninteractive-role": "off",
+        //         "astro/jsx-a11y/no-noninteractive-element-interactions": "off",
+        //         "astro/jsx-a11y/no-noninteractive-element-to-interactive-role": "off",
+        //         "astro/jsx-a11y/no-noninteractive-tabindex": "off",
+        //         "astro/jsx-a11y/no-redundant-roles": "off",
+        //         "astro/jsx-a11y/no-static-element-interactions": "off",
+        //         "astro/jsx-a11y/prefer-tag-over-role": "off",
+        //         "astro/jsx-a11y/role-has-required-aria-props": "off",
+        //         "astro/jsx-a11y/role-supports-aria-props": "off",
+        //         "astro/jsx-a11y/scope": "off",
+        //         "astro/jsx-a11y/tabindex-no-positive": "off",
+        //         "astro/missing-client-only-directive-value": "warn",
+        //         "astro/no-conflict-set-directives": "warn",
+        //         "astro/no-deprecated-astro-canonicalurl": "warn",
+        //         "astro/no-deprecated-astro-fetchcontent": "warn",
+        //         "astro/no-deprecated-astro-resolve": "warn",
+        //         "astro/no-deprecated-getentrybyslug": "warn",
+        //         "astro/no-exports-from-components": "warn",
+        //         "astro/no-prerender-export-outside-pages": "warn",
+        //         "astro/no-set-html-directive": "warn",
+        //         "astro/no-set-text-directive": "warn",
+        //         "astro/no-unsafe-inline-scripts": "warn",
+        //         "astro/no-unused-css-selector": "warn",
+        //         "astro/no-unused-define-vars-in-style": "warn",
+        //         "astro/prefer-class-list-directive": "warn",
+        //         "astro/prefer-object-class-list": "warn",
+        //         "astro/prefer-split-class-list": "warn",
+        //         "astro/semi": "warn",
+        //         "astro/sort-attributes": "warn",
+        //     },
+        // },
+        // // #endregion 🚀 Astro Files
+        // prettier-ignore-end
         // #region ⚛️ Next.js Files
         // ═══════════════════════════════════════════════════════════════════════════════
         ...(shouldEnableNext
