@@ -5,7 +5,6 @@
             "error",
             {
                 "exceptions": [
-                    "npm-package-json-lint",
                     "prettier-plugin-multiline-arrays",
                     "vitest-environment-browser"
                 ]

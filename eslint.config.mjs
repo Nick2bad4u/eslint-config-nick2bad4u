@@ -12,26 +12,6 @@ const rootConfig = [
             "typedoc/require-package-documentation-description": "warn",
         },
     },
-    {
-        files: ["package.json"],
-        name: "Temporary npm-package-json-lint pin",
-        rules: {
-            "node-dependencies/absolute-version": [
-                "error",
-                {
-                    dependencies: "never",
-                    devDependencies: "never",
-                    optionalDependencies: "never",
-                    overridePackages: {
-                        "npm-package-json-lint": {
-                            devDependencies: "ignore",
-                        },
-                    },
-                    peerDependencies: "never",
-                },
-            ],
-        },
-    },
 ];
 
 // eslint-disable-next-line no-barrel-files/no-barrel-files -- Intentional adapter re-export for the repo's ESLint config entrypoint.
