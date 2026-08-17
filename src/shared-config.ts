@@ -785,12 +785,16 @@ export const createConfig = (
         hasNextOptions && isDefined(nextOptions.files)
             ? [...nextOptions.files]
             : [...NEXT_FILE_PATTERNS];
-    const nextRootDirectory =
-        hasNextOptions && isDefined(nextOptions.rootDir)
-            ? typeof nextOptions.rootDir === "string"
+    let nextRootDirectory:
+        | readonly string[]
+        | string
+        | undefined;
+    if (hasNextOptions && isDefined(nextOptions.rootDir)) {
+        nextRootDirectory =
+            typeof nextOptions.rootDir === "string"
                 ? nextOptions.rootDir
-                : [...nextOptions.rootDir]
-            : undefined;
+                : [...nextOptions.rootDir];
+    }
     const shouldEnableNext = nextOptions === true || hasNextOptions;
     const sonarJSOptions = options.sonarjs;
     const hasSonarJSOptions = typeof sonarJSOptions === "object";
@@ -827,11 +831,14 @@ export const createConfig = (
     const actionlintAllConfigInput = safeCastTo<EslintConfigInput | undefined>(
         actionlintPlugin?.configs.all
     );
-    const actionlintAllConfigs = isEslintConfigArray(actionlintAllConfigInput)
-        ? actionlintAllConfigInput
-        : isDefined(actionlintAllConfigInput)
-          ? [actionlintAllConfigInput]
-          : [];
+    let actionlintAllConfigs: readonly EslintConfig[];
+    if (isEslintConfigArray(actionlintAllConfigInput)) {
+        actionlintAllConfigs = actionlintAllConfigInput;
+    } else if (isDefined(actionlintAllConfigInput)) {
+        actionlintAllConfigs = [actionlintAllConfigInput];
+    } else {
+        actionlintAllConfigs = [];
+    }
     const codexPlugin = resolveTypedPlugin(
         pluginOverrideEntries,
         "codex",
