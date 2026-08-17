@@ -1888,6 +1888,7 @@ export const createConfig = (
                           "repo-compliance/require-pr-template-checklist-items": "warn",
                           "repo-compliance/require-readme-badges": "warn",
                           "repo-compliance/require-readme-sections": "off",
+                          "repo-compliance/require-secret-scanning-config": "warn",
                           "repo-compliance/require-vercel-build-command": "off",
                           "repo-compliance/require-vercel-config-file": "off",
                           "repo-compliance/require-vercel-config-object": "off",

@@ -394,6 +394,22 @@ describe("eslint-config-nick2bad4u presets", () => {
         ).toBeGreaterThan(0);
     });
 
+    it("enables the repository secret-scanning policy check as a warning", () => {
+        expect.assertions(1);
+
+        const ruleName =
+            "repo-compliance/require-secret-scanning-config" as const;
+        const ruleSeverities = presets.all.flatMap((configEntry) => {
+            const ruleConfig = configEntry.rules?.[ruleName];
+
+            return ruleConfig === undefined
+                ? []
+                : [getRuleSeverity(ruleConfig)];
+        });
+
+        expect(ruleSeverities).toContain("warn");
+    });
+
     it("uses the Listeners flat strict preset", () => {
         expect.assertions(5);
 
