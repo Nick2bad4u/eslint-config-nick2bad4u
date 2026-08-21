@@ -3778,7 +3778,7 @@ export const createConfig = (
             rules: {
                 // TOML ESLint Plugin Rules (toml/*)
                 "toml/array-bracket-newline": "off",
-                "toml/array-bracket-spacing": "warn",
+                "toml/array-bracket-spacing": "off",
                 "toml/array-element-newline": "off",
                 "toml/comma-style": "warn",
                 "toml/indent": "off",

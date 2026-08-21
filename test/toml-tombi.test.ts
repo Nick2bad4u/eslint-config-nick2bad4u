@@ -9,7 +9,6 @@ const fixtureWorkspaceRoot = fileURLToPath(
 );
 
 const compatibleTomlRules = [
-    "toml/array-bracket-spacing",
     "toml/comma-style",
     "toml/inline-table-curly-newline",
     "toml/inline-table-curly-spacing",
@@ -29,6 +28,7 @@ const compatibleTomlRules = [
 
 const conflictingOrDuplicateTomlRules = [
     "toml/array-bracket-newline",
+    "toml/array-bracket-spacing",
     "toml/array-element-newline",
     "toml/indent",
     "toml/key-spacing",
@@ -147,6 +147,40 @@ describe("toml and Tombi config", () => {
                 )
             )
         ).toStrictEqual([]);
+    });
+
+    it("converges on Tombi formatting without circular array-spacing fixes", async () => {
+        expect.assertions(4);
+
+        const eslint = new ESLint({
+            cwd: fixtureWorkspaceRoot,
+            fix: true,
+            overrideConfig: createConfig({
+                rootDirectory: fixtureWorkspaceRoot,
+                tsconfigPaths: ["./tsconfig.json"],
+            }),
+            overrideConfigFile: true,
+        });
+        const source = [
+            'title     = "fixture"',
+            "",
+            "[[allowlists]]",
+            '    description = "Ignore generated output"',
+            String.raw`    paths       = [ '''^docs/generated\\.json$''' ]`,
+            "",
+        ].join("\n");
+        const [firstResult] = await eslint.lintText(source, {
+            filePath: ".gitleaks.toml",
+        });
+        const formatted = firstResult?.output ?? source;
+        const [secondResult] = await eslint.lintText(formatted, {
+            filePath: ".gitleaks.toml",
+        });
+
+        expect(firstResult?.messages).toStrictEqual([]);
+        expect(firstResult?.output).toBeTypeOf("string");
+        expect(secondResult).toMatchObject({ messages: [] });
+        expect(secondResult?.output ?? formatted).toBe(formatted);
     });
 
     it("lints external-tool TOML configs with Tombi enabled", async () => {
