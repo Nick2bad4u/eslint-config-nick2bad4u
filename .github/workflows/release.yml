@@ -118,7 +118,7 @@ jobs:
                   npm_package_manager="$(
                     node "$GITHUB_WORKSPACE/scripts/sync-npm-version.mjs" --print-package-manager
                   )"
-                  npm install --global --ignore-scripts "$npm_package_manager"
+                  npm install --global "$npm_package_manager"
                   hash -r
                   actual_npm_version="$(npm --version)"
                   expected_npm_version="${npm_package_manager#npm@}"
@@ -136,7 +136,7 @@ jobs:
                   cache-dependency-path: "package-lock.json"
 
             - name: "Install dependencies"
-              run: "npm ci --force --ignore-scripts"
+              run: "npm ci"
 
             - name: "Configure Git for release automation"
               if: "github.event_name == 'workflow_dispatch'"
@@ -144,7 +144,7 @@ jobs:
                   set -euo pipefail
                   git config user.name "github-actions[bot]"
                   git config user.email "github-actions[bot]@users.noreply.github.com"
-                  git fetch --tags --force
+                  git fetch --prune --tags
 
             - name: "Validate workflow_dispatch release input"
               if: "github.event_name == 'workflow_dispatch'"
@@ -194,11 +194,10 @@ jobs:
               run: "npm run release:check"
 
             - name: "Ensure verification did not modify tracked files"
-              if: "startsWith(github.ref, 'refs/tags/v')"
               run: |
                   set -euo pipefail
                   if ! git diff --quiet || ! git diff --cached --quiet; then
-                    echo "release:check modified files on a tag-triggered release. Ensure main is clean before tagging." >&2
+                    echo "release:check modified tracked files. Ensure the release source is deterministic." >&2
                     git status --short
                     exit 1
                   fi
@@ -274,12 +273,27 @@ jobs:
               run: |
                   set -euo pipefail
 
+                  source_sha="$(git rev-parse HEAD)"
+
                   if git rev-parse "$TAG" >/dev/null 2>&1; then
                     echo "Tag $TAG already exists locally." >&2
                     exit 1
                   fi
 
-                  git add -A
+                  git add -- package.json package-lock.json
+                  mapfile -t staged_paths < <(git diff --cached --name-only)
+                  expected_paths=("package-lock.json" "package.json")
+                  if [ "${staged_paths[*]}" != "${expected_paths[*]}" ]; then
+                    echo "Unexpected release staging set: ${staged_paths[*]:-(none)}" >&2
+                    exit 1
+                  fi
+
+                  if ! git diff --quiet; then
+                    echo "Unexpected unstaged tracked changes remain after release staging." >&2
+                    git status --short
+                    exit 1
+                  fi
+
                   if git diff --cached --quiet; then
                     echo "No staged changes found for release commit." >&2
                     exit 1
@@ -287,8 +301,12 @@ jobs:
 
                   git commit -m "chore: release ${TAG}"
                   git tag -a "$TAG" -m "$TAG"
-                  git push origin "HEAD:${BRANCH}"
-                  git push origin "$TAG"
+                  release_commit="$(git rev-parse HEAD)"
+                  git push --atomic --no-follow-tags \
+                    --force-with-lease="refs/heads/${BRANCH}:${source_sha}" \
+                    origin \
+                    "${release_commit}:refs/heads/${BRANCH}" \
+                    "refs/tags/${TAG}:refs/tags/${TAG}"
 
             - name: "Generate release notes from git-cliff"
               env:
@@ -336,7 +354,7 @@ jobs:
 
             - name: "Publish to npm"
               if: "steps.npm_check.outputs.already_published != 'true'"
-              run: "npm publish --access public --provenance --ignore-scripts"
+              run: "npm publish --access public --provenance"
 
             - name: "Create release archives"
               id: "release_assets"

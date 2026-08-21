@@ -65,7 +65,7 @@ jobs:
                   npm_package_manager="$(
                     node "$GITHUB_WORKSPACE/scripts/sync-npm-version.mjs" --print-package-manager
                   )"
-                  npm install --global --ignore-scripts "$npm_package_manager"
+                  npm install --global "$npm_package_manager"
                   hash -r
                   actual_npm_version="$(npm --version)"
                   expected_npm_version="${npm_package_manager#npm@}"
@@ -82,7 +82,7 @@ jobs:
                   cache-dependency-path: "package-lock.json"
 
             - name: "Install dependencies"
-              run: "npm ci --force --ignore-scripts"
+              run: "npm ci"
 
             - name: "Build package"
               run: "npm run build"
@@ -175,7 +175,7 @@ jobs:
                   npm_package_manager="$(
                     node "$GITHUB_WORKSPACE/scripts/sync-npm-version.mjs" --print-package-manager
                   )"
-                  npm install --global --ignore-scripts "$npm_package_manager"
+                  npm install --global "$npm_package_manager"
                   hash -r
                   actual_npm_version="$(npm --version)"
                   expected_npm_version="${npm_package_manager#npm@}"
@@ -192,7 +192,7 @@ jobs:
                   cache-dependency-path: "package-lock.json"
 
             - name: "Install dependencies"
-              run: "npm ci --force --ignore-scripts"
+              run: "npm ci"
 
             - name: "Run full verification pipeline"
               run: "npm run release:verify"
