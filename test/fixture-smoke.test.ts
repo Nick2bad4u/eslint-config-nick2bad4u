@@ -170,6 +170,36 @@ const getMissingPluginNames = (
         .filter((pluginName) => !actualPluginNames.has(pluginName))
         .toSorted((left, right) => left.localeCompare(right));
 
+const getEnabledRulePluginNames = (config: Linter.Config): Set<string> => {
+    const configuredPluginNames = Object.keys(config.plugins ?? {}).toSorted(
+        (left, right) => right.length - left.length
+    );
+    const enabledRulePluginNames = new Set<string>();
+    const rules = config.rules;
+
+    if (rules === undefined) {
+        return enabledRulePluginNames;
+    }
+
+    for (const [ruleName, ruleConfig] of Object.entries(rules)) {
+        const severity = Array.isArray(ruleConfig) ? ruleConfig[0] : ruleConfig;
+
+        if (severity === "off" || severity === 0) {
+            continue;
+        }
+
+        const pluginName = configuredPluginNames.find((candidatePluginName) =>
+            ruleName.startsWith(`${candidatePluginName}/`)
+        );
+
+        if (pluginName !== undefined) {
+            enabledRulePluginNames.add(pluginName);
+        }
+    }
+
+    return enabledRulePluginNames;
+};
+
 const getActiveConfigScopeIndexes = (
     config: Linter.Config | undefined
 ): number[] =>
@@ -229,7 +259,7 @@ describe("fixture smoke matrix", () => {
     it(
         "lints every configured fixture surface without parser or rule-loading failures",
         async () => {
-            expect.assertions(5);
+            expect.assertions(7);
 
             const sharedConfig = createConfig({
                 next: true,
@@ -253,6 +283,7 @@ describe("fixture smoke matrix", () => {
                 normalizeFixturePath(result.filePath)
             );
             const activePluginNames = new Set<string>();
+            const activeRulePluginNames = new Set<string>();
             const activeConfigScopeIndexes = new Set<number>();
 
             for (const fixturePath of fixturePaths) {
@@ -265,6 +296,14 @@ describe("fixture smoke matrix", () => {
 
                 for (const pluginName of configPluginNames) {
                     activePluginNames.add(pluginName);
+                }
+
+                if (config !== undefined) {
+                    for (const pluginName of getEnabledRulePluginNames(
+                        config
+                    )) {
+                        activeRulePluginNames.add(pluginName);
+                    }
                 }
 
                 const configScopeIndexes = getActiveConfigScopeIndexes(config);
@@ -294,6 +333,20 @@ describe("fixture smoke matrix", () => {
                             `${normalizeFixturePath(result.filePath)}:${String(message.line)}:${String(message.column)} ${message.message}`
                     )
             );
+            const secretScanningMessages = results.flatMap((result) =>
+                result.messages
+                    .filter(
+                        ({ ruleId }) =>
+                            ruleId ===
+                            "repo-compliance/require-secret-scanning-config"
+                    )
+                    .map(({ messageId, ruleId, severity }) => ({
+                        filePath: normalizeFixturePath(result.filePath),
+                        messageId,
+                        ruleId,
+                        severity,
+                    }))
+            );
 
             expect(new Set(lintedPaths)).toStrictEqual(new Set(fixturePaths));
             expect(
@@ -318,6 +371,25 @@ describe("fixture smoke matrix", () => {
             ).toStrictEqual([]);
             expect(fatalMessages).toStrictEqual([]);
             expect(missingJsxA11yPeerMessages).toStrictEqual([]);
+            // Compat is intentionally registration-only until a consumer opts
+            // into compat/compat with its own Browserslist targets.
+            expect(
+                getMissingPluginNames(
+                    getConfiguredPluginNames(sharedConfig),
+                    activeRulePluginNames
+                )
+            ).toStrictEqual(["compat"]);
+            // The fixture workspace deliberately omits
+            // .github/secret_scanning.yml so the repository-policy warning is
+            // exercised instead of merely asserted in the static config.
+            expect(secretScanningMessages).toStrictEqual([
+                {
+                    filePath: "eslint.config.mjs",
+                    messageId: "missingSecretScanningConfig",
+                    ruleId: "repo-compliance/require-secret-scanning-config",
+                    severity: 1,
+                },
+            ]);
         },
         FIXTURE_SMOKE_TEST_TIMEOUT
     );

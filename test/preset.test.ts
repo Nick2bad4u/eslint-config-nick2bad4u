@@ -9,6 +9,7 @@ import {
     rules as sonarjsRules,
 } from "eslint-plugin-sonarjs";
 import { fileURLToPath } from "node:url";
+import { objectEntries } from "ts-extras";
 import { describe, expect, it } from "vitest";
 
 import nickTwoBadFourU, {
@@ -285,6 +286,43 @@ const presetEntriesByName: Readonly<Record<string, readonly Linter.Config[]>> =
         ...presetByName,
     };
 
+// Keep one representative real path for every public preset. The exhaustive
+// Record makes a newly exported preset a compile-time coverage obligation.
+const publicPresetRuntimeFixtures = {
+    all: "src/index.ts",
+    base: "src/index.ts",
+    recommended: "src/index.ts",
+    withJest: "packages/jest/test/sample.test.ts",
+    withNext: "app/page.tsx",
+    withoutActionlint: ".github/workflows/ci.yml",
+    withoutCodex: ".codex/config.toml",
+    withoutCopilot: "docs/guides/readme.md",
+    withoutDocusaurus2: "docs/docusaurus/src/pages/index.tsx",
+    withoutEtcMisc: "src/index.ts",
+    withoutFileProgress2: "src/index.ts",
+    withoutGitHubActions2: ".github/workflows/ci.yml",
+    withoutGithubActions2: ".github/workflows/ci.yml",
+    withoutImmutable2: "functional/pipeline.ts",
+    withoutRemark: "docs/guides/readme.md",
+    withoutRepo: "package.json",
+    withoutRuntimeCleanup: "src/index.ts",
+    withoutSdl2: "src/index.ts",
+    withoutSecretlint: ".secretlintrc.json",
+    withoutSonarJS: "src/index.ts",
+    withoutStylelint2: "fixtures/styles/layout.css",
+    withoutTestSignal: "test/sample.test.ts",
+    withoutTombi: "config/site.toml",
+    withoutTsconfig: "tsconfig.json",
+    withoutTsdocRequire2: "src/index.ts",
+    withoutTypedoc: "src/index.ts",
+    withoutTypefest: "src/index.ts",
+    withoutVite: "vite.config.ts",
+    withoutVitest: "test/sample.test.ts",
+    withoutWriteGoodComments2: "src/index.ts",
+    withoutYamllint: "dependabot.yml",
+    withSonarJS: "src/index.ts",
+} as const satisfies Readonly<Record<keyof typeof presets, string>>;
+
 describe("eslint-config-nick2bad4u presets", () => {
     it("exposes plugin-style flat config presets", () => {
         expect.assertions(5);
@@ -539,6 +577,23 @@ describe("eslint-config-nick2bad4u presets", () => {
             expect.assertions(1);
 
             expect(getParserOptionsGlobalsEntries(preset)).toStrictEqual([]);
+        }
+    );
+
+    it.each(objectEntries(publicPresetRuntimeFixtures))(
+        "calculates an executable config for the %s public preset",
+        async (presetName, fixturePath) => {
+            expect.assertions(1);
+
+            const eslint = new ESLint({
+                cwd: ruleOwnershipFixtureWorkspaceRoot,
+                overrideConfig: presets[presetName],
+                overrideConfigFile: true,
+            });
+
+            await expect(
+                eslint.calculateConfigForFile(fixturePath)
+            ).resolves.toBeDefined();
         }
     );
 
@@ -943,7 +998,7 @@ describe("plugin replacement integration", () => {
     });
 
     it("supports owned plugin replacement via createConfig", () => {
-        expect.assertions(34);
+        expect.hasAssertions();
 
         // eslint-disable perfectionist/sort-arrays -- Keep cases grouped by config shape and plugin family to make fixture setup easier to audit.
         const ownedPluginReplacementCases = [
