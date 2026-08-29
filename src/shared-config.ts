@@ -3308,6 +3308,7 @@ export const createConfig = (
                 "package-json/no-redundant-files": "warn",
                 "package-json/no-redundant-publishConfig": "warn",
                 "package-json/order-properties": "warn",
+                "package-json/prefer-rolling-workspace-spec": "warn",
                 "package-json/repository-shorthand": "warn",
                 "package-json/require-attribution": "warn",
                 "package-json/require-author": "warn",

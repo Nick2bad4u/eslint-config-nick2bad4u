@@ -448,6 +448,21 @@ describe("eslint-config-nick2bad4u presets", () => {
         expect(ruleSeverities).toContain("warn");
     });
 
+    it("prefers rolling workspace dependency specs as a warning", () => {
+        expect.assertions(1);
+
+        const ruleName = "package-json/prefer-rolling-workspace-spec" as const;
+        const ruleSeverities = presets.all.flatMap((configEntry) => {
+            const ruleConfig = configEntry.rules?.[ruleName];
+
+            return ruleConfig === undefined
+                ? []
+                : [getRuleSeverity(ruleConfig)];
+        });
+
+        expect(ruleSeverities).toContain("warn");
+    });
+
     it("uses the Listeners flat strict preset", () => {
         expect.assertions(5);
 
@@ -510,7 +525,7 @@ describe("eslint-config-nick2bad4u presets", () => {
         ).toStrictEqual(["no-barrel-files/prefer-source-imports"]);
     });
 
-    it("configures the Unicorn v73 rules with explicit owners and styles", () => {
+    it("configures the Unicorn v74 rules with explicit owners and styles", () => {
         expect.assertions(5);
 
         const unicornConfig = getConfigByNameOrThrow(
