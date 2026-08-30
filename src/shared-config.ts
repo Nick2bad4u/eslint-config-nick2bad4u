@@ -3264,7 +3264,8 @@ export const createConfig = (
         // ═══════════════════════════════════════════════════════════════════════════════
         {
             files: ["**/package.json"],
-            language: "json/json",
+            // Package metadata plugins consume jsonc-eslint-parser node types.
+            language: "jsonc/x",
             languageOptions: {
                 parser: jsoncEslintParser,
                 parserOptions: { jsonSyntax: "JSON" },
@@ -3276,9 +3277,7 @@ export const createConfig = (
                 "package-json": packageJson,
             },
             rules: {
-                ...json.configs.recommended.rules,
                 "depend/ban-dependencies": "error",
-                "json/sort-keys": "off",
                 // NOTE: Keeping node-dependencies scoped to package.json avoids perf + parser issues.
                 "node-dependencies/absolute-version": [
                     "error",

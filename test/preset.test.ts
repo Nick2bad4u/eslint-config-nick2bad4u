@@ -448,19 +448,45 @@ describe("eslint-config-nick2bad4u presets", () => {
         expect(ruleSeverities).toContain("warn");
     });
 
-    it("prefers rolling workspace dependency specs as a warning", () => {
-        expect.assertions(1);
+    it("executes package.json rules with JSONC language ownership", async () => {
+        expect.assertions(4);
 
         const ruleName = "package-json/prefer-rolling-workspace-spec" as const;
-        const ruleSeverities = presets.all.flatMap((configEntry) => {
-            const ruleConfig = configEntry.rules?.[ruleName];
-
-            return ruleConfig === undefined
-                ? []
-                : [getRuleSeverity(ruleConfig)];
+        const eslint = new ESLint({
+            overrideConfig: presets.withoutFileProgress2,
+            overrideConfigFile: true,
         });
+        const effectiveConfig = (await eslint.calculateConfigForFile(
+            "package.json"
+        )) as Linter.Config | undefined;
+        const lintResults = await eslint.lintText(
+            JSON.stringify(
+                {
+                    dependencies: {
+                        internal: "workspace:^1.2.3",
+                    },
+                    name: "package-json-rule-fixture",
+                    private: true,
+                },
+                null,
+                2
+            ),
+            { filePath: "package.json" }
+        );
+        const diagnostics = lintResults.flatMap(({ messages }) =>
+            messages.filter(({ ruleId }) => ruleId === ruleName)
+        );
 
-        expect(ruleSeverities).toContain("warn");
+        expect(getRuleSeverity(effectiveConfig?.rules?.[ruleName])).toBe(1);
+        expect(
+            effectiveConfig?.rules?.["json/no-duplicate-keys"]
+        ).toBeUndefined();
+        expect(diagnostics).toHaveLength(1);
+        expect(diagnostics[0]).toMatchObject({
+            messageId: "nonRollingWorkspaceSpec",
+            ruleId: ruleName,
+            severity: 1,
+        });
     });
 
     it("uses the Listeners flat strict preset", () => {
