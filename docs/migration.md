@@ -1,5 +1,35 @@
 # Migration guide — `eslint-config-nick2bad4u`
 
+## Version 15 peer compatibility and dependency rules
+
+Version 15 requires ESLint `^10.8.1` and TypeScript `^5.6.3 || ^6.0.3`.
+These minimums match the bundled plugins: `eslint-plugin-tsdoc-require-2`
+requires ESLint 10.8.1 or newer within ESLint 10, and
+`eslint-plugin-no-barrel-files` requires TypeScript 5.6.3 or newer within
+TypeScript 5. The previous advertised ranges admitted invalid dependency trees.
+Update these peers before adopting version 15.
+
+Version 15 includes two new upstream rules:
+
+- `@typescript-eslint/no-generated-empty-object-type` is inherited from the
+  strict type-checked preset at error severity. It detects type operations such
+  as `Omit<Data, keyof Data>` that unexpectedly produce the empty object type.
+  Nonempty results and unresolved generic mappings remain valid.
+- `jsdoc/no-unnecessary-type-assertion` is enabled at warning severity for
+  `src/**/*.{js,cjs,mjs,jsx}`. It reports redundant JSDoc type assertions and can
+  remove them with `eslint --fix`. Tuple types and const assertions that affect
+  inference remain intact.
+
+CSS linting now shares the config's `@eslint/css` v2 instance with the Stylelint
+bridge. This prevents overlapping presets from failing with
+`Cannot redefine plugin "css"` when the bridge installs an older CSS plugin.
+The upstream presets are not mutated, and the Stylelint opt-out remains available.
+
+The dependency audit compared the rule exports of every updated plugin, including
+the six plugins composed by ESLint React. It found the two additions above and no
+removed rule exports. Existing inherited rules also receive upstream bug fixes.
+The public presets, factory options, and Node requirement are unchanged.
+
 ## Version 12 independent Jest and Vitest integrations
 
 Version 12 makes Jest and Vitest independent factory options. Vitest remains
@@ -115,8 +145,8 @@ shared `eslint-config-nick2bad4u` package.
 ## Prerequisites
 
 - Node.js `^22.22.3 || ^24.16.0 || >=26.3.0`
-- ESLint `^10.7.0`
-- TypeScript `^5.0.0 || ^6.0.3`
+- ESLint `^10.8.1`
+- TypeScript `^5.6.3 || ^6.0.3`
 - npm, pnpm, or yarn support for installing peer dependencies
 - A project-level `tsconfig.json` for type-aware linting through project service
 
@@ -451,10 +481,10 @@ The same pattern applies to other namespaces with matching `without*` presets.
 Install or update the peer dependencies in the consuming project:
 
 ```powershell
-npm install --save-dev eslint@^10.7.0 typescript@^6.0.3
+npm install --save-dev eslint@^10.8.1 typescript@^6.0.3
 ```
 
-TypeScript `^5.0.0` is also supported when the project has not migrated to
+TypeScript `^5.6.3` is also supported when the project has not migrated to
 TypeScript 6.
 
 ### Project service file-not-found errors

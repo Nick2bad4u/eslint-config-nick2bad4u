@@ -134,6 +134,24 @@ package JSON linting, and package JSON sort checks.
 
 ## Release readiness
 
+When updating dependencies, compare the installed plugin rule exports against
+the versions in the previous release's lockfile. Check new rules against the
+effective config for their actual target files; upstream `all` or `strict`
+presets may already include them, while curated blocks may need explicit entries.
+Review removed and deprecated rules alongside upstream migration notes.
+
+Install the packed artifact in a separate consumer using the lowest advertised
+ESLint and TypeScript versions. Require `npm ls --all` to pass and execute the
+changed lint fixtures there. Passing with the repository's newer development
+versions does not prove that the published peer minimums are compatible.
+
+Add execution fixtures for changed parser-dependent behavior. A rule being
+present in `calculateConfigForFile()` does not prove that it reports diagnostics.
+Use the public config with ESLint's `ruleFilter` to isolate a rule without
+overriding its inherited severity or options, and cover both invalid and valid
+code plus autofix output where applicable. Keep new fixture files in the smoke
+matrix inventory so the complete preset also loads them.
+
 Run the full release gate before publishing or tagging a release:
 
 ```sh

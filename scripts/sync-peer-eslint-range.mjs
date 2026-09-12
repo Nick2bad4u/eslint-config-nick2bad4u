@@ -37,7 +37,7 @@ const packageJsonPath = fileURLToPath(
  *
  * @see resolvePeerFloorRange
  */
-const minimumSupportedEslintRange = "^10.7.0";
+const minimumSupportedEslintRange = "^10.8.1";
 
 /**
  * Read and parse package.json.
@@ -124,8 +124,8 @@ const resolvePeerFloorRange = (existingPeerRange) => {
 
 /**
  * Append the development dependency range only when it covers a different major
- * than the floor range. `^10.7.0 || ^10.8.0` is redundant and should stay
- * collapsed to `^10.7.0`.
+ * than the floor range. `^10.8.1 || ^10.10.0` is redundant and should stay
+ * collapsed to `^10.8.1`.
  *
  * @type {(peerFloorRange: string, devDependencyRange: string) => string}
  *

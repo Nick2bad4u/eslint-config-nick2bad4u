@@ -1798,7 +1798,19 @@ export const createConfig = (
         // MARK: ⚡ Vite
         vite.configs.all,
         // MARK: 🎨 Stylelint
-        ...(stylelint2Plugin === null ? [] : [stylelint2Plugin.configs.all]),
+        ...(stylelint2Plugin === null
+            ? []
+            : flattenConfigs([stylelint2Plugin.configs.all]).map((config) =>
+                  isDefined(config.plugins?.["css"])
+                      ? {
+                            ...config,
+                            // The Stylelint bridge may bundle an older CSS
+                            // language plugin. Share this config's CSS instance
+                            // so overlapping CSS blocks can merge safely.
+                            plugins: { ...config.plugins, css },
+                        }
+                      : config
+              )),
         // MARK: 🐲 Repo Compliance
         ...(repoPlugin === null
             ? []
@@ -3858,6 +3870,7 @@ export const createConfig = (
                 "jsdoc/no-bad-blocks": "warn",
                 "jsdoc/no-blank-block-descriptions": "warn",
                 "jsdoc/no-blank-blocks": "warn",
+                "jsdoc/no-unnecessary-type-assertion": "warn",
                 "jsdoc/normalize-see-links": "warn",
                 "jsdoc/prefer-import-tag": "warn",
                 "jsdoc/require-asterisk-prefix": "warn",

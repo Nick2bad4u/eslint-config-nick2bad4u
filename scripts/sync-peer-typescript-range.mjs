@@ -38,7 +38,7 @@ const packageJsonPath = fileURLToPath(
  *
  * @see resolvePeerFloorRange
  */
-const minimumSupportedtypescriptRange = "^9.0.0";
+const minimumSupportedtypescriptRange = "^5.6.3";
 
 /**
  * Read and parse package.json.
@@ -89,7 +89,7 @@ const resolvePeerFloorRange = (existingPeerRange) => {
         .split("||")
         .map((part) => part.trim());
 
-    if (!floorCandidate) {
+    if (!floorCandidate || floorCandidate.startsWith("^5.")) {
         return minimumSupportedtypescriptRange;
     }
 
