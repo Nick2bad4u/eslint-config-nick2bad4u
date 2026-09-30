@@ -3,6 +3,13 @@ import { configs as sharedConfigs } from "./dist/shared-config.js";
 /** Root ESLint flat config for this repository. */
 /** @type {import("eslint").Linter.Config[]} */
 const rootConfig = [
+    {
+        files: ["**/*.{md,mdx}"],
+        name: "Remark lint performance",
+        rules: {
+            "remark/remark": ["error", { skipCompilation: true }],
+        },
+    },
     ...sharedConfigs.all,
     {
         files: ["src/preset.ts"],
