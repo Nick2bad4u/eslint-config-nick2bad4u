@@ -57,11 +57,9 @@ const getEffectiveRuleSeverity = (
     }
 
     const rules: unknown = Reflect.get(config, "rules");
-    if (typeof rules !== "object" || rules === null) {
-        return undefined;
-    }
-
-    return getRuleSeverity(Reflect.get(rules, ruleName));
+    return typeof rules !== "object" || rules === null
+        ? undefined
+        : getRuleSeverity(Reflect.get(rules, ruleName));
 };
 
 const createIntegrationConfig = () =>

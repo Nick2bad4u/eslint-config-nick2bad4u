@@ -1,6 +1,12 @@
 {
     "extends": "npm-package-json-lint-config-nick2bad4u",
     "rules": {
+        "prefer-caret-version-dependencies": [
+            "error",
+            {
+                "exceptions": ["eslint-plugin-jsdoc"]
+            }
+        ],
         "prefer-caret-version-devDependencies": [
             "error",
             {

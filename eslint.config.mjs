@@ -12,6 +12,14 @@ const rootConfig = [
     },
     ...sharedConfigs.all,
     {
+        files: [".github/workflows/release.yml"],
+        name: "Release workflow input compatibility",
+        rules: {
+            // Preserve the existing workflow_dispatch input API.
+            "github-actions/input-id-case": ["error", "snake_case"],
+        },
+    },
+    {
         files: ["src/preset.ts"],
         name: "Package entrypoint documentation",
         rules: {
@@ -21,8 +29,22 @@ const rootConfig = [
     },
     {
         files: ["package.json"],
-        name: "Package manifest packlist compatibility",
+        name: "Package manifest compatibility",
         rules: {
+            // JSDoc 64.5.4+ skips the first assertion; require the temporary exact pin.
+            // Introduced by https://github.com/gajus/eslint-plugin-jsdoc/pull/1774.
+            "node-dependencies/absolute-version": [
+                "error",
+                {
+                    dependencies: "never",
+                    devDependencies: "never",
+                    optionalDependencies: "never",
+                    overridePackages: {
+                        "eslint-plugin-jsdoc": { dependencies: "always" },
+                    },
+                    peerDependencies: "never",
+                },
+            ],
             // npm 12 omits the main entry from this package's dry-run packlist unless files includes it explicitly.
             "package-json/no-redundant-files": "off",
         },

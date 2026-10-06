@@ -59,10 +59,7 @@ const isCiEnvironment = process.env["CI"] === "true",
         "test/**/*.{test,spec}-d.{ts,tsx,mts,cts}",
         "test/**/*.{test,spec}.{ts,tsx,mts,cts}",
     ],
-    /**
-     * Shared reporter list for test runs with optional hanging-process
-     * diagnostics.
-     */
+    /** Test reporters with optional hanging-process diagnostics. */
     vitestReporters = shouldEnableHangingProcessReporter
         ? ["default", "hanging-process"]
         : ["default"],

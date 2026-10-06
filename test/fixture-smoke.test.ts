@@ -132,7 +132,7 @@ const getFixtureWorkspaceFiles = (directory: string): string[] =>
 
             return directoryEntry.isDirectory()
                 ? getFixtureWorkspaceFiles(filePath)
-                : [normalizeFixturePath(filePath)];
+                : normalizeFixturePath(filePath);
         }
     );
 
@@ -208,17 +208,14 @@ const getEnabledRulePluginNames = (config: Linter.Config): Set<string> => {
 const getActiveConfigScopeIndexes = (
     config: Linter.Config | undefined
 ): number[] =>
-    Object.keys(config?.settings ?? {}).flatMap((settingName) => {
-        if (!settingName.startsWith(FIXTURE_SCOPE_SETTING_PREFIX)) {
-            return [];
-        }
-
-        const configIndex = Number(
-            settingName.slice(FIXTURE_SCOPE_SETTING_PREFIX.length)
-        );
-
-        return Number.isSafeInteger(configIndex) ? [configIndex] : [];
-    });
+    Object.keys(config?.settings ?? {})
+        .filter((settingName) =>
+            settingName.startsWith(FIXTURE_SCOPE_SETTING_PREFIX)
+        )
+        .map((settingName) =>
+            Number(settingName.slice(FIXTURE_SCOPE_SETTING_PREFIX.length))
+        )
+        .filter(Number.isSafeInteger);
 
 // The exhaustive matrix competes with the other typechecked Vitest projects
 // during the full release gate. Its isolated runtime is much lower, but the
@@ -255,7 +252,7 @@ describe("fixture smoke matrix", () => {
             sharedConfig.flatMap((configEntry, configIndex) =>
                 configEntry.name === undefined ||
                 configEntry.name.trim().length === 0
-                    ? [{ index: configIndex, name: configEntry.name }]
+                    ? { index: configIndex, name: configEntry.name }
                     : []
             )
         ).toStrictEqual([]);
@@ -365,13 +362,11 @@ describe("fixture smoke matrix", () => {
                     configEntry.files === undefined ||
                     activeConfigScopeIndexes.has(configIndex)
                         ? []
-                        : [
-                              {
-                                  files: configEntry.files,
-                                  index: configIndex,
-                                  name: configEntry.name ?? "(unnamed config)",
-                              },
-                          ]
+                        : {
+                              files: configEntry.files,
+                              index: configIndex,
+                              name: configEntry.name ?? "(unnamed config)",
+                          }
                 )
             ).toStrictEqual([]);
             expect(fatalMessages).toStrictEqual([]);

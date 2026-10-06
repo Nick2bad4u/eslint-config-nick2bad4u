@@ -41,7 +41,7 @@ describe("codex preset integration", () => {
                     ([ruleName, ruleConfig]) =>
                         ruleName.startsWith("codex/") &&
                         isRuleEnabled(ruleConfig)
-                            ? [ruleName]
+                            ? ruleName
                             : []
                 )
             )

@@ -119,39 +119,34 @@ const getMissingEnabledRulePluginRegistrations = (
             availablePluginNames.add(pluginName);
         }
 
-        missingRegistrations.push(
-            ...Object.entries(configEntry.rules ?? {}).flatMap(
-                ([ruleName, ruleConfig]) => {
-                    if (!isRuleEnabled(ruleConfig)) {
-                        return [];
-                    }
+        if (configEntry.rules === undefined) {
+            continue;
+        }
 
-                    const pluginName = getPluginNameForRule(
-                        ruleName,
-                        pluginNames
-                    );
-
-                    if (
-                        pluginName === undefined ||
-                        availablePluginNames.has(pluginName)
-                    ) {
-                        return [];
-                    }
-
-                    return [
-                        {
-                            configIndex,
-                            configName:
-                                typeof configEntry.name === "string"
-                                    ? configEntry.name
-                                    : "(unnamed config)",
-                            pluginName,
-                            ruleName,
-                        },
-                    ];
-                }
-            )
+        const enabledRules = Object.entries(configEntry.rules).filter(
+            ([, ruleConfig]) => isRuleEnabled(ruleConfig)
         );
+
+        for (const [ruleName] of enabledRules) {
+            const pluginName = getPluginNameForRule(ruleName, pluginNames);
+
+            if (
+                pluginName === undefined ||
+                availablePluginNames.has(pluginName)
+            ) {
+                continue;
+            }
+
+            missingRegistrations.push({
+                configIndex,
+                configName:
+                    typeof configEntry.name === "string"
+                        ? configEntry.name
+                        : "(unnamed config)",
+                pluginName,
+                ruleName,
+            });
+        }
     }
 
     return missingRegistrations;
@@ -179,26 +174,25 @@ const getParserOptionsGlobalsEntries = (
     readonly configIndex: number;
     readonly configName: string;
 }> =>
-    configEntries.flatMap((configEntry, configIndex) => {
-        const parserOptions = configEntry.languageOptions?.["parserOptions"];
+    configEntries
+        .entries()
+        .filter(([, configEntry]) => {
+            const parserOptions =
+                configEntry.languageOptions?.["parserOptions"];
 
-        if (
-            !isNonArrayObject(parserOptions) ||
-            !Object.hasOwn(parserOptions, "globals")
-        ) {
-            return [];
-        }
-
-        return [
-            {
-                configIndex,
-                configName:
-                    typeof configEntry.name === "string"
-                        ? configEntry.name
-                        : "(unnamed config)",
-            },
-        ];
-    });
+            return (
+                isNonArrayObject(parserOptions) &&
+                Object.hasOwn(parserOptions, "globals")
+            );
+        })
+        .map(([configIndex, configEntry]) => ({
+            configIndex,
+            configName:
+                typeof configEntry.name === "string"
+                    ? configEntry.name
+                    : "(unnamed config)",
+        }))
+        .toArray();
 
 const presetByName: Readonly<Record<string, readonly Linter.Config[]>> = {
     withJest: presets.withJest,
@@ -1844,7 +1838,7 @@ describe("disabled Vue integration", () => {
             Object.entries(configEntry.rules ?? {}).flatMap(
                 ([ruleName, ruleConfig]) =>
                     ruleName.startsWith("vue/") && isRuleEnabled(ruleConfig)
-                        ? [ruleName]
+                        ? ruleName
                         : []
             )
         );

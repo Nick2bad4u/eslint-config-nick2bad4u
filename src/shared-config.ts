@@ -25,6 +25,7 @@ import vite from "@typpi/eslint-plugin-vite";
 import vitest from "@vitest/eslint-plugin";
 import gitignore from "eslint-config-flat-gitignore";
 import prettierOverrides from "eslint-config-prettier";
+import cssicorn from "eslint-cssicorn";
 import { createTypeScriptImportResolver } from "eslint-import-resolver-typescript";
 import actionlint from "eslint-plugin-actionlint";
 import arrayFunc from "eslint-plugin-array-func";
@@ -190,10 +191,7 @@ const COMMENT_LENGTH_SEMANTIC_COMMENTS = Object.freeze([
     "@warn",
     "@yields",
 ]);
-/**
- * Minimal set of root files that can opt into TypeScript ESLint default-project
- * fallback.
- */
+/** Root files eligible for the TypeScript ESLint default-project fallback. */
 const DEFAULT_PROJECT_FILE_PATTERNS = Object.freeze([
     "*.{js,mjs,cjs}",
     ".*.{js,mjs,cjs}",
@@ -220,10 +218,7 @@ const DOCUSAURUS_IGNORES = Object.freeze([
 const GLOBAL_FILE_PATTERNS = Object.freeze([
     "**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
 ]);
-/**
- * JSON/JSON5 rule overrides that coexist with prettier and mixed-language
- * handling.
- */
+/** JSONC/JSON5 overrides compatible with Prettier and language plugins. */
 const JSONC_AND_JSON5_RULES = {
     "jsonc/array-bracket-newline": "off", // Handled by Prettier
     "jsonc/array-bracket-spacing": "off", // Handled by Prettier
@@ -306,10 +301,7 @@ const JSONC_AND_JSON5_RULES = {
     "jsonc/valid-json-number": "warn",
     "jsonc/vue-custom-block/no-parsing-error": "warn",
 } satisfies Linter.RulesRecord;
-/**
- * Root config filenames matched for default-project fallback and
- * config-specific tuning.
- */
+/** Root config filenames eligible for fallback and config-specific tuning. */
 const ROOT_CONFIG_FILE_PATTERNS = Object.freeze([
     "*.config.{js,mjs,cjs,ts,mts,cts}",
     "*.config.*.{js,mjs,cjs,ts,mts,cts}",
@@ -354,10 +346,7 @@ const TEST_FILE_PATTERNS = Object.freeze([
     "benchmarks/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
     "benchmark/**/*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
 ]);
-/**
- * RuleTester/fixture paths ignored by test-signal to avoid noisy false
- * positives.
- */
+/** RuleTester and fixture paths excluded from test-signal checks. */
 const TEST_SIGNAL_IGNORES = Object.freeze([
     "**/*RuleTester*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
     "**/*ruleTester*.{js,jsx,mjs,cjs,ts,tsx,cts,mts}",
@@ -813,11 +802,9 @@ export const createConfig = (
             .filter(([, plugin]) => plugin === false || plugin === null)
             .map(([pluginName]) => pluginName)
     );
-    const projectService = isEmpty(defaultProjectFilePatterns)
-        ? true
-        : {
-              allowDefaultProject: [...defaultProjectFilePatterns],
-          };
+    const projectService = isEmpty(defaultProjectFilePatterns) || {
+        allowDefaultProject: [...defaultProjectFilePatterns],
+    };
     const typefest = resolveTypedPlugin(
         pluginOverrideEntries,
         "typefest",
@@ -2183,6 +2170,7 @@ export const createConfig = (
             name: "🎨 CSS: recommended",
             plugins: {
                 ...css.configs.recommended.plugins,
+                cssicorn: cssicorn,
                 unicorn: unicorn,
             },
             rules: {
@@ -2191,7 +2179,39 @@ export const createConfig = (
                 "css/relative-font-units": "warn",
                 "css/selector-complexity": "warn",
                 "css/use-layers": "off",
-                "unicorn/prefer-explicit-viewport-units": "warn",
+                "cssicorn/lowercase": "warn",
+                // Modern CSS preserves declaration order around nested rules.
+                "cssicorn/no-declarations-after-nested-rules": "off",
+                "cssicorn/no-deprecated-features": "warn",
+                // Component styles can intentionally precede generic selectors.
+                "cssicorn/no-descending-specificity": "off",
+                "cssicorn/no-duplicate-font-family-names": "warn",
+                "cssicorn/no-duplicate-properties": "warn",
+                "cssicorn/no-duplicate-selectors": "warn",
+                "cssicorn/no-invalid-media-features": "warn",
+                "cssicorn/no-nesting-with-mixed-specificity": "warn",
+                // Autofixes can remove intentional fallback declarations.
+                "cssicorn/no-redundant-longhand-properties": "off",
+                "cssicorn/no-redundant-nested-style-rules": "warn",
+                "cssicorn/no-redundant-shorthand-values": "warn",
+                // References in unused var() fallbacks can be valid.
+                "cssicorn/no-self-referencing-custom-properties": "off",
+                // Keyframes may be defined in another stylesheet.
+                "cssicorn/no-unknown-animations": "off",
+                "cssicorn/no-unknown-annotations": "warn",
+                // CSS Modules extends selector syntax with local/global scopes.
+                "cssicorn/no-unknown-pseudo-selectors": [
+                    "warn",
+                    { allow: [":global", ":local"] },
+                ],
+                "cssicorn/no-unscoped-nesting-selector": "warn",
+                "cssicorn/no-zero-length-unit": "warn",
+                "cssicorn/prefer-explicit-viewport-units": "warn",
+                "cssicorn/prefer-media-feature-range-syntax": "warn",
+                "cssicorn/prefer-modern-syntax": "warn",
+                "cssicorn/prefer-short-hex-color": "off", // Stylelint requires long hex colors.
+                "cssicorn/require-property-descriptors": "warn",
+                "unicorn/indent": "off", // Handled by Prettier
             },
         },
         {
@@ -3361,6 +3381,7 @@ export const createConfig = (
                 "package-json/require-name": "warn",
                 "package-json/require-optionalDependencies": "off",
                 "package-json/require-os": "off",
+                "package-json/require-package-json-export": "warn",
                 "package-json/require-packageManager": "warn",
                 "package-json/require-peerDependencies": "warn",
                 "package-json/require-peerDependenciesMeta": "warn",
@@ -3383,13 +3404,13 @@ export const createConfig = (
                 ],
                 "package-json/require-version": "warn",
                 "package-json/restrict-dependency-ranges": "warn",
+                "package-json/restrict-dist-tags": ["warn", { allowed: [] }],
                 "package-json/restrict-private-properties": [
                     "warn",
                     {
                         blockedProperties: ["publishConfig"],
                     },
                 ],
-                // Package.json Plugin Rules (package-json/*)
                 "package-json/restrict-top-level-properties": [
                     "error",
                     {
@@ -3542,6 +3563,7 @@ export const createConfig = (
             name: "📁 Markdown: **/*.{MD,MARKUP,ATOM,RSS,MARKDOWN}",
             plugins: {
                 markdown: markdown,
+                unicorn: unicorn,
             },
             rules: {
                 "markdown/fenced-code-language": "warn",
@@ -3576,6 +3598,10 @@ export const createConfig = (
                 "markdown/no-unused-definitions": "warn",
                 "markdown/require-alt-text": "warn",
                 "markdown/table-column-count": "warn",
+                "unicorn/no-empty-link-text": "warn",
+                "unicorn/no-javascript-url": "warn",
+                // Required metadata varies between documentation collections.
+                "unicorn/require-frontmatter-fields": "off",
             },
         },
         ...(enableMarkdownCodeBlockLinting
@@ -3692,6 +3718,7 @@ export const createConfig = (
             },
             name: "🏝️ YAML/YML: **/*.{YAML,YML}",
             plugins: {
+                unicorn: unicorn,
                 yml: yml,
             },
             rules: {
@@ -3702,6 +3729,7 @@ export const createConfig = (
                 ...yml.configs.prettier[2]?.rules,
                 "no-irregular-whitespace": "off",
                 "no-unused-vars": "off",
+                "unicorn/key-name-casing": "off", // Keys follow their data schemas.
                 "yml/file-extension": "off",
                 "yml/key-name-casing": "off",
                 // `require-string-key` already rejects boolean keys and more.
@@ -3738,6 +3766,7 @@ export const createConfig = (
         // ═══════════════════════════════════════════════════════════════════════════════
         {
             files: ["**/*.jsonc"],
+            // Unicorn's JSON rules require an @eslint/json language.
             languageOptions: {
                 parser: jsoncEslintParser,
                 parserOptions: { jsonSyntax: "JSONC" },
@@ -3754,13 +3783,19 @@ export const createConfig = (
             files: ["**/*.json"],
             // Package.json has a dedicated config block above that uses jsonc-eslint-parser
             // (needed for some package.json-specific tooling rules).
+            // Unicorn's JSON rules cannot run on that block's jsonc/x language.
             ignores: ["**/package.json"],
             language: "json/json",
             name: "🐀 JSON: **/*.JSON",
+            plugins: { unicorn: unicorn },
             rules: {
                 ...json.configs.recommended.rules,
                 "json/sort-keys": ["warn"],
                 "json/top-level-interop": "warn",
+                "unicorn/comma-spacing": "off", // Handled by Prettier
+                "unicorn/indent": "off", // Handled by Prettier
+                "unicorn/key-name-casing": "off", // Keys follow their data schemas.
+                "unicorn/no-loss-of-precision": "error",
             },
         },
         // #endregion 🐀 JSON Files
@@ -3770,8 +3805,13 @@ export const createConfig = (
             files: ["**/*.json5"],
             language: "json/json5",
             name: "🐁 JSON5: **/*.JSON5",
+            plugins: { unicorn: unicorn },
             rules: {
                 ...JSONC_AND_JSON5_RULES,
+                "unicorn/comma-spacing": "off", // Handled by Prettier
+                "unicorn/indent": "off", // Handled by Prettier
+                "unicorn/key-name-casing": "off", // Keys follow their data schemas.
+                "unicorn/no-loss-of-precision": "error",
             },
         },
         // #endregion 🐁 JSON5 Files
@@ -3786,7 +3826,7 @@ export const createConfig = (
                 parserOptions: { tomlVersion: "1.1.0" },
             },
             name: "🐦‍🔥 TOML: **/*.TOML",
-            plugins: { toml: toml },
+            plugins: { toml: toml, unicorn: unicorn },
             rules: {
                 // TOML ESLint Plugin Rules (toml/*)
                 "toml/array-bracket-newline": "off",
@@ -3816,6 +3856,9 @@ export const createConfig = (
                 "toml/table-bracket-spacing": "warn",
                 "toml/tables-order": "off",
                 "toml/vue-custom-block/no-parsing-error": "warn",
+                "unicorn/key-name-casing": "off", // Keys follow their data schemas.
+                // TOML integers remain covered by toml/precision-of-integer.
+                "unicorn/no-loss-of-precision": "error",
             },
         },
         ...(tombiPlugin === null ? [] : [tombiPlugin.configs.all]),
@@ -3942,22 +3985,33 @@ export const createConfig = (
             rules: {
                 ...playwright.configs["flat/recommended"].rules,
                 "playwright/max-expects": "warn",
+                // Individual actions may need a different timeout from the default.
+                "playwright/no-action-timeout": "off",
                 "playwright/no-commented-out-tests": "warn",
+                "playwright/no-export": "warn",
                 "playwright/no-get-by-title": "warn",
                 "playwright/no-hooks": "warn",
+                "playwright/no-magic-timeouts": ["warn", { minOccurrences: 2 }],
                 "playwright/no-nth-methods": "warn",
                 "playwright/no-raw-locators": "warn",
                 "playwright/no-restricted-locators": "warn",
                 "playwright/no-restricted-matchers": "warn",
                 "playwright/no-restricted-roles": "warn",
                 "playwright/no-slowed-test": "warn",
+                // Parameterized tests and steps can have deterministic dynamic titles.
+                "playwright/no-template-literal-title": "off",
+                // Playwright awaits promises returned by test callbacks.
+                "playwright/no-test-return-statement": "off",
                 "playwright/prefer-comparison-matcher": "warn",
+                // Assertion helpers and finally blocks can follow an assertion.
+                "playwright/prefer-ending-with-an-expect": "off",
                 "playwright/prefer-equality-matcher": "warn",
                 "playwright/prefer-lowercase-title": "warn",
                 "playwright/prefer-native-locators": "warn",
                 "playwright/prefer-strict-equal": "warn",
                 "playwright/prefer-to-be": "warn",
                 "playwright/prefer-to-contain": "warn",
+                "playwright/require-annotation-reason": "warn",
                 "playwright/require-hook": "warn",
                 "playwright/require-soft-assertions": "warn",
                 "playwright/require-tags": "warn",
@@ -4491,10 +4545,9 @@ function flattenConfigs(configs: readonly EslintConfigInput[]): EslintConfig[] {
 }
 
 function getRulePluginName(ruleName: string): string {
-    if (ruleName.startsWith("@")) {
-        return arrayJoin(stringSplit(ruleName, "/").slice(0, 2), "/");
-    }
-    return arrayFirst(stringSplit(ruleName, "/")) ?? ruleName;
+    return ruleName.startsWith("@")
+        ? arrayJoin(stringSplit(ruleName, "/").slice(0, 2), "/")
+        : (arrayFirst(stringSplit(ruleName, "/")) ?? ruleName);
 }
 
 function removeDisabledPluginRules(
@@ -4534,10 +4587,9 @@ function resolvePlugin(
     fallbackPlugin: ConfigurablePlugin
 ): ConfigurablePlugin | null {
     const configuredPlugin = pluginOverrideEntries.get(pluginName);
-    if (configuredPlugin === false || configuredPlugin === null) {
-        return null;
-    }
-    return configuredPlugin ?? fallbackPlugin;
+    return configuredPlugin === false || configuredPlugin === null
+        ? null
+        : (configuredPlugin ?? fallbackPlugin);
 }
 
 function resolveTypedPlugin<TPlugin extends ConfigurablePlugin>(
@@ -4605,10 +4657,7 @@ function scopeTypeScriptEslintConfigToCodeFiles(
 // ═══════════════════════════════════════════════════════════════════════════════
 /** Full config stack with all optional presets enabled. */
 const allConfigs: EslintConfig[] = createConfig();
-/**
- * Variant where SDL-related plugins are disabled for environments that lack
- * SDL.
- */
+/** Config without SDL plugins for environments where SDL is unavailable. */
 const configsWithoutSdl2Base: EslintConfig[] = createConfig({
     plugins: {
         sdl: false,
@@ -4776,10 +4825,7 @@ const sharedConfigs: Nick2Bad4UEslintConfigPresets = {
 // #endregion 📦 Preset Construction
 // #region 📤 Public Exports
 // ═══════════════════════════════════════════════════════════════════════════════
-/**
- * Public named export for consumers that import this package as an ESLint
- * config collection.
- */
+/** Named config collection exported for package consumers. */
 export const configs: Nick2Bad4UEslintConfigPresets = sharedConfigs;
 
 /** Default package export matching ESLint's plugin/config convention. */

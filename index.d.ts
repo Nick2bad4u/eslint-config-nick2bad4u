@@ -84,10 +84,7 @@ export type Nick2Bad4UEslintConfigPluginOverrides = Readonly<
 
 /** Named flat config presets exposed by this package. */
 export interface Nick2Bad4UEslintConfigPresets {
-    /**
-     * Full shared config, including packaged Typefest and Etc-Misc source
-     * rules.
-     */
+    /** Full shared config, including Typefest and Etc-Misc source rules. */
     readonly all: Linter.Config[];
 
     /** Shared config without the explicit source-rule plugin sections. */
