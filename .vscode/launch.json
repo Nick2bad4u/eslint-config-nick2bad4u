@@ -16,33 +16,34 @@
     "configurations": [
         {
             "console": "integratedTerminal",
-            "cwd": "C:/Repos/eslint-config-nick2bad4u",
+            "cwd": "${workspaceFolder}",
             "internalConsoleOptions": "neverOpen",
             "name": "Launch ESLint Inspector",
             "outputCapture": "std",
+            "program": "${workspaceFolder}/node_modules/@eslint/config-inspector/bin.mjs",
             "request": "launch",
-            "runtimeArgs": [
-                "run-script",
-                "build:eslint-inspector:local"
-            ],
-            "runtimeExecutable": "npm",
+            "runtimeExecutable": "node",
+            "runtimeVersion": "24",
             "skipFiles": [
                 "<node_internals>/**"
             ],
             "type": "node"
         },
         {
+            "args": [
+                "-p",
+                "tsconfig.build.json",
+                "--watch"
+            ],
             "console": "integratedTerminal",
-            "cwd": "C:/Repos/eslint-config-nick2bad4u",
+            "cwd": "${workspaceFolder}",
             "internalConsoleOptions": "neverOpen",
             "name": "Launch Build Watch",
             "outputCapture": "std",
+            "program": "${workspaceFolder}/node_modules/typescript/bin/tsc",
             "request": "launch",
-            "runtimeArgs": [
-                "run-script",
-                "build:watch"
-            ],
-            "runtimeExecutable": "npm",
+            "runtimeExecutable": "node",
+            "runtimeVersion": "24",
             "skipFiles": [
                 "<node_internals>/**"
             ],
